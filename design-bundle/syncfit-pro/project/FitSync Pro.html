@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FitSync Pro · Design Canvas</title>
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #f0eee9; }
+    body { font-family: 'Inter', -apple-system, sans-serif; }
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" src="tokens.jsx"></script>
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="components.jsx"></script>
+  <script type="text/babel" src="page-components.jsx"></script>
+  <script type="text/babel" src="page-admin.jsx"></script>
+  <script type="text/babel" src="page-coach.jsx"></script>
+  <script type="text/babel" src="page-mobile.jsx"></script>
+
+  <script type="text/babel">
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "accent": "#2D5BFF",
+      "direction": "ltr",
+      "statusFilter": "all"
+    }/*EDITMODE-END*/;
+
+    function App() {
+      const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+      // Live-update accent token + the CSS rules that depend on it
+      React.useEffect(() => {
+        const a = t.accent;
+        window.FS.accent = a;
+        // Soft accent: lighten via translucent overlay-ish hex
+        const soft = a + '14'; // 8% alpha hex tail
+        window.FS.accentSoft = soft;
+        const sheet = document.getElementById('fs-styles');
+        if (sheet) {
+          // Re-target lines that referenced the original blue. Easiest: append override rules.
+          let override = document.getElementById('fs-accent-override');
+          if (!override) { override = document.createElement('style'); override.id = 'fs-accent-override'; document.head.appendChild(override); }
+          override.textContent = `
+            .fs-btn.accent { background: ${a} !important; }
+            .fs-btn.accent:hover { background: ${a}DD !important; }
+            .fs-badge.gym { background: ${a}1A !important; color: ${a} !important; }
+            .fs-badge.gym .dot { background: ${a} !important; }
+            .fs-input:focus { border-color: ${a} !important; box-shadow: 0 0 0 3px ${a}26 !important; }
+          `;
+        }
+      }, [t.accent]);
+
+      return (
+        <>
+          <DesignCanvas>
+            <DCSection id="system" title="01 · Design system" subtitle="The foundation. Every screen below is built from these primitives.">
+              <DCArtboard id="components" label="Component library" width={1100} height={2400}>
+                <ComponentLibrary />
+              </DCArtboard>
+            </DCSection>
+
+            <DCSection id="admin" title="02 · Admin (desktop)" subtitle="Gym owners running the business — desktop-only context. RTL variant proves the layout flips correctly.">
+              <DCArtboard id="admin-dashboard" label="Admin dashboard · LTR" width={1280} height={900}>
+                <AdminDashboard dir="ltr" />
+              </DCArtboard>
+              <DCArtboard id="admin-dashboard-rtl" label="Admin dashboard · RTL (Arabic)" width={1280} height={900}>
+                <AdminDashboard dir="rtl" />
+              </DCArtboard>
+              <DCArtboard id="admin-members" label={`Member list · filter: ${t.statusFilter}`} width={1280} height={900}>
+                <MemberList statusFilter={t.statusFilter} />
+              </DCArtboard>
+            </DCSection>
+
+            <DCSection id="coach" title="03 · Coach (desktop)" subtitle="Trainers managing client rosters. Empty states are the first thing real coaches see — they need to be designed, not afterthought.">
+              <DCArtboard id="coach-dashboard" label="Coach dashboard · populated" width={1280} height={900}>
+                <CoachDashboard />
+              </DCArtboard>
+              <DCArtboard id="coach-dashboard-empty" label="Coach dashboard · empty state" width={1280} height={900}>
+                <CoachDashboard empty />
+              </DCArtboard>
+              <DCArtboard id="coach-exercises" label="Exercise library · populated" width={1280} height={900}>
+                <CoachExerciseLibrary />
+              </DCArtboard>
+              <DCArtboard id="coach-exercises-empty" label="Exercise library · empty state" width={1280} height={900}>
+                <CoachExerciseLibrary empty />
+              </DCArtboard>
+            </DCSection>
+
+            <DCSection id="client" title="04 · Client app (mobile)" subtitle="Side-by-side: a gym member sees the QR code, wallet pass and membership card. An online client sees none of that — pure plan + check-in + photos.">
+              <DCArtboard id="member-home" label="Gym member home · /app" width={375} height={780}>
+                <GymMemberHome />
+              </DCArtboard>
+              <DCArtboard id="online-home" label="Online client home · /app (zero gym UI)" width={375} height={780}>
+                <OnlineClientHome />
+              </DCArtboard>
+              <DCArtboard id="my-plan" label="My plan · /app/plan" width={375} height={780}>
+                <MyPlan />
+              </DCArtboard>
+            </DCSection>
+          </DesignCanvas>
+
+          <TweaksPanel title="Tweaks">
+            <TweakSection label="Theme" />
+            <TweakColor label="Accent color" value={t.accent} onChange={(v) => setTweak('accent', v)} />
+            <TweakSection label="Layout" />
+            <TweakRadio label="Direction" value={t.direction}
+              options={[{value:'ltr',label:'LTR'},{value:'rtl',label:'RTL'}]}
+              onChange={(v) => setTweak('direction', v)} />
+            <TweakSection label="Member list" />
+            <TweakSelect label="Status filter" value={t.statusFilter}
+              options={[
+                { value: 'all',     label: 'All' },
+                { value: 'active',  label: 'Active' },
+                { value: 'frozen',  label: 'Frozen' },
+                { value: 'expired', label: 'Expired' },
+                { value: 'pending', label: 'Pending' },
+              ]}
+              onChange={(v) => setTweak('statusFilter', v)} />
+          </TweaksPanel>
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

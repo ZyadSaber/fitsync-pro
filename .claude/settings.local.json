@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(python -c \"import gzip; data = gzip.decompress\\(open\\('webfetch-1777857530462-2a3ua5.bin','rb'\\).read\\(\\)\\); open\\('design.html','wb'\\).write\\(data\\)\")",
+      "Bash(python3 -c \"import gzip; data = gzip.decompress\\(open\\('webfetch-1777857530462-2a3ua5.bin','rb'\\).read\\(\\)\\); open\\('design.html','wb'\\).write\\(data\\)\")",
+      "Bash(python *)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --app --no-src-dir --import-alias \"@/*\" --yes)",
+      "Bash(npx create-next-app@latest app --typescript --tailwind --app --no-src-dir --import-alias \"@/*\" --yes)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)"
+    ]
+  }
+}
