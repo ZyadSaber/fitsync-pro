@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import Icon from "@/components/ui/Icon";
 import Avatar from "@/components/ui/Avatar";
 
@@ -7,40 +7,50 @@ type Role = "admin" | "coach";
 interface SidebarProps {
   active?: string;
   role?: Role;
+  locale?: string;
+  /** @deprecated use locale instead */
   dir?: "ltr" | "rtl";
 }
 
 const ADMIN_ITEMS: [string, string, string][] = [
-  ["/admin",              "Dashboard",      "home"],
-  ["/admin/members",      "Members",        "users"],
-  ["/admin/plans",        "Plans",          "card"],
-  ["/admin/offers",       "Offers",         "tag"],
-  ["/admin/checkins",     "Live check-ins", "qr"],
-  ["/admin/staff",        "Staff",          "user"],
+  ["/admin",          "Dashboard",      "home"],
+  ["/admin/members",  "Members",        "users"],
+  ["/admin/plans",    "Plans",          "card"],
+  ["/admin/offers",   "Offers",         "tag"],
+  ["/admin/checkins", "Live check-ins", "qr"],
+  ["/admin/staff",    "Staff",          "user"],
 ];
 
 const COACH_ITEMS: [string, string, string][] = [
-  ["/coach",              "Dashboard",      "home"],
-  ["/coach/clients",      "Clients",        "users"],
-  ["/coach/exercises",    "Exercise library","dumbbell"],
-  ["/coach/workouts",     "Workouts",       "chart"],
-  ["/coach/nutrition",    "Nutrition",      "flame"],
+  ["/coach",           "Dashboard",       "home"],
+  ["/coach/clients",   "Clients",         "users"],
+  ["/coach/exercises", "Exercise library","dumbbell"],
+  ["/coach/workouts",  "Workouts",        "chart"],
+  ["/coach/nutrition", "Nutrition",       "flame"],
 ];
 
 const ADMIN_ITEMS_AR: [string, string, string][] = [
-  ["/admin",              "لوحة التحكم",   "home"],
-  ["/admin/members",      "الأعضاء",        "users"],
-  ["/admin/plans",        "الباقات",         "card"],
-  ["/admin/offers",       "العروض",          "tag"],
-  ["/admin/checkins",     "تسجيل الدخول",   "qr"],
-  ["/admin/staff",        "الفريق",          "user"],
+  ["/admin",          "لوحة التحكم",   "home"],
+  ["/admin/members",  "الأعضاء",        "users"],
+  ["/admin/plans",    "الباقات",         "card"],
+  ["/admin/offers",   "العروض",          "tag"],
+  ["/admin/checkins", "تسجيل الدخول",   "qr"],
+  ["/admin/staff",    "الفريق",          "user"],
 ];
 
-export default function Sidebar({ active = "dashboard", role = "admin", dir = "ltr" }: SidebarProps) {
-  const isRtl = dir === "rtl";
+const COACH_ITEMS_AR: [string, string, string][] = [
+  ["/coach",           "لوحة التحكم",    "home"],
+  ["/coach/clients",   "العملاء",         "users"],
+  ["/coach/exercises", "مكتبة التمارين",  "dumbbell"],
+  ["/coach/workouts",  "التمارين",        "chart"],
+  ["/coach/nutrition", "التغذية",         "flame"],
+];
+
+export default function Sidebar({ active = "dashboard", role = "admin", locale, dir }: SidebarProps) {
+  const isRtl = locale ? locale === "ar" : dir === "rtl";
   const items = role === "admin"
     ? (isRtl ? ADMIN_ITEMS_AR : ADMIN_ITEMS)
-    : COACH_ITEMS;
+    : (isRtl ? COACH_ITEMS_AR : COACH_ITEMS);
 
   const brand   = isRtl ? "فِت‑سِنك برو"          : "FitSync Pro";
   const gym     = isRtl ? "نادي القاهرة الرياضي"  : "Cairo Fit · Zamalek";

@@ -1,0 +1,178 @@
+{
+  "common": {
+    "appName": "FitSync Pro",
+    "gymName": "Cairo Fit · Zamalek",
+    "addMember": "Add member",
+    "export": "Export",
+    "configure": "Configure",
+    "remind": "Remind",
+    "viewAll": "View all →",
+    "less": "Less",
+    "more": "More",
+    "bulkActions": "Bulk actions:",
+    "freeze": "Freeze",
+    "extend": "Extend",
+    "createOffer": "Create offer",
+    "noResults": "No results."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "members": "Members",
+    "plans": "Plans",
+    "offers": "Offers",
+    "checkins": "Live check-ins",
+    "staff": "Staff",
+    "clients": "Clients",
+    "exercises": "Exercise library",
+    "workouts": "Workouts",
+    "nutrition": "Nutrition"
+  },
+  "roles": {
+    "admin": "Gym admin",
+    "coach": "Coach",
+    "adminName": "Mona Khaled",
+    "coachName": "Ahmed Coach"
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Dashboard",
+      "subtitle": "Thursday, 4 May 2026",
+      "ramadanCampaign": "Ramadan campaign",
+      "ramadanDesc": "Discount overlay active · ends 30 May",
+      "activeMembers": "Active members",
+      "activeToday": "Active today",
+      "expiringThisWeek": "Expiring this week",
+      "revenue": "Revenue (May)",
+      "vsLastMonth": "vs last month",
+      "avgLabel": "avg. 121",
+      "renewalNeeded": "renewal needed",
+      "liveFeed": "Live check-in feed",
+      "membersToday": "42 members so far today",
+      "live": "Live",
+      "expiringTitle": "Memberships expiring soon",
+      "heatmapTitle": "Attendance activity · 12 weeks",
+      "heatmapSub": "Peak days: Mon, Thu"
+    },
+    "members": {
+      "title": "Members",
+      "filters": {
+        "all": "All",
+        "active": "Active",
+        "frozen": "Frozen",
+        "expired": "Expired",
+        "pending": "Pending"
+      },
+      "table": {
+        "member": "Member",
+        "phone": "Phone",
+        "plan": "Plan",
+        "status": "Status",
+        "expiry": "Expiry"
+      },
+      "noResults": "No members match this filter."
+    }
+  },
+  "coach": {
+    "dashboard": {
+      "title": "Coach Dashboard"
+    },
+    "exercises": {
+      "title": "Exercise Library"
+    }
+  },
+  "auth": {
+    "hero": {
+      "eyebrow": "Welcome back",
+      "headline1": "Train hard.",
+      "headline2": "Track everything.",
+      "description": "One platform for gym owners, coaches, and members. Manage memberships, build programs, and keep clients accountable — from Cairo to anywhere.",
+      "metricMembers": "Active members",
+      "metricCompliance": "Avg. compliance",
+      "clientPlan": "Hypertrophy 12W · Week 4",
+      "copyright": "© 2026 FitSync Pro",
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "langToggle": "عربى"
+    },
+    "login": {
+      "newHere": "New here?",
+      "createAccount": "Create an account →",
+      "eyebrow": "Sign in",
+      "title": "Welcome back to your gym",
+      "description": "Use the email tied to your membership, or continue with the provider you signed up with.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "ahmed@cairofit.eg",
+      "continueBtn": "Continue →",
+      "forgotPassword": "Forgot password?",
+      "orWith": "or continue with",
+      "roleAdmin": "gym admin",
+      "roleCoach": "coach",
+      "roleHintSuffix": "We'll route you automatically based on your account.",
+      "terms": "Terms",
+      "privacyPolicy": "Privacy Policy",
+      "legalPrefix": "By continuing you agree to our",
+      "legalAnd": "and",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "signInBtn": "Sign in →",
+      "backBtn": "← Change email",
+      "forgotSentTitle": "Reset link sent",
+      "forgotSentDesc": "Check your inbox at {email} for the password reset link.",
+      "backToLogin": "← Back to sign in"
+    },
+    "signup": {
+      "alreadyMember": "Already a member?",
+      "signIn": "Sign in →",
+      "step": "Step 1 of 3",
+      "eyebrow": "Create account",
+      "title": "Choose your role",
+      "description": "Different surfaces, different tools. We'll set you up accordingly.",
+      "adminTitle": "Gym admin",
+      "adminSub": "Manage memberships, staff, and revenue",
+      "coachTitle": "Coach",
+      "coachSub": "Run programs for gym or online clients",
+      "memberTitle": "Member",
+      "memberSub": "Train at the gym or with an online coach",
+      "emailLabel": "Work email",
+      "emailPlaceholder": "you@gym.com",
+      "continueBtn": "Continue with email →",
+      "or": "or",
+      "step2": "Step 2 of 3",
+      "step3": "Step 3 of 3",
+      "nameLabel": "Full name",
+      "namePlaceholder": "Your full name",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Min. 8 characters",
+      "createBtn": "Create account →",
+      "checkEmailTitle": "Check your inbox",
+      "checkEmailDesc": "We sent a confirmation link to {email}. Click it to activate your account.",
+      "backBtn": "← Back"
+    },
+    "errors": {
+      "invalidEmail": "Please enter a valid email address",
+      "invalidCredentials": "Invalid email or password",
+      "emailInUse": "An account with this email already exists",
+      "weakPassword": "Password must be at least 8 characters",
+      "nameRequired": "Please enter your full name",
+      "generic": "Something went wrong. Please try again."
+    },
+    "providers": {
+      "google": "Google",
+      "apple": "Apple",
+      "phone": "Phone",
+      "whatsapp": "WhatsApp"
+    }
+  },
+  "index": {
+    "subtitle": "Egypt-first gym management & online coaching platform",
+    "adminDashboard": "Admin Dashboard",
+    "memberList": "Member List",
+    "coachDashboard": "Coach Dashboard",
+    "exerciseLibrary": "Exercise Library",
+    "desktopLtr": "Desktop · LTR",
+    "desktopFilterable": "Desktop · filterable",
+    "desktop8Clients": "Desktop · 8 clients",
+    "desktop12Exercises": "Desktop · 12 exercises",
+    "stackInfo": "Stack: Next.js 16 · Supabase · Tailwind CSS"
+  }
+}

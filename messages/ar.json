@@ -1,0 +1,178 @@
+{
+  "common": {
+    "appName": "فِت‑سِنك برو",
+    "gymName": "نادي القاهرة الرياضي",
+    "addMember": "إضافة عضو",
+    "export": "تصدير",
+    "configure": "إعداد",
+    "remind": "تذكير",
+    "viewAll": "عرض الكل ←",
+    "less": "أقل",
+    "more": "أكثر",
+    "bulkActions": "إجراءات جماعية",
+    "freeze": "تجميد",
+    "extend": "تمديد",
+    "createOffer": "إنشاء عرض",
+    "noResults": "لا توجد نتائج."
+  },
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "members": "الأعضاء",
+    "plans": "الباقات",
+    "offers": "العروض",
+    "checkins": "تسجيل الدخول",
+    "staff": "الفريق",
+    "clients": "العملاء",
+    "exercises": "مكتبة التمارين",
+    "workouts": "التمارين",
+    "nutrition": "التغذية"
+  },
+  "roles": {
+    "admin": "مديرة النادي",
+    "coach": "المدرّب",
+    "adminName": "منى خالد",
+    "coachName": "أحمد المدرّب"
+  },
+  "admin": {
+    "dashboard": {
+      "title": "لوحة التحكم",
+      "subtitle": "الخميس، 4 مايو 2026",
+      "ramadanCampaign": "حملة رمضان",
+      "ramadanDesc": "خصم نشط · ينتهي 30 مايو",
+      "activeMembers": "الأعضاء النشطون",
+      "activeToday": "النشطون اليوم",
+      "expiringThisWeek": "تنتهي هذا الأسبوع",
+      "revenue": "الإيرادات (مايو)",
+      "vsLastMonth": "مقارنة بالشهر السابق",
+      "avgLabel": "المتوسط 121",
+      "renewalNeeded": "يحتاج تجديد",
+      "liveFeed": "سجل الحضور المباشر",
+      "membersToday": "42 عضو حتى الآن اليوم",
+      "live": "مباشر",
+      "expiringTitle": "العضويات المنتهية قريباً",
+      "heatmapTitle": "نشاط الحضور · 12 أسبوع",
+      "heatmapSub": "أيام الذروة: الاثنين، الخميس"
+    },
+    "members": {
+      "title": "الأعضاء",
+      "filters": {
+        "all": "الكل",
+        "active": "نشط",
+        "frozen": "مجمد",
+        "expired": "منتهي",
+        "pending": "معلق"
+      },
+      "table": {
+        "member": "العضو",
+        "phone": "الهاتف",
+        "plan": "الخطة",
+        "status": "الحالة",
+        "expiry": "تاريخ الانتهاء"
+      },
+      "noResults": "لا يوجد أعضاء يطابقون هذا الفلتر."
+    }
+  },
+  "coach": {
+    "dashboard": {
+      "title": "لوحة المدرب"
+    },
+    "exercises": {
+      "title": "مكتبة التمارين"
+    }
+  },
+  "auth": {
+    "hero": {
+      "eyebrow": "مرحباً بعودتك",
+      "headline1": "تدرّب بجد.",
+      "headline2": "تتبّع كل شيء.",
+      "description": "منصة واحدة لأصحاب الجيمات والمدربين والأعضاء. أدر الاشتراكات، وابنِ البرامج، وحافظ على التزام عملائك — من القاهرة وإلى أي مكان.",
+      "metricMembers": "الأعضاء النشطون",
+      "metricCompliance": "متوسط الالتزام",
+      "clientPlan": "تضخيم 12 أسبوع · الأسبوع 4",
+      "copyright": "© 2026 فِت‑سِنك برو",
+      "privacy": "الخصوصية",
+      "terms": "الشروط",
+      "langToggle": "English"
+    },
+    "login": {
+      "newHere": "جديد هنا؟",
+      "createAccount": "← إنشاء حساب",
+      "eyebrow": "تسجيل الدخول",
+      "title": "مرحباً بعودتك إلى ناديك",
+      "description": "استخدم البريد الإلكتروني المرتبط باشتراكك، أو تابع مع مزود الخدمة الذي اشتركت به.",
+      "emailLabel": "البريد الإلكتروني",
+      "emailPlaceholder": "ahmed@cairofit.eg",
+      "continueBtn": "← متابعة",
+      "forgotPassword": "نسيت كلمة المرور؟",
+      "orWith": "أو تابع بـ",
+      "roleAdmin": "مدير النادي",
+      "roleCoach": "مدرب",
+      "roleHintSuffix": "سنوجّهك تلقائياً بناءً على حسابك.",
+      "terms": "الشروط",
+      "privacyPolicy": "سياسة الخصوصية",
+      "legalPrefix": "بالمتابعة توافق على",
+      "legalAnd": "و",
+      "passwordLabel": "كلمة المرور",
+      "passwordPlaceholder": "أدخل كلمة المرور",
+      "signInBtn": "تسجيل الدخول →",
+      "backBtn": "→ تغيير البريد",
+      "forgotSentTitle": "تم إرسال رابط الاستعادة",
+      "forgotSentDesc": "تحقق من بريدك على {email} للحصول على رابط إعادة تعيين كلمة المرور.",
+      "backToLogin": "→ العودة لتسجيل الدخول"
+    },
+    "signup": {
+      "alreadyMember": "لديك حساب؟",
+      "signIn": "← تسجيل الدخول",
+      "step": "الخطوة 1 من 3",
+      "eyebrow": "إنشاء حساب",
+      "title": "اختر دورك",
+      "description": "واجهات مختلفة، أدوات مختلفة. سنهيئك وفقاً لاختيارك.",
+      "adminTitle": "مدير النادي",
+      "adminSub": "إدارة الاشتراكات والموظفين والإيرادات",
+      "coachTitle": "مدرب",
+      "coachSub": "إدارة برامج لعملاء النادي أو الأونلاين",
+      "memberTitle": "عضو",
+      "memberSub": "التدرب في النادي أو مع مدرب أونلاين",
+      "emailLabel": "البريد المهني",
+      "emailPlaceholder": "you@gym.com",
+      "continueBtn": "← متابعة بالبريد الإلكتروني",
+      "or": "أو",
+      "step2": "الخطوة 2 من 3",
+      "step3": "الخطوة 3 من 3",
+      "nameLabel": "الاسم الكامل",
+      "namePlaceholder": "اسمك الكامل",
+      "passwordLabel": "كلمة المرور",
+      "passwordPlaceholder": "8 أحرف على الأقل",
+      "createBtn": "إنشاء الحساب →",
+      "checkEmailTitle": "تحقق من بريدك",
+      "checkEmailDesc": "أرسلنا رابط تأكيد إلى {email}. انقر عليه لتفعيل حسابك.",
+      "backBtn": "→ رجوع"
+    },
+    "errors": {
+      "invalidEmail": "يرجى إدخال بريد إلكتروني صحيح",
+      "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+      "emailInUse": "يوجد حساب بهذا البريد الإلكتروني بالفعل",
+      "weakPassword": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل",
+      "nameRequired": "يرجى إدخال اسمك الكامل",
+      "generic": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+    },
+    "providers": {
+      "google": "جوجل",
+      "apple": "آبل",
+      "phone": "هاتف",
+      "whatsapp": "واتساب"
+    }
+  },
+  "index": {
+    "subtitle": "منصة إدارة الجيم والتدريب الأونلاين — مصر أولاً",
+    "adminDashboard": "لوحة الإدارة",
+    "memberList": "قائمة الأعضاء",
+    "coachDashboard": "لوحة المدرب",
+    "exerciseLibrary": "مكتبة التمارين",
+    "desktopLtr": "سطح المكتب · LTR",
+    "desktopFilterable": "سطح المكتب · قابل للتصفية",
+    "desktop8Clients": "سطح المكتب · 8 عملاء",
+    "desktop12Exercises": "سطح المكتب · 12 تمرين",
+    "stackInfo": "Stack: Next.js 16 · Supabase · Tailwind CSS"
+  }
+}

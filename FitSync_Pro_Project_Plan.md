@@ -118,7 +118,7 @@ import { createBrowserClient } from '@supabase/ssr'
 export const createClient = () =>
   createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
   )
 
 // lib/supabase/server.ts — server client (server components + route handlers)
@@ -127,7 +127,7 @@ import { cookies } from 'next/headers'
 export const createServerSupabaseClient = () =>
   createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     { cookies: { getAll: () => cookies().getAll() } }
   )
 ```
@@ -801,7 +801,7 @@ Egyptian gyms run their biggest campaigns before and during Ramadan. Build a one
 ```env
 # ── Supabase ──────────────────────────────────────────────
 NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 
 # ── WhatsApp / Twilio ─────────────────────────────────────
