@@ -3,6 +3,7 @@ import { getMessages } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
+import { Toaster } from "@/components/ui/sonner";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -40,6 +41,7 @@ export default async function LocaleLayout({
           <AppShell locale={locale}>
             {children}
           </AppShell>
+          <Toaster />
         </NextIntlClientProvider>
       </body>
     </html>

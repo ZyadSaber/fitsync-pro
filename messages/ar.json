@@ -13,7 +13,8 @@
     "freeze": "تجميد",
     "extend": "تمديد",
     "createOffer": "إنشاء عرض",
-    "noResults": "لا توجد نتائج."
+    "noResults": "لا توجد نتائج.",
+    "langToggle": "English"
   },
   "nav": {
     "dashboard": "لوحة التحكم",
@@ -91,8 +92,7 @@
       "clientPlan": "تضخيم 12 أسبوع · الأسبوع 4",
       "copyright": "© 2026 فِت‑سِنك برو",
       "privacy": "الخصوصية",
-      "terms": "الشروط",
-      "langToggle": "English"
+      "terms": "الشروط"
     },
     "login": {
       "newHere": "جديد هنا؟",
@@ -115,6 +115,7 @@
       "passwordLabel": "كلمة المرور",
       "passwordPlaceholder": "أدخل كلمة المرور",
       "signInBtn": "تسجيل الدخول →",
+      "signingIn": "جارٍ تسجيل الدخول…",
       "backBtn": "→ تغيير البريد",
       "forgotSentTitle": "تم إرسال رابط الاستعادة",
       "forgotSentDesc": "تحقق من بريدك على {email} للحصول على رابط إعادة تعيين كلمة المرور.",

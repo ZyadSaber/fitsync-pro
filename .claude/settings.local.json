@@ -36,7 +36,10 @@
       "Bash(Remove-Item *)",
       "Bash(bunx tsc *)",
       "Bash(rm \"F:/fitsync-pro/app/[locale]/admin/layout.tsx\")",
-      "Bash(rm \"F:/fitsync-pro/app/[locale]/coach/layout.tsx\")"
+      "Bash(rm \"F:/fitsync-pro/app/[locale]/coach/layout.tsx\")",
+      "Bash(move \"F:\\\\fitsync-pro\\\\components\\\\auth\\\\validations\\\\signInSchema.ts\" \"F:\\\\fitsync-pro\\\\validations\\\\signInSchema.ts\")",
+      "Bash(move \"F:\\\\fitsync-pro\\\\components\\\\auth\\\\validations\\\\signUpSchema.ts\" \"F:\\\\fitsync-pro\\\\validations\\\\signUpSchema.ts\")",
+      "PowerShell(New-Item *)"
     ]
   }
 }

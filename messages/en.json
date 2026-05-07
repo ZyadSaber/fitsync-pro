@@ -13,7 +13,9 @@
     "freeze": "Freeze",
     "extend": "Extend",
     "createOffer": "Create offer",
-    "noResults": "No results."
+    "noResults": "No results.",
+      "langToggle": "عربى"
+
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -91,9 +93,7 @@
       "clientPlan": "Hypertrophy 12W · Week 4",
       "copyright": "© 2026 FitSync Pro",
       "privacy": "Privacy",
-      "terms": "Terms",
-      "langToggle": "عربى"
-    },
+      "terms": "Terms"    },
     "login": {
       "newHere": "New here?",
       "createAccount": "Create an account →",
@@ -115,6 +115,7 @@
       "passwordLabel": "Password",
       "passwordPlaceholder": "Enter your password",
       "signInBtn": "Sign in →",
+      "signingIn": "Signing in…",
       "backBtn": "← Change email",
       "forgotSentTitle": "Reset link sent",
       "forgotSentDesc": "Check your inbox at {email} for the password reset link.",
