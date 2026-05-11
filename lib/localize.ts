@@ -1,13 +1,7 @@
-export interface LocalizedString {
-  en: string;
-  ar: string;
-  [key: string]: string;
-}
+import type { LocalizedString } from "@/types/common";
 
-/**
- * Returns the string for the current locale.
- * Falls back to English if the locale-specific string is missing.
- */
+export type { LocalizedString };
+
 export function getLocalizedValue(
   data: LocalizedString | undefined | null,
   locale: string,

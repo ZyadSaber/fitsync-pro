@@ -1,209 +1,268 @@
+import { getTranslations, getLocale } from "next-intl/server";
+import { getAdminDashboardData } from "@/services/admin/dashboard";
+import type { DashboardCheckin, DashboardExpiringMember, DashboardData } from "@/types/dashboard";
 import Icon from "@/components/ui/Icon";
-import Avatar from "@/components/ui/Avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/Avatar";
 import MetricCard from "@/components/ui/MetricCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import CheckinHeatmap from "@/components/ui/CheckinHeatmap";
+import CheckinBarChart from "@/components/ui/CheckinBarChart";
 import Topbar from "@/components/layout/Topbar";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
-const CHECKINS = [
-  { name: "Karim Mansour",  time: "32s ago",  status: "active"  },
-  { name: "Layla Abdullah", time: "1m ago",   status: "active"  },
-  { name: "Youssef Ibrahim",time: "4m ago",   status: "pending" },
-  { name: "Hoda El-Sayed",  time: "7m ago",   status: "active"  },
-  { name: "Tarek Nabil",    time: "12m ago",  status: "frozen"  },
-] as const;
+function deltaTrend(delta: number): { label: string | undefined; dir: "up" | "down" | "flat" } {
+  if (delta === 0) return { label: undefined, dir: "flat" };
+  return { label: delta > 0 ? `+${delta}` : `${delta}`, dir: delta > 0 ? "up" : "down" };
+}
 
-const EXPIRING = [
-  { name: "Sara Mohamed",   plan: "Monthly · 1,500 EGP",    days: "2 days" },
-  { name: "Mahmoud Farouk", plan: "Quarterly · 4,000 EGP",  days: "3 days" },
-  { name: "Nour El-Din",    plan: "Annual · 14,000 EGP",    days: "5 days" },
-  { name: "Dina Hassan",    plan: "Monthly · 1,500 EGP",    days: "6 days" },
-];
+function revenueTrend(delta: number, locale: string): { label: string | undefined; dir: "up" | "down" | "flat" } {
+  if (delta === 0) return { label: undefined, dir: "flat" };
+  const fmt = Math.abs(delta).toLocaleString(locale === "ar" ? "ar-EG" : "en-US");
+  return { label: delta > 0 ? `+${fmt}` : `-${fmt}`, dir: delta > 0 ? "up" : "down" };
+}
 
-export default function AdminDashboard() {
+function relativeTime(dateStr: string, locale: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const secs = Math.floor(diff / 1000);
+  const rtf = new Intl.RelativeTimeFormat(locale === "ar" ? "ar-EG" : "en", { numeric: "auto" });
+  if (secs < 60) return rtf.format(-secs, "second");
+  const mins = Math.floor(secs / 60);
+  if (mins < 60) return rtf.format(-mins, "minute");
+  return rtf.format(-Math.floor(mins / 60), "hour");
+}
+
+function peakHourLabel(hour: number): string {
+  if (hour === 12) return "12pm";
+  return hour > 12 ? `${hour - 12}pm` : `${hour}am`;
+}
+
+function initials(name: string) {
+  return name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+}
+
+export default async function AdminDashboard() {
+  const [t, tc, locale, data] = await Promise.all([
+    getTranslations("admin.dashboard"),
+    getTranslations("common"),
+    getLocale(),
+    getAdminDashboardData(),
+  ]);
+
+  const {
+    activeMembers, activeMembersDelta,
+    activeToday, activeTodayDelta,
+    expiringCount, expiringDelta,
+    revenue, revenueDelta,
+    recentCheckins, expiringMembers,
+    hourlyCheckins, peakHour, heatmapData, currentHour,
+  } = data as DashboardData;
+
+  const membersTrend = deltaTrend(activeMembersDelta);
+  const todayTrend = deltaTrend(activeTodayDelta);
+  // More expiring = worse, so invert the direction for display
+  const expiringTrend = { ...deltaTrend(expiringDelta), dir: deltaTrend(-expiringDelta).dir } as ReturnType<typeof deltaTrend>;
+  const revTrend = revenueTrend(revenueDelta, locale);
+
+  const revenueStr = revenue > 0
+    ? revenue.toLocaleString(locale === "ar" ? "ar-EG" : "en-US")
+    : "—";
+
+  const dateLabel = new Intl.DateTimeFormat(
+    locale === "ar" ? "ar-EG" : "en-US",
+    { weekday: "long", day: "numeric", month: "long", year: "numeric" }
+  ).format(new Date());
+
+
   return (
     <>
       <Topbar
-        title="Dashboard"
-        subtitle="Thursday, 4 May 2026"
+        title={t("title")}
+        subtitle={dateLabel}
+        noSearch
         actions={
           <>
-            <button className="fs-btn ghost">
+            <Button
+              variant="ghost"
+            >
               <Icon name="tag" size={13} />
-              Create offer
-            </button>
-            <button className="fs-btn accent">
+              {tc("createOffer")}
+            </Button>
+            <Button
+              variant="accent"
+            >
               <Icon name="plus" size={13} color="#fff" />
-              Add member
-            </button>
+              {tc("addMember")}
+            </Button>
           </>
         }
       />
 
-      <div style={{ padding: 28, display: "flex", flexDirection: "column", gap: 20 }}>
-
-        {/* Ramadan strip */}
-        <div
-          style={{
-            background: "var(--ink)",
-            color: "#fff",
-            borderRadius: 8,
-            padding: "16px 20px",
-            display: "flex",
-            alignItems: "center",
-            gap: 16,
-          }}
-        >
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 8,
-              background: "rgba(255,255,255,0.08)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Icon name="flame" size={18} color="var(--accent)" />
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>Ramadan campaign</div>
-            <div style={{ fontSize: 11, color: "#9AA1AE", marginTop: 2 }}>
-              Discount overlay active · ends 30 May
-            </div>
-          </div>
-          <button
-            className="fs-btn ghost sm"
-            style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.12)", color: "#fff" }}
-          >
-            Configure
-          </button>
-        </div>
+      <div className="flex flex-col gap-5 p-4 md:p-7">
 
         {/* Metrics */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-          <MetricCard label="Active members"    value="847"     trend="+24"  trendDir="up"   sub="vs last month" />
-          <MetricCard label="Active today"      value="142"     trend="+8"   trendDir="up"   sub="avg. 121" />
-          <MetricCard label="Expiring this week"value="18"      trend="−4"   trendDir="down" sub="renewal needed" />
-          <MetricCard label="Revenue (May)"     value="284,500" trend="+12%" trendDir="up"   sub="EGP" />
+        <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+          <MetricCard
+            label={t("activeMembers")}
+            value={String(activeMembers)}
+            trend={membersTrend.label}
+            trendDir={membersTrend.dir}
+            sub={t("vsLastMonth")}
+          />
+          <MetricCard
+            label={t("activeToday")}
+            value={String(activeToday)}
+            trend={todayTrend.label}
+            trendDir={todayTrend.dir}
+            sub={t("avgLabel")}
+          />
+          <MetricCard
+            label={t("expiringThisWeek")}
+            value={String(expiringCount)}
+            trend={expiringTrend.label}
+            trendDir={expiringTrend.dir}
+            sub={t("renewalNeeded")}
+          />
+          <MetricCard
+            label={t("revenue")}
+            value={revenueStr}
+            trend={revTrend.label}
+            trendDir={revTrend.dir}
+            sub="EGP"
+          />
         </div>
 
         {/* Two-col: live feed + expiring */}
-        <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 20 }}>
+        <div className="grid gap-5 grid-cols-1 lg:grid-cols-[1.4fr_1fr]">
 
           {/* Live check-ins */}
-          <div className="fs-card" style={{ padding: 0 }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "16px 20px",
-                borderBottom: "1px solid var(--hairline)",
-              }}
-            >
+          <Card className="gap-0 rounded-xl border-[var(--hairline)] py-0 shadow-none">
+            <div className="flex items-center justify-between border-b border-[var(--hairline)] px-5 py-4">
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600 }}>Live check-in feed</div>
-                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>42 members so far today</div>
+                <p className="text-[14px] font-semibold">{t("liveFeed")}</p>
+                <p className="mt-0.5 text-[11px] text-[var(--muted)]">{t("membersToday", { count: activeToday })}</p>
               </div>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--green)", fontWeight: 600 }}>
-                <span
-                  style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--green)" }}
-                  className="fs-blink"
-                />
-                Live
+              <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[var(--green)]">
+                <span className="fs-blink size-1.5 rounded-full bg-[var(--green)]" />
+                {t("live")}
               </div>
             </div>
-            <div>
-              {CHECKINS.map((c, i) => (
+            <CardContent className="px-0 pb-0">
+              {recentCheckins.length > 0 ? recentCheckins.map((c: DashboardCheckin, i, arr) => (
                 <div
                   key={i}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "14px 20px",
-                    borderBottom: i < CHECKINS.length - 1 ? "1px solid var(--hairline2)" : "none",
-                  }}
+                  className={`flex items-center gap-3 px-5 py-3.5 ${i < arr.length - 1 ? "border-b border-[var(--hairline2)]" : ""}`}
                 >
-                  <Avatar name={c.name} size="md" />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{c.name}</div>
-                    <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{c.time}</div>
+                  <Avatar>
+                    <AvatarFallback className="bg-[var(--accent-soft)] text-xs font-semibold text-[var(--accent)]">
+                      {initials(c.memberName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-semibold">{c.memberName}</p>
+                    <p className="mt-0.5 text-[11px] text-[var(--muted)]">{relativeTime(c.checkedInAt, locale)}</p>
                   </div>
-                  <StatusBadge status={c.status} />
+                  <StatusBadge status={c.membershipStatus} />
                   <Icon name="qr" size={14} color="var(--muted)" />
                 </div>
-              ))}
-            </div>
-          </div>
+              )) : (
+                <p className="py-8 text-center text-[13px] text-[var(--muted)]">No check-ins today yet</p>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Expiring memberships */}
-          <div className="fs-card" style={{ padding: 0 }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "16px 20px",
-                borderBottom: "1px solid var(--hairline)",
-              }}
-            >
-              <div style={{ fontSize: 14, fontWeight: 600 }}>Memberships expiring soon</div>
-              <span style={{ fontSize: 11, color: "var(--accent)", fontWeight: 600, cursor: "pointer" }}>
-                View all →
-              </span>
+          <Card className="gap-0 rounded-xl border-[var(--hairline)] py-0 shadow-none">
+            <div className="flex items-center justify-between border-b border-[var(--hairline)] px-5 py-4">
+              <p className="text-[14px] font-semibold">{t("expiringTitle")}</p>
+              <span className="cursor-pointer text-[11px] font-semibold text-[var(--accent)]">{tc("viewAll")}</span>
             </div>
-            <div>
-              {EXPIRING.map((e, i) => (
+            <CardContent className="px-0 pb-0">
+              {expiringMembers.length > 0 ? expiringMembers.map((e: DashboardExpiringMember, i, arr) => (
                 <div
                   key={i}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "14px 20px",
-                    borderBottom: i < EXPIRING.length - 1 ? "1px solid var(--hairline2)" : "none",
-                  }}
+                  className={`flex items-center gap-3 px-5 py-3.5 ${i < arr.length - 1 ? "border-b border-[var(--hairline2)]" : ""}`}
                 >
-                  <Avatar name={e.name} size="md" />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{e.name}</div>
-                    <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{e.plan}</div>
+                  <Avatar>
+                    <AvatarFallback className="bg-[var(--accent-soft)] text-xs font-semibold text-[var(--accent)]">
+                      {initials(e.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-semibold">{e.name}</p>
+                    <p className="mt-0.5 text-[11px] text-[var(--muted)]">{e.planLabel}</p>
                   </div>
                   <span className="fs-badge expired">
                     <span className="dot" />
-                    {e.days}
+                    {e.daysUntilExpiry <= 1 ? "1 day" : `${e.daysUntilExpiry} days`}
                   </span>
-                  <button className="fs-btn ghost sm" style={{ gap: 6 }}>
+                  <button className="fs-btn ghost sm">
                     <Icon name="whatsapp" size={12} color="var(--whatsapp)" />
-                    Remind
+                    {tc("remind")}
                   </button>
                 </div>
-              ))}
-            </div>
-          </div>
+              )) : (
+                <p className="py-8 text-center text-[13px] text-[var(--muted)]">No expiring memberships this week</p>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Attendance heatmap */}
-        <div className="fs-card pad">
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600 }}>Attendance activity · 12 weeks</div>
-              <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>Peak days: Mon, Thu</div>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "var(--muted)" }}>
-              <span>Less</span>
-              {["#EEF0F4", "#C7D2FE", "#6B85FF", "#2D5BFF"].map((c) => (
-                <span key={c} style={{ width: 10, height: 10, borderRadius: 2, background: c }} />
-              ))}
-              <span>More</span>
-            </div>
-          </div>
-          <CheckinHeatmap weeks={14} />
-        </div>
+        {/* Bottom row: hourly chart + weekly heatmap */}
+        <div className="grid gap-5 grid-cols-1 lg:grid-cols-[1.4fr_1fr]">
 
+          {/* Today's check-in chart */}
+          <Card className="rounded-xl border-[var(--hairline)] shadow-none">
+            <div className="flex items-center justify-between px-6 pt-6">
+              <div>
+                <p className="text-[14px] font-semibold">{t("checkinChartTitle")}</p>
+                <p className="mt-0.5 text-[11px] text-[var(--muted)]">
+                  {t("checkinChartSub", { count: activeToday, peak: peakHourLabel(peakHour) })}
+                </p>
+              </div>
+              <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[var(--green)]">
+                <span className="fs-blink size-1.5 rounded-full bg-[var(--green)]" />
+                {t("live")}
+              </div>
+            </div>
+            <CardContent>
+              <CheckinBarChart data={hourlyCheckins} currentHour={currentHour} />
+              <div className="mt-3 flex items-center gap-3 text-[10px] text-[var(--muted)]">
+                {([
+                  ["var(--accent)", t("currentHour")],
+                  ["#C7D2FE", t("earlierToday")],
+                  ["var(--hairline)", t("upcoming")],
+                ] as [string, string][]).map(([bg, label]) => (
+                  <span key={label} className="flex items-center gap-1">
+                    <span className="size-2.5 rounded-sm" style={{ background: bg }} />
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Weekly heatmap */}
+          <Card className="rounded-xl border-[var(--hairline)] shadow-none">
+            <div className="flex items-center justify-between px-6 pt-6">
+              <div>
+                <p className="text-[14px] font-semibold">{t("attendanceTitle")}</p>
+                <p className="mt-0.5 text-[11px] text-[var(--muted)]">{t("heatmapSub")}</p>
+              </div>
+              <div className="flex items-center gap-1 text-[10px] text-[var(--muted)]">
+                <span>{tc("less")}</span>
+                {["#EEF0F4", "#C7D2FE", "#6B85FF", "#2D5BFF"].map((c) => (
+                  <span key={c} className="size-2.5 rounded-sm" style={{ background: c }} />
+                ))}
+                <span>{tc("more")}</span>
+              </div>
+            </div>
+            <CardContent>
+              <CheckinHeatmap weeks={12} data={heatmapData} />
+            </CardContent>
+          </Card>
+
+        </div>
       </div>
     </>
   );

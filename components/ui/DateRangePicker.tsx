@@ -12,11 +12,9 @@ import {
 import { cn } from "@/lib/utils";
 import { Label } from "./label";
 import { useVisibility } from "@/hooks";
+import type { DateRangeValue } from "@/types/ui";
 
-export interface DateRangeValue {
-    from: string; // ISO date string YYYY-MM-DD
-    to: string;
-}
+export type { DateRangeValue };
 
 interface Props {
     value: DateRangeValue | null;

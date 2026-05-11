@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Sidebar from "@/components/layout/Sidebar";
+import { SidebarContext } from "@/components/layout/SidebarContext";
 
 type Role = "admin" | "coach";
 
@@ -13,7 +15,6 @@ function getRole(pathname: string): Role | null {
 
 function getActive(pathname: string): string {
   const segments = pathname.split("/");
-  // strip locale prefix, reconstruct from role segment onward
   const roleIndex = segments.findIndex((s) => s === "admin" || s === "coach");
   if (roleIndex === -1) return pathname;
   return "/" + segments.slice(roleIndex).join("/");
@@ -28,15 +29,33 @@ export default function AppShell({
 }) {
   const pathname = usePathname();
   const role = getRole(pathname);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (!role) return <>{children}</>;
 
   return (
-    <div style={{ display: "flex", height: "100vh", background: "var(--paper)", overflow: "hidden" }}>
-      <Sidebar role={role} active={getActive(pathname)} locale={locale} />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "auto" }}>
-        {children}
+    <SidebarContext.Provider value={{ open: sidebarOpen, setOpen: setSidebarOpen }}>
+      <div className="flex h-dvh bg-[var(--paper)] overflow-hidden">
+        {/* Backdrop — mobile/tablet only */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        <Sidebar
+          role={role}
+          active={getActive(pathname)}
+          locale={locale}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+
+        <div className="flex-1 flex flex-col min-w-0 overflow-auto">
+          {children}
+        </div>
       </div>
-    </div>
+    </SidebarContext.Provider>
   );
 }

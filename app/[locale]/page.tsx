@@ -11,9 +11,58 @@ const AuthPage = async () => {
   const t = await getTranslations("auth");
 
   return (
-    <div className="flex min-h-screen w-full bg-[#FAFAF7] text-[var(--ink)] font-sans">
+    <div className="flex flex-col lg:flex-row min-h-screen w-full bg-[#FAFAF7] text-[var(--ink)] font-sans overflow-x-hidden">
 
-      <div className="hidden lg:flex flex-col flex-[0_0_52%] min-h-screen bg-[var(--ink)] text-white relative overflow-hidden px-14 py-10">
+      {/* Mobile hero banner — logo + tagline, shown only on small screens */}
+      <div className="flex lg:hidden flex-col bg-[var(--ink)] text-white relative overflow-hidden px-6 py-8">
+        <div className="pointer-events-none absolute -top-12 -right-10 w-[280px] h-[280px] rounded-full bg-[radial-gradient(circle_at_30%_30%,#2D5BFF40,transparent_65%)]" />
+
+        <div className="relative flex items-center justify-between mb-6">
+          <Logo inverted />
+          <LanguageChange />
+        </div>
+
+        <div className="relative">
+          <div className="fs-eyebrow text-accent mb-2">{t("hero.eyebrow")}</div>
+          <h2 className="text-[28px] font-bold tracking-[-0.03em] leading-[1.1] mb-2">
+            {t("hero.headline1")} {t("hero.headline2")}
+          </h2>
+          <p className="text-[13px] text-[var(--muted2)] leading-relaxed">
+            {t("hero.description")}
+          </p>
+        </div>
+
+        {/* Mini metrics row */}
+        <div className="relative mt-6 flex gap-3 overflow-x-auto pb-1">
+          <div className="shrink-0 px-3.5 py-3 rounded-lg border border-white/10 bg-white/[0.06] backdrop-blur-sm">
+            <div className="text-[10px] font-semibold text-[var(--muted2)] uppercase tracking-widest">{t("hero.metricMembers")}</div>
+            <div className="flex items-baseline gap-1.5 mt-1.5">
+              <span className="fs-num text-[20px] font-bold text-white">847</span>
+              <span className="text-[11px] font-semibold text-green-400">↑ 24</span>
+            </div>
+          </div>
+          <div className="shrink-0 px-3.5 py-3 rounded-lg border border-white/10 bg-white/[0.06] backdrop-blur-sm">
+            <div className="text-[10px] font-semibold text-[var(--muted2)] uppercase tracking-widest">{t("hero.metricCompliance")}</div>
+            <div className="flex items-baseline gap-1.5 mt-1.5">
+              <span className="fs-num text-[20px] font-bold text-white">86%</span>
+              <span className="text-[11px] font-semibold text-green-400">↑ 5%</span>
+            </div>
+          </div>
+          <div className="shrink-0 flex items-center gap-2.5 px-3 py-3 rounded-lg border border-white/10 bg-white/[0.06] backdrop-blur-sm">
+            <Avatar>
+              <AvatarFallback>AH</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-white whitespace-nowrap">Ahmed Hassan</div>
+              <div className="text-[10px] text-[var(--muted2)] mt-0.5">{t("hero.clientPlan")}</div>
+            </div>
+            <Ring value={86} />
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop hero panel — left column, hidden on mobile */}
+      <div className="hidden lg:flex flex-col flex-[0_0_52%] h-screen bg-[var(--ink)] text-white relative overflow-hidden px-14 py-10">
         <div className="pointer-events-none absolute -top-28 -right-24 w-[520px] h-[520px] rounded-full bg-[radial-gradient(circle_at_30%_30%,#2D5BFF40,transparent_65%)]" />
         <div className="pointer-events-none absolute -bottom-20 -left-20 w-[380px] h-[380px] bg-[repeating-linear-gradient(135deg,transparent_0_10px,rgba(255,255,255,0.04)_10px_11px)]" />
 
@@ -66,7 +115,7 @@ const AuthPage = async () => {
         </div>
       </div>
 
-      {/* RIGHT — form */}
+      {/* Auth form — full width on mobile, fills remaining space on desktop */}
       <AuthScreen />
     </div>
   );

@@ -183,7 +183,8 @@ function SelectScrollDownButton({
   )
 }
 
-export interface SelectOptions { key: string; label: string }
+import type { SelectOptions } from "@/types/ui";
+export type { SelectOptions };
 
 export function SelectField<T extends SelectOptions>({
   label,

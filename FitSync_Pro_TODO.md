@@ -12,6 +12,7 @@
 - 🧠 = Claude Code handles this (code generation, schema, logic)
 - 👤 = You handle this (accounts, keys, real data, decisions)
 - 🤝 = Both together
+- ❌ = Rejected or chang in plan
 
 ---
 
@@ -19,29 +20,29 @@
 
 ### Foundation & Setup
 
-- ⬜ 🧠 Scaffold Next.js 15 app with TypeScript + Tailwind + shadcn/ui
-- ⬜ 👤 Create Supabase project at supabase.com
+- ✅ 🧠 Scaffold Next.js 15 app with TypeScript + Tailwind + shadcn/ui
+- ✅ 👤 Create Supabase project at supabase.com
 - ⬜ 👤 Enable Phone OTP in Supabase Auth dashboard
-- ⬜ 🧠 Run full database schema SQL in Supabase SQL editor
-- ⬜ 🧠 Add all RLS policies (gyms, profiles, clients, exercises, checkins, photos)
-- ⬜ 🧠 Set up Supabase browser + server clients (`lib/supabase/client.ts` & `server.ts`)
-- ⬜ 👤 Fill in `.env.local` with Supabase URL + anon key + service role key
-- ⬜ 🧠 Build `/middleware.ts` — role detection → redirect to `/admin`, `/coach`, or `/app`
+- ✅ 🧠 Run full database schema SQL in Supabase SQL editor
+- ✅ 🧠 Add all RLS policies (gyms, profiles, clients, exercises, checkins, photos)
+- ✅ 🧠 Set up Supabase browser + server clients (`lib/supabase/client.ts` & `server.ts`)
+- ✅ 👤 Fill in `.env.local` with Supabase URL + anon key + service role key
+- ✅ 🧠 Build `/middleware.ts` — role detection → redirect to `/admin`, `/coach`, or `/app`
 
 ---
 
 ### Auth & Onboarding
 
-- ⬜ 🧠 `/login` — Phone OTP primary, email fallback
-- ⬜ 🧠 `/onboarding` — Role selection or auto-detect from invite token
-- ⬜ 🧠 `/join/gym/[token]` — Client clicks → joins gym → onboarding flow
+- ✅ 🧠 `/login` — Phone OTP primary, email fallback
+- ❌ 🧠 `/onboarding` — Role selection or auto-detect from invite token
+- ❌ 🧠 `/join/gym/[token]` — Client clicks → joins gym → onboarding flow
 
 ---
 
 ### Admin Portal
 
-- ⬜ 🧠 `/admin` — Dashboard: active members today, realtime check-in chart, expiring memberships alert
-- ⬜ 🧠 `/admin/members` — All clients with status badges, search, filter by plan
+- ✅ 🧠 `/admin` — Dashboard: active members today, realtime check-in chart, expiring memberships alert
+- ✅ 🧠 `/admin/members` — All clients with status badges, search, filter by plan
 - ⬜ 🧠 `/admin/members/new` — Add member form: name, phone, plan, start date + auto-generates QR code
 - ⬜ 🧠 `/admin/members/[id]` — Member detail: profile, subscription, check-in history, InBody results
 - ⬜ 🧠 `/admin/plans` — Create subscription plans: name, EGP price, duration days
@@ -55,12 +56,12 @@
 
 ### Coach Portal (Gym Context)
 
-- ⬜ 🧠 `/coach` — Dashboard: assigned clients, compliance %, weight trend, 3-day inactivity flag
+- ✅ 🧠 `/coach` — Dashboard: assigned clients, compliance %, weight trend, 3-day inactivity flag
 - ⬜ 🧠 `/coach/clients` — Quick list with last check-in and current plan
 - ⬜ 🧠 `/coach/clients/[id]` — Full client profile, plan, progress, InBody history
-- ⬜ 🧠 `/coach/exercises` — Private exercise library with YouTube thumbnail previews
+- ✅ 🧠 `/coach/exercises` — Private exercise library with YouTube thumbnail previews
 - ⬜ 🧠 `/coach/exercises/new` — Add exercise: name, muscle group, difficulty, YouTube URL + instant thumbnail
-- ⬜ 🧠 `lib/youtube.ts` — YouTube ID parser + embed URL + thumbnail helper
+- ✅ 🧠 `lib/youtube.ts` — YouTube ID parser + embed URL + thumbnail helper
 - ⬜ 🧠 `/coach/workouts/new` — Workout plan builder: weeks → days → exercises → sets/reps/rest
 - ⬜ 🧠 `/coach/workouts` — All plans (templates + client-specific)
 - ⬜ 🧠 `/coach/clients/[id]/assign` — Assign plan, set start date, set current week
@@ -113,7 +114,7 @@
 
 ### Phase 1 RTL & Arabic
 
-- ⬜ 🧠 Set `dir="rtl"` on `<html>` from day one
+- ✅ 🧠 Set `dir="rtl"` on `<html>` from day one
 - ⬜ 🧠 Verify all shadcn/ui components work correctly in RTL
 - ⬜ 🧠 Test every layout component with both LTR and RTL
 

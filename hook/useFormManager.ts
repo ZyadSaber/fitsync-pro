@@ -1,19 +1,22 @@
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { ZodSchema } from "zod";
 import updateDeep from "@/lib/updateDeep";
-import { DateRangeValue } from "@/components/ui/DateRangePicker";
+import type { DateRangeValue } from "@/types/ui";
 
 interface UseFormManagerProps<T> {
   initialData: T;
-  schema?: ZodSchema<T>; // Pass the Zod schema as an optional prop
+  schema?: ZodSchema<T>;
+  onSubmit?: (data: T) => void | Promise<void>;
 }
 
 const useFormManager = <T extends object>({
   initialData,
   schema,
+  onSubmit,
 }: UseFormManagerProps<T>) => {
   const [formData, setFormData] = useState<T>(initialData);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isPending, startTransition] = useTransition();
 
   const validate = (): boolean => {
     if (!schema) return true;
@@ -84,17 +87,27 @@ const useFormManager = <T extends object>({
     setFormData((prev) => ({ ...prev, ...data }) as T);
   };
 
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!validate() || !onSubmit) return;
+    startTransition(() => {
+      Promise.resolve(onSubmit(formData));
+    });
+  };
+
   return {
     formData,
     setFormData,
     handleChange,
     resetForm,
-    validate, // Call this before submitting
-    errors, // Display these in your UI
+    validate,
+    errors,
     handleToggle,
     handleFieldChange,
     handleChangeMultiInputs,
     setErrors,
+    handleSubmit,
+    loading: isPending,
   };
 };
 

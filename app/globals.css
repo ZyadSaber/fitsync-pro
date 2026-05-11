@@ -18,11 +18,35 @@
   --green-soft: #E8F6EE;
   --amber:      #D97706;
   --amber-soft: #FBF1E0;
-  --red:        #DC2626;
+  --red-app:        #DC2626;
   --red-soft:   #FCEAEA;
   --slate:      #475569;
   --slate-soft: #EEF1F4;
   --whatsapp:   #25D366;
+}
+
+/* ── Tailwind theme tokens ─────────────────────────────────────────────── */
+@theme {
+  --color-ink:         var(--ink);
+  --color-ink2:        var(--ink2);
+  --color-paper:       var(--paper);
+  --color-surface:     var(--surface);
+  --color-hairline:    var(--hairline);
+  --color-hairline2:   var(--hairline2);
+  --color-muted:       var(--muted);
+  --color-muted2:      var(--muted2);
+  --color-accent:      var(--accent);
+  --color-accent-ink:  var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-green:       var(--green);
+  --color-green-soft:  var(--green-soft);
+  --color-amber:       var(--amber);
+  --color-amber-soft:  var(--amber-soft);
+  --color-red:         var(--red);
+  --color-red-soft:    var(--red-soft);
+  --color-slate:       var(--slate);
+  --color-slate-soft:  var(--slate-soft);
+  --color-whatsapp:    var(--whatsapp);
 }
 
 /* ── Base ──────────────────────────────────────────────────────────────── */

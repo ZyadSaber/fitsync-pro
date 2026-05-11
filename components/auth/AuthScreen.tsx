@@ -8,8 +8,8 @@ export default function AuthScreen() {
     const [screen, setScreen] = useState<"signin" | "signup">("signin")
 
     return (
-        <div className="flex flex-1 items-center justify-center p-10 overflow-auto">
-            <div className="w-full max-w-[440px]">
+        <div className="flex-1 overflow-y-auto flex flex-col">
+            <div className="m-auto w-full max-w-[440px] px-6 py-10 md:px-10">
                 {screen === "signin"
                     ? <SignInComponent onSwitchToSignup={() => setScreen("signup")} />
                     : <SignupComponent onSwitchToSignIn={() => setScreen("signin")} />

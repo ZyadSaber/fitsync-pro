@@ -50,9 +50,21 @@ Two clients with distinct uses — never swap them:
 
 RLS policies on the database enforce access control, so always use the user-scoped anon-key clients (not the service-role key) in application code.
 
+### Next.js 16 dynamic API change
+
+In Next.js 16 the `params` and `searchParams` props on layouts and pages are **Promises** — always `await` them before destructuring:
+
+```ts
+const { locale } = await params;
+```
+
+Accessing them synchronously (as in older Next.js) will throw at runtime.
+
 ### Current state
 
-The UI is built with **hardcoded demo data** — no live database queries are wired into the page components yet. The full schema exists at `db/full_schema.sql` and seed data at `db/seed.sql`. When connecting real data, Server Components should fetch via the server Supabase client; mutations should use Server Actions.
+The UI is built with **hardcoded demo data** — no live database queries are wired into the page components yet. The full schema exists at `db/full_schema.sql`, seed data at `db/seed.sql`, and a migration helper at `db/migrate_to_user_type.sql`. When connecting real data, Server Components should fetch via the server Supabase client; mutations should use Server Actions.
+
+Pages that exist today: `/admin` (dashboard), `/admin/members`, `/coach` (dashboard), `/coach/exercises`. Routes listed in the roles table (`/member`, `/client`, admin sub-pages like `/admin/plans`, `/admin/offers`, etc.) are not yet implemented.
 
 ### Localization
 
@@ -75,19 +87,31 @@ The root layout sets `dir="rtl"` and switches fonts when `locale === "ar"`. Cair
 | Token | Value | Use |
 |---|---|---|
 | `var(--ink)` | `#0B0F1A` | Dark sidebar bg, primary text |
+| `var(--ink2)` | `#161B26` | Slightly lighter dark surface |
 | `var(--paper)` | `#FAFAF7` | App background |
 | `var(--surface)` | `#FFFFFF` | Card backgrounds |
 | `var(--accent)` | `#2D5BFF` | CTA buttons, active states |
-| `var(--hairline)` | `#E5E7EB` | Borders |
+| `var(--accent-soft)` | `#EAF0FF` | Accent tints / badge backgrounds |
+| `var(--hairline)` | `#E5E7EB` | Primary borders |
+| `var(--hairline2)` | `#EEF0F4` | Subtle row separators |
 | `var(--muted)` | `#6B7280` | Secondary text |
+| `var(--muted2)` | `#9AA1AE` | Tertiary / placeholder text |
+| `var(--green)` | `#16A34A` | Success / active |
+| `var(--amber)` | `#D97706` | Warning / pending |
+| `var(--red)` | `#DC2626` | Error / expired |
+| `var(--whatsapp)` | `#25D366` | WhatsApp action colour |
 
-Utility classes follow the `fs-*` prefix: `fs-btn`, `fs-input`, `fs-nav`, `fs-badge`, `fs-metric`, `fs-card`, `fs-av`, `fs-th`, `fs-td`. Button variants: `fs-btn primary`, `fs-btn accent`, `fs-btn ghost`, `fs-btn sm`. Badge variants: `active`, `frozen`, `expired`, `pending`, `gym`.
+Utility classes follow the `fs-*` prefix: `fs-btn`, `fs-input`, `fs-nav`, `fs-badge`, `fs-metric`, `fs-card`, `fs-av`, `fs-th`, `fs-td`, `fs-tr`. Button variants: `fs-btn primary`, `fs-btn accent`, `fs-btn ghost`, `fs-btn sm`. Badge variants: `active`, `frozen`, `expired`, `pending`, `gym`. Card variant: `fs-card pad` (adds `padding: 20px`). Typography helpers: `fs-num` (tabular numerals), `fs-mono` (monospace), `fs-eyebrow` (uppercase label), `fs-blink` (pulsing animation for live indicators).
 
 The custom `Icon` component at `components/ui/Icon.tsx` renders inline SVGs by name string. Use it for all icons inside the app shell — available names: `home`, `users`, `user`, `card`, `tag`, `qr`, `dumbbell`, `chart`, `plus`, `search`, `filter`, `bell`, `flame`, `whatsapp`, `logo`, `more`, `wallet`, `apple`, `google`, `play`.
 
 ### AppShell behaviour
 
 `AppShell` (`components/layout/AppShell.tsx`) is a client component that reads the pathname to detect `role`. It only renders the `Sidebar` for routes under `/admin` or `/coach`. All other routes (auth, landing page, etc.) render without the sidebar shell.
+
+**Exception to the navigation import rule:** `AppShell` uses `usePathname` from `next/navigation` directly (not from `@/i18n/navigation`) — it only reads the raw pathname string for role detection and does not generate locale-prefixed links, so the locale wrapper is not needed there.
+
+All dashboard pages start with a `Topbar` (`components/layout/Topbar.tsx`) that renders the page title, subtitle, a search input, a notifications bell, and optional `actions` (buttons). Pass `dir="rtl"` when in Arabic context.
 
 ### Path alias
 

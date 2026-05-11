@@ -36,7 +36,7 @@ export default async function LocaleLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="h-full">
+      <body className="h-full" suppressHydrationWarning>
         <NextIntlClientProvider messages={messages} locale={locale}>
           <AppShell locale={locale}>
             {children}

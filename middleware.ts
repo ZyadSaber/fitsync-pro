@@ -5,10 +5,17 @@ import { routing } from "./i18n/routing";
 
 const handleI18nRouting = createIntlMiddleware(routing);
 
-// Routes that require a specific user_type
-const GYM_STAFF_ROUTES = ["/admin"];   // gym owner + staff pages
-const COACH_ROUTES = ["/coach"];   // coach dashboard
-const AUTH_ROUTES = ["/sign-in", "/sign-up"]; // skip auth check here
+const GYM_STAFF_ROUTES = ["/admin"];
+const COACH_ROUTES = ["/coach"];
+const AUTH_ROUTES = ["/", "/sign-in", "/sign-up"];
+
+// Default dashboard per user_type
+const DEFAULT_ROUTE: Record<string, string> = {
+  gym: "/admin",
+  coach: "/coach",
+  member: "/member",
+  client: "/client",
+};
 
 function extractLocaleAndPath(pathname: string) {
   const locale =
@@ -24,25 +31,8 @@ function isUnderAny(path: string, prefixes: string[]) {
   return prefixes.some((p) => path === p || path.startsWith(`${p}/`));
 }
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const { locale, pathWithoutLocale } = extractLocaleAndPath(pathname);
-
-  // Public routes — just apply intl routing and move on
-  if (isUnderAny(pathWithoutLocale, AUTH_ROUTES)) {
-    return handleI18nRouting(request);
-  }
-
-  const isGymRoute = isUnderAny(pathWithoutLocale, GYM_STAFF_ROUTES);
-  const isCoachRoute = isUnderAny(pathWithoutLocale, COACH_ROUTES);
-
-  if (!isGymRoute && !isCoachRoute) {
-    return handleI18nRouting(request);
-  }
-
-  // ── Protected route: check auth ──────────────────────────────────────────
+function buildSupabaseClient(request: NextRequest) {
   let response = NextResponse.next({ request });
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
@@ -61,17 +51,72 @@ export async function middleware(request: NextRequest) {
       },
     }
   );
+  return { supabase, getResponse: () => response };
+}
+
+function forwardAuthCookies(
+  from: NextResponse,
+  to: NextResponse
+): NextResponse {
+  from.cookies.getAll().forEach((cookie) => {
+    to.cookies.set(cookie.name, cookie.value, {
+      path: cookie.path,
+      sameSite: cookie.sameSite as "lax" | "strict" | "none" | undefined,
+      secure: cookie.secure,
+      httpOnly: cookie.httpOnly,
+      maxAge: cookie.maxAge,
+    });
+  });
+  return to;
+}
+
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const { locale, pathWithoutLocale } = extractLocaleAndPath(pathname);
+
+  // Auth routes — redirect logged-in users to their dashboard
+  if (isUnderAny(pathWithoutLocale, AUTH_ROUTES)) {
+    const { supabase, getResponse } = buildSupabaseClient(request);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_type")
+        .eq("id", user.id)
+        .single();
+
+      const userType = profile?.user_type ?? "member";
+      const dest = DEFAULT_ROUTE[userType] ?? "/";
+      const redirect = NextResponse.redirect(
+        new URL(`/${locale}${dest}`, request.url)
+      );
+      return forwardAuthCookies(getResponse(), redirect);
+    }
+
+    return handleI18nRouting(request);
+  }
+
+  const isGymRoute = isUnderAny(pathWithoutLocale, GYM_STAFF_ROUTES);
+  const isCoachRoute = isUnderAny(pathWithoutLocale, COACH_ROUTES);
+
+  if (!isGymRoute && !isCoachRoute) {
+    return handleI18nRouting(request);
+  }
+
+  // ── Protected route: check auth ──────────────────────────────────────────
+  const { supabase, getResponse } = buildSupabaseClient(request);
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Not signed in → send to auth page (root)
   if (!user) {
     return NextResponse.redirect(new URL(`/${locale}`, request.url));
   }
 
-  // Fetch the user type from their profile
   const { data: profile } = await supabase
     .from("profiles")
     .select("user_type")
@@ -80,31 +125,16 @@ export async function middleware(request: NextRequest) {
 
   const userType = profile?.user_type ?? "member";
 
-  // Gym admin pages — only 'gym' accounts
   if (isGymRoute && userType !== "gym") {
     return NextResponse.redirect(new URL(`/${locale}`, request.url));
   }
 
-  // Coach pages — only 'coach' accounts
   if (isCoachRoute && userType !== "coach") {
     return NextResponse.redirect(new URL(`/${locale}`, request.url));
   }
 
-  // Auth passed — apply intl routing (may rewrite/set locale cookie)
   const intlResponse = handleI18nRouting(request);
-
-  // Forward any auth cookies that were refreshed
-  response.cookies.getAll().forEach((cookie) => {
-    intlResponse.cookies.set(cookie.name, cookie.value, {
-      path: cookie.path,
-      sameSite: cookie.sameSite as "lax" | "strict" | "none" | undefined,
-      secure: cookie.secure,
-      httpOnly: cookie.httpOnly,
-      maxAge: cookie.maxAge,
-    });
-  });
-
-  return intlResponse;
+  return forwardAuthCookies(getResponse(), intlResponse);
 }
 
 export const config = {
