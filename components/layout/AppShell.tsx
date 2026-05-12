@@ -5,9 +5,10 @@ import { usePathname } from "next/navigation";
 import Sidebar from "@/components/layout/Sidebar";
 import { SidebarContext } from "@/components/layout/SidebarContext";
 
-type Role = "admin" | "coach";
+type Role = "admin" | "coach" | "superadmin";
 
 function getRole(pathname: string): Role | null {
+  if (pathname.includes("/management")) return "superadmin";
   if (pathname.includes("/admin")) return "admin";
   if (pathname.includes("/coach")) return "coach";
   return null;
@@ -15,7 +16,7 @@ function getRole(pathname: string): Role | null {
 
 function getActive(pathname: string): string {
   const segments = pathname.split("/");
-  const roleIndex = segments.findIndex((s) => s === "admin" || s === "coach");
+  const roleIndex = segments.findIndex((s) => s === "admin" || s === "coach" || s === "management");
   if (roleIndex === -1) return pathname;
   return "/" + segments.slice(roleIndex).join("/");
 }

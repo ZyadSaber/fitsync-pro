@@ -173,6 +173,45 @@
       "whatsapp": "واتساب"
     }
   },
+  "management": {
+    "gyms": {
+      "title": "الأندية",
+      "subtitle": "{count} مستأجر · {members} عضو على المنصة",
+      "actions": {
+        "exportCsv": "تصدير CSV",
+        "addGym": "إضافة نادٍ"
+      },
+      "filters": {
+        "all": "الكل",
+        "active": "نشط",
+        "suspended": "موقوف",
+        "cancelled": "ملغي",
+        "allPlans": "كل الخطط",
+        "allCities": "كل المدن",
+        "status": "الحالة"
+      },
+      "table": {
+        "gym": "النادي",
+        "plan": "الخطة",
+        "members": "الأعضاء",
+        "mrr": "الإيراد الشهري",
+        "status": "الحالة",
+        "lastActivity": "آخر نشاط"
+      },
+      "status": {
+        "active": "نشط",
+        "suspended": "موقوف",
+        "cancelled": "ملغي",
+        "unknown": "غير معروف"
+      },
+      "plan": {
+        "starter": "مبتدئ",
+        "pro": "احترافي",
+        "enterprise": "مميز"
+      },
+      "currency": "ج.م"
+    }
+  },
   "index": {
     "subtitle": "منصة إدارة الجيم والتدريب الأونلاين — مصر أولاً",
     "adminDashboard": "لوحة الإدارة",

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Icon from "@/components/ui/Icon";
 import ExerciseCard from "@/components/ui/ExerciseCard";
-import Topbar from "@/components/layout/Topbar";
+import HeaderContent from "@/components/layout/Topbar";
 
 const EXERCISES = [
   { name: "Barbell back squat",    muscles: ["Quads", "Glutes"],   difficulty: "Intermediate", equip: "Barbell"    },
@@ -37,7 +37,7 @@ export default function ExerciseLibraryPage() {
 
   return (
     <>
-      <Topbar
+      <HeaderContent
         title="Exercise library"
         subtitle="12 exercises · private to your account"
         actions={

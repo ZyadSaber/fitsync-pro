@@ -16,6 +16,42 @@
 
 ---
 
+## 👑 Super Admin — Platform Management
+
+> Platform-level role that sits above all gyms and coaches. Only FitSync staff access this. Protected by a separate `super_admin` flag on `profiles`.
+
+### Database
+
+- ✅ 🧠 Add `is_super_admin` boolean column to `profiles` table (default `false`, not exposed via RLS to regular users)
+- ✅ 🧠 Create `platform_subscriptions` table — `id`, `gym_id`, `plan_name` (starter/pro/enterprise), `price_egp`, `billing_cycle` (monthly/yearly), `status` (active/suspended/cancelled), `started_at`, `next_billing_at`, `notes`
+- ✅ 🧠 Create `platform_activity_log` table — `id`, `gym_id`, `event_type` (login, member_add, checkin, plan_change…), `actor_id`, `metadata jsonb`, `created_at`
+- ✅ 🧠 RLS: super admin rows are readable only when `is_super_admin = true`; no gym-scoped policy applies
+
+---
+
+### Super Admin Portal — `/superadmin`
+
+- ⬜ 🧠 Middleware guard — redirect anyone without `is_super_admin` away from `/superadmin/*`
+- ⬜ 🧠 `/superadmin` — Platform dashboard: total gyms, total members, MRR (EGP), active today, churn this month
+- ⬜ 🧠 `/superadmin/gyms` — Gyms table: name, city, plan tier, member count, last activity, subscription status badge; search + filter by plan/status
+- ⬜ 🧠 `/superadmin/gyms/new` — Register a new gym: name, owner name, phone, city, assign platform plan, set trial end date
+- ⬜ 🧠 `/superadmin/gyms/[id]` — Gym detail: profile info, subscription history, member count over time, coach list, recent check-ins, activity log feed
+- ⬜ 🧠 `/superadmin/gyms/[id]/subscription` — Edit plan tier, override price, mark as suspended/cancelled, add manual note
+- ⬜ 🧠 `/superadmin/subscriptions` — All subscriptions table: gym, plan, price, next billing date, status; bulk filter by status
+- ⬜ 🧠 `/superadmin/activity` — Platform-wide activity log: who did what at which gym, filterable by gym / event type / date range
+- ⬜ 🧠 `/superadmin/coaches` — All independent online coaches: name, client count, last login, subscription status
+- ⬜ 🧠 `/superadmin/settings` — Platform config: plan tier definitions, pricing defaults, trial period length
+
+---
+
+### Super Admin Success Checklist
+
+- ⬜ 🧠 Zero gym can see another gym's super admin data (RLS audit)
+- ⬜ 👤 At least one FitSync staff account has `is_super_admin = true` in production
+- ⬜ 🤝 Subscription statuses sync with Paymob webhooks (Phase 3)
+
+---
+
 ## 🏗️ Phase 1 — Gym MVP (Months 1–4)
 
 ### Foundation & Setup

@@ -173,6 +173,45 @@
       "whatsapp": "WhatsApp"
     }
   },
+  "management": {
+    "gyms": {
+      "title": "Gyms",
+      "subtitle": "{count} tenants · {members} members across the platform",
+      "actions": {
+        "exportCsv": "Export CSV",
+        "addGym": "Add gym"
+      },
+      "filters": {
+        "all": "All",
+        "active": "Active",
+        "suspended": "Suspended",
+        "cancelled": "Cancelled",
+        "allPlans": "All plans",
+        "allCities": "All cities",
+        "status": "Status"
+      },
+      "table": {
+        "gym": "Gym",
+        "plan": "Plan",
+        "members": "Members",
+        "mrr": "MRR",
+        "status": "Status",
+        "lastActivity": "Last activity"
+      },
+      "status": {
+        "active": "Active",
+        "suspended": "Suspended",
+        "cancelled": "Cancelled",
+        "unknown": "Unknown"
+      },
+      "plan": {
+        "starter": "Starter",
+        "pro": "Pro",
+        "enterprise": "Elite"
+      },
+      "currency": "EGP"
+    }
+  },
   "index": {
     "subtitle": "Egypt-first gym management & online coaching platform",
     "adminDashboard": "Admin Dashboard",

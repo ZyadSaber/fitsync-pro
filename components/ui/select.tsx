@@ -3,11 +3,10 @@
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon, LucideIcon, X, Loader2 } from "lucide-react"
-import { Label } from "@/components/ui/label";
 
 import { cn } from "@/lib/utils"
-import { useVisibility } from "@/hooks";
-import isArrayHasData from "@/lib/isArrayHasData";
+import useVisibility from "@/hook/useVisibility"
+import isArrayHasData from "@/lib/isArrayHasData"
 
 function Select({
   ...props
@@ -40,16 +39,35 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "border-input data-placeholder:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-fit items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        // base layout
+        "flex w-fit items-center justify-between gap-2 rounded-[6px] border border-[var(--hairline)]",
+        "bg-white px-3 text-[13px] font-medium text-[var(--text)] whitespace-nowrap",
+        // placeholder
+        "data-placeholder:text-[var(--muted2)]",
+        // hover / focus
+        "hover:border-[var(--muted2)]",
+        "focus-visible:outline-none focus-visible:border-[var(--accent)] focus-visible:ring-[3px] focus-visible:ring-[var(--accent-soft)]",
+        // open state — keep border accent while open
+        "data-[state=open]:border-[var(--accent)] data-[state=open]:ring-[3px] data-[state=open]:ring-[var(--accent-soft)]",
+        "transition-[border-color,box-shadow] duration-100",
+        // disabled
+        "disabled:cursor-not-allowed disabled:opacity-50",
+        // icon children
+        "[&_svg]:pointer-events-none [&_svg]:shrink-0",
         size === "default" && "h-9",
-        size === "sm" && "h-8",
+        size === "sm" && "h-8 text-xs",
         className
       )}
       {...props}
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="size-4 opacity-50" />
+        <ChevronDownIcon
+          className={cn(
+            "size-3.5 text-[var(--muted2)] transition-transform duration-150",
+            "group-data-[state=open]:rotate-180"
+          )}
+        />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   )
@@ -59,7 +77,7 @@ function SelectContent({
   className,
   children,
   position = "item-aligned",
-  align = "center",
+  align = "start",
   header,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content> & { header?: React.ReactNode }) {
@@ -68,9 +86,19 @@ function SelectContent({
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(
-          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-(--radix-select-content-available-height) min-w-32 origin-(--radix-select-content-transform-origin) overflow-x-hidden rounded-md border shadow-md flex flex-col",
+          // surface
+          "relative z-50 bg-white border border-[var(--hairline)] rounded-[8px]",
+          "shadow-[0_4px_24px_rgba(11,15,26,0.08),0_1px_4px_rgba(11,15,26,0.04)]",
+          // sizing
+          "min-w-[160px] max-h-(--radix-select-content-available-height)",
+          "origin-(--radix-select-content-transform-origin) overflow-x-hidden",
+          // animate
+          "data-[state=open]:animate-in data-[state=closed]:animate-out",
+          "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+          "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+          "data-[side=bottom]:slide-in-from-top-1 data-[side=top]:slide-in-from-bottom-1",
           position === "popper" &&
-          "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
+          "data-[side=bottom]:translate-y-1 data-[side=top]:-translate-y-1",
           className
         )}
         position={position}
@@ -78,12 +106,16 @@ function SelectContent({
         {...props}
       >
         <SelectScrollUpButton />
-        {header && <div className="p-2 border-b bg-popover z-20">{header}</div>}
+        {header && (
+          <div className="px-2 pt-2 pb-1.5 border-b border-[var(--hairline2)]">
+            {header}
+          </div>
+        )}
         <SelectPrimitive.Viewport
           className={cn(
-            "p-1 overflow-y-auto",
+            "p-1.5",
             position === "popper" &&
-            "h-(--radix-select-trigger-height) w-full min-w-(--radix-select-trigger-width) scroll-my-1"
+            "w-full min-w-(--radix-select-trigger-width) scroll-my-1"
           )}
         >
           {children}
@@ -101,7 +133,10 @@ function SelectLabel({
   return (
     <SelectPrimitive.Label
       data-slot="select-label"
-      className={cn("text-muted-foreground px-2 py-1.5 text-xs", className)}
+      className={cn(
+        "px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted2)]",
+        className
+      )}
       {...props}
     />
   )
@@ -116,17 +151,26 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "relative flex w-full cursor-default select-none items-center gap-2",
+        "rounded-[5px] px-2.5 py-[7px] text-[13px] text-[var(--text)] outline-none",
+        // hover / keyboard highlight
+        "data-[highlighted]:bg-[var(--paper)] data-[highlighted]:text-[var(--text)]",
+        // selected
+        "data-[state=checked]:text-[var(--accent)] data-[state=checked]:font-medium",
+        // disabled
+        "data-[disabled]:pointer-events-none data-[disabled]:opacity-40",
+        // room for the check indicator on the right
+        "pr-8",
         className
       )}
       {...props}
     >
       <span
         data-slot="select-item-indicator"
-        className="absolute right-2 flex size-3.5 items-center justify-center"
+        className="absolute right-2.5 flex size-3.5 items-center justify-center"
       >
         <SelectPrimitive.ItemIndicator>
-          <CheckIcon className="size-4" />
+          <CheckIcon className="size-3.5 text-[var(--accent)]" />
         </SelectPrimitive.ItemIndicator>
       </span>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
@@ -141,7 +185,7 @@ function SelectSeparator({
   return (
     <SelectPrimitive.Separator
       data-slot="select-separator"
-      className={cn("bg-border pointer-events-none -mx-1 my-1 h-px", className)}
+      className={cn("pointer-events-none -mx-1.5 my-1 h-px bg-[var(--hairline2)]", className)}
       {...props}
     />
   )
@@ -154,13 +198,10 @@ function SelectScrollUpButton({
   return (
     <SelectPrimitive.ScrollUpButton
       data-slot="select-scroll-up-button"
-      className={cn(
-        "flex cursor-default items-center justify-center py-1",
-        className
-      )}
+      className={cn("flex cursor-default items-center justify-center py-1 text-[var(--muted2)]", className)}
       {...props}
     >
-      <ChevronUpIcon className="size-4" />
+      <ChevronUpIcon className="size-3.5" />
     </SelectPrimitive.ScrollUpButton>
   )
 }
@@ -172,19 +213,16 @@ function SelectScrollDownButton({
   return (
     <SelectPrimitive.ScrollDownButton
       data-slot="select-scroll-down-button"
-      className={cn(
-        "flex cursor-default items-center justify-center py-1",
-        className
-      )}
+      className={cn("flex cursor-default items-center justify-center py-1 text-[var(--muted2)]", className)}
       {...props}
     >
-      <ChevronDownIcon className="size-4" />
+      <ChevronDownIcon className="size-3.5" />
     </SelectPrimitive.ScrollDownButton>
   )
 }
 
-import type { SelectOptions } from "@/types/ui";
-export type { SelectOptions };
+import type { SelectOptions } from "@/types/ui"
+export type { SelectOptions }
 
 export function SelectField<T extends SelectOptions>({
   label,
@@ -196,7 +234,7 @@ export function SelectField<T extends SelectOptions>({
   containerClassName,
   error,
   showSearch = false,
-  searchPlaceholder = "Search...",
+  searchPlaceholder = "Search…",
   extraSearchParam = [],
   preSelectFirstKey = false,
   placeholder,
@@ -206,25 +244,24 @@ export function SelectField<T extends SelectOptions>({
   className,
   loading = false,
 }: {
-  label: string;
-  options: T[];
-  value?: string;
-  onValueChange: (value: string) => void;
-  name: string;
-  disabled?: boolean;
-  containerClassName?: string;
-  error?: string;
-  searchPlaceholder?: string;
-  extraSearchParam?: string[];
-  showSearch?: boolean;
-  preSelectFirstKey?: boolean;
-  placeholder?: string;
-  renderAddField?: (onSuccess: (newId: string) => void) => React.ReactNode;
-  icon?: LucideIcon;
-  hideClear?: boolean;
-  /** Applied directly to the SelectTrigger element */
-  className?: string;
-  loading?: boolean;
+  label: string
+  options: T[]
+  value?: string
+  onValueChange: (value: string) => void
+  name: string
+  disabled?: boolean
+  containerClassName?: string
+  error?: string
+  searchPlaceholder?: string
+  extraSearchParam?: string[]
+  showSearch?: boolean
+  preSelectFirstKey?: boolean
+  placeholder?: string
+  renderAddField?: (onSuccess: (newId: string) => void) => React.ReactNode
+  icon?: LucideIcon
+  hideClear?: boolean
+  className?: string
+  loading?: boolean
 }) {
   const [search, setSearch] = React.useState("")
   const { visible, handleClose, handleStateChange } = useVisibility()
@@ -237,23 +274,25 @@ export function SelectField<T extends SelectOptions>({
 
   const filteredOptions = React.useMemo(() => {
     if (!showSearch || !search) return options
-    const searchLower = search.toLowerCase()
-    return options.filter(option => {
-      const matchLabel = option.label.toLowerCase().includes(searchLower)
-      if (matchLabel) return true
-
-      return extraSearchParam.some(param => {
-        const val = (option as Record<string, unknown>)[param]
-        return String(val || "").toLowerCase().includes(searchLower)
-      })
+    const q = search.toLowerCase()
+    return options.filter((option) => {
+      if (option.label.toLowerCase().includes(q)) return true
+      return extraSearchParam.some((param) =>
+        String((option as Record<string, unknown>)[param] || "").toLowerCase().includes(q)
+      )
     })
   }, [options, search, showSearch, extraSearchParam])
 
   return (
-    <div className={cn("space-y-2 px-1", containerClassName)}>
-      <Label htmlFor={name} className="text-xs uppercase font-black tracking-widest text-muted-foreground px-1 flex items-center gap-2">
-        {Icon && <Icon className="w-3 h-3" />} {label}
-      </Label>
+    <div className={cn("flex flex-col gap-1", containerClassName)}>
+      <label
+        htmlFor={name}
+        className="flex items-center gap-1.5 px-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)]"
+      >
+        {Icon && <Icon className="size-3" />}
+        {label}
+      </label>
+
       <Select
         name={name}
         value={value}
@@ -261,69 +300,80 @@ export function SelectField<T extends SelectOptions>({
         onOpenChange={handleStateChange}
         onValueChange={(val) => {
           onValueChange(val)
-          setSearch("") // Reset search on select
+          setSearch("")
         }}
         disabled={disabled}
       >
         <SelectTrigger
-          className={cn("w-full h-9", !!error && "border-destructive", className)}
+          className={cn("w-full", error && "border-[var(--red-app)]", className)}
         >
-          <div className="flex items-center gap-2 overflow-hidden h-full">
-            {value && (
-              <span
-                className="pointer-events-auto cursor-pointer p-0.5 hover:bg-muted rounded-md transition-colors"
+          <div className="flex items-center gap-1.5 overflow-hidden h-full flex-1 min-w-0">
+            {value && !hideClear && (
+              <button
+                type="button"
+                tabIndex={-1}
+                className="shrink-0 rounded p-0.5 text-[var(--muted2)] hover:text-[var(--text)] hover:bg-[var(--paper)] transition-colors"
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
                   onValueChange("")
                 }}
               >
-                {!hideClear && <X className="size-3.5 opacity-50 hover:opacity-100" />}
-              </span>
+                <X className="size-3" />
+              </button>
             )}
-            <SelectValue placeholder={placeholder ? placeholder : `Select ${label.toLowerCase()}`} />
+            <SelectValue
+              placeholder={placeholder ?? label}
+              className="truncate text-[var(--muted)]"
+            />
           </div>
-
         </SelectTrigger>
+
         <SelectContent
           position="popper"
-          sideOffset={4}
-          header={showSearch || renderAddField ? (
-            <div className="flex flex-col gap-2 p-1 border-b bg-popover sticky top-0 z-20">
-              {showSearch && (
-                <input
-                  type="text"
-                  placeholder={searchPlaceholder}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onKeyDown={(e) => e.stopPropagation()}
-                  onClick={(e) => e.stopPropagation()}
-                  className="w-full text-sm bg-transparent outline-none p-1 border rounded"
-                />
-              )}
-              {renderAddField && renderAddField((newId: string) => {
-                onValueChange(newId)
-                handleClose()
-              })}
-            </div>
-          ) : null}
+          sideOffset={5}
+          header={
+            showSearch || renderAddField ? (
+              <div className="flex flex-col gap-1.5">
+                {showSearch && (
+                  <input
+                    type="text"
+                    placeholder={searchPlaceholder}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-full rounded-[5px] border border-[var(--hairline)] bg-[var(--paper)] px-2.5 py-1.5 text-[13px] text-[var(--text)] placeholder:text-[var(--muted2)] outline-none focus:border-[var(--accent)] focus:ring-[2px] focus:ring-[var(--accent-soft)] transition-[border-color,box-shadow]"
+                  />
+                )}
+                {renderAddField &&
+                  renderAddField((newId: string) => {
+                    onValueChange(newId)
+                    handleClose()
+                  })}
+              </div>
+            ) : null
+          }
         >
           {loading ? (
-            <div className="flex items-center justify-center p-6">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="size-5 animate-spin text-[var(--muted2)]" />
             </div>
-          ) : filteredOptions?.length > 0 ? (
-            filteredOptions.map((option, index) => (
-              <SelectItem key={index} value={option.key}>{option.label}</SelectItem>
+          ) : filteredOptions.length > 0 ? (
+            filteredOptions.map((option, i) => (
+              <SelectItem key={i} value={option.key}>
+                {option.label}
+              </SelectItem>
             ))
           ) : (
-            <div className="p-4 text-sm text-center text-muted-foreground">
-              No results found
-            </div>
+            <p className="py-5 text-center text-[12px] text-[var(--muted2)]">No results</p>
           )}
         </SelectContent>
       </Select>
-      {!!error && <p className="text-destructive text-sm px-3">{error}</p>}
+
+      {error && (
+        <p className="px-0.5 text-[11px] text-[var(--red-app)]">{error}</p>
+      )}
     </div>
   )
 }

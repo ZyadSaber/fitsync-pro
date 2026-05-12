@@ -4,7 +4,7 @@ import { useState } from "react";
 import Icon from "@/components/ui/Icon";
 import { Avatar } from "@/components/ui/Avatar";
 import StatusBadge from "@/components/ui/StatusBadge";
-import Topbar from "@/components/layout/Topbar";
+import HeaderContent from "@/components/layout/Topbar";
 
 type Status = "active" | "frozen" | "expired" | "pending";
 
@@ -37,7 +37,7 @@ export default function MemberListPage() {
 
   return (
     <>
-      {/* <Topbar
+      {/* <HeaderContent
         title="Members"
         subtitle={`${rows.length} of ${ALL_MEMBERS.length} members`}
         actions={

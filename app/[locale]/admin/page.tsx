@@ -7,7 +7,7 @@ import MetricCard from "@/components/ui/MetricCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import CheckinHeatmap from "@/components/ui/CheckinHeatmap";
 import CheckinBarChart from "@/components/ui/CheckinBarChart";
-import Topbar from "@/components/layout/Topbar";
+import HeaderContent from "@/components/layout/Topbar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -76,7 +76,7 @@ export default async function AdminDashboard() {
 
   return (
     <>
-      <Topbar
+      <HeaderContent
         title={t("title")}
         subtitle={dateLabel}
         noSearch

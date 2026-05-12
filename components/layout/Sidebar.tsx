@@ -3,7 +3,7 @@
 import { Link } from "@/i18n/navigation";
 import Icon from "@/components/ui/Icon";
 
-type Role = "admin" | "coach";
+type Role = "admin" | "coach" | "superadmin";
 
 interface SidebarProps {
   active?: string;
@@ -14,6 +14,17 @@ interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
 }
+
+const SUPERADMIN_ITEMS: [string, string, string][] = [
+  ["/management",               "Overview",        "home"],
+  ["/management/gyms",          "Gyms",            "users"],
+  ["/management/coaches",       "Online coaches",  "user"],
+  ["/management/subscriptions", "Subscriptions",   "card"],
+  ["/management/quotas",        "Quotas & usage",  "chart"],
+  ["/management/revenue",       "Revenue",         "tag"],
+  ["/management/audit",         "Audit log",       "filter"],
+  ["/management/settings",      "Settings",        "dumbbell"],
+];
 
 const ADMIN_ITEMS: [string, string, string][] = [
   ["/admin",          "Dashboard",      "home"],
@@ -58,16 +69,20 @@ export default function Sidebar({
   onClose,
 }: SidebarProps) {
   const isRtl = locale ? locale === "ar" : dir === "rtl";
-  const items = role === "admin"
+  const items = role === "superadmin"
+    ? SUPERADMIN_ITEMS
+    : role === "admin"
     ? (isRtl ? ADMIN_ITEMS_AR : ADMIN_ITEMS)
     : (isRtl ? COACH_ITEMS_AR : COACH_ITEMS);
 
-  const brand       = isRtl ? "فِت‑سِنك برو"         : "FitSync Pro";
-  const gym         = isRtl ? "نادي القاهرة الرياضي" : "Cairo Fit · Zamalek";
-  const profile     = role === "admin"
+  const brand       = role === "superadmin" ? "FitSync HQ"              : isRtl ? "فِت‑سِنك برو"         : "FitSync Pro";
+  const gym         = role === "superadmin" ? "platform · super admin"  : isRtl ? "نادي القاهرة الرياضي" : "Cairo Fit · Zamalek";
+  const profile     = role === "superadmin" ? "Yara Sherif"
+    : role === "admin"
     ? (isRtl ? "منى خالد"      : "Mona Khaled")
     : (isRtl ? "أحمد المدرّب" : "Ahmed Coach");
-  const profileRole = role === "admin"
+  const profileRole = role === "superadmin" ? "Platform owner"
+    : role === "admin"
     ? (isRtl ? "مديرة النادي" : "Gym admin")
     : (isRtl ? "المدرّب"      : "Coach");
 
@@ -90,8 +105,11 @@ export default function Sidebar({
     >
       {/* Brand + mobile close button */}
       <div className="flex items-center gap-2.5 px-2 py-1">
-        <div className="w-7 h-7 rounded-[6px] bg-[var(--accent)] flex items-center justify-center shrink-0">
-          <Icon name="logo" size={18} color="#fff" />
+        <div
+          className="w-7 h-7 rounded-[6px] flex items-center justify-center shrink-0"
+          style={{ background: role === "superadmin" ? "#fff" : "var(--accent)" }}
+        >
+          <Icon name="logo" size={18} color={role === "superadmin" ? "var(--ink)" : "#fff"} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-[13px] font-bold text-white tracking-[-0.01em]">{brand}</div>

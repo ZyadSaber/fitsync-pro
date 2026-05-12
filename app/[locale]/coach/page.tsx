@@ -4,7 +4,7 @@ import { useState } from "react";
 import Icon from "@/components/ui/Icon";
 import MetricCard from "@/components/ui/MetricCard";
 import ClientCard from "@/components/ui/ClientCard";
-import Topbar from "@/components/layout/Topbar";
+import HeaderContent from "@/components/layout/Topbar";
 import EmptyState from "@/components/layout/EmptyState";
 
 const CLIENTS = [
@@ -32,7 +32,7 @@ export default function CoachDashboardPage() {
 
   return (
     <>
-      <Topbar
+      <HeaderContent
         title="Coach dashboard"
         subtitle="8 clients · 6 active this week"
         actions={

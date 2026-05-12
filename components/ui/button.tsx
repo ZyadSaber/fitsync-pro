@@ -51,12 +51,30 @@ function Button({
   asChild = false,
   children,
   isLoading = false,
+  href,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
     isLoading?: boolean
+    href?: string
   }) {
+  const classes = cn(buttonVariants({ variant, size, className }))
+
+  if (href) {
+    return (
+      <a
+        data-slot="button"
+        data-variant={variant}
+        data-size={size}
+        href={href}
+        className={classes}
+      >
+        {children}
+      </a>
+    )
+  }
+
   const Comp = asChild ? Slot : "button"
 
   return (
@@ -64,7 +82,7 @@ function Button({
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={classes}
       disabled={isLoading || props.disabled}
       {...props}
     >
