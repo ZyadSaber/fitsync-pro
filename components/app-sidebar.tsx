@@ -25,9 +25,9 @@ import {
     SidebarGroup,
 } from "@/components/ui/sidebar"
 import { useTranslations } from "next-intl"
-import { Link, usePathname } from "@/i18n/routing"
+import { Link, usePathname } from "@/i18n/navigation"
 import Logo from "@/components/logo"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar"
 
 const iconMap = {
     "layout-dashboard": LayoutDashboard,

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Icon from "@/components/ui/Icon";
-import { Avatar } from "@/components/ui/Avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/Avatar";
 import StatusBadge from "@/components/ui/StatusBadge";
 import HeaderContent from "@/components/layout/Topbar";
 
@@ -115,7 +115,9 @@ export default function MemberListPage() {
                     </td>
                     <td className="fs-td">
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <Avatar name={r.name} size="md" />
+                        <Avatar size="default">
+                          <AvatarFallback>{r.name.split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase()}</AvatarFallback>
+                        </Avatar>
                         <div>
                           <div style={{ fontWeight: 600 }}>{r.name}</div>
                           <div className="fs-mono" style={{ fontSize: 10, color: "var(--muted)", marginTop: 1 }}>

@@ -3,12 +3,12 @@ import { Suspense } from "react";
 import Icon from "@/components/ui/Icon";
 import HeaderContent from "@/components/layout/Topbar";
 import UsageBar from "@/components/superadmin/UsageBar";
-import PlanBadge, { type Plan } from "@/components/superadmin/PlanBadge";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
-import { getGyms } from "@/services/management/gyms";
+import { getGyms, getActiveSubscriptionPlanOptions } from "@/services/management/gyms";
 import { formatDistanceToNow } from "date-fns";
 import GymsFilters from "@/components/management/GymsFilters";
 import { Button } from "@/components/ui/button";
+import getInitials from "@/lib/getInitials"
 
 const STATUS_BADGE: Record<string, string> = {
   active: "active",
@@ -16,20 +16,15 @@ const STATUS_BADGE: Record<string, string> = {
   cancelled: "expired",
 };
 
-const initials = (name: string) =>
-  name.split(" ").slice(0, 2).map((w) => w[0]).join("");
-
-const lastSeen = (iso: string | null) =>
-  iso ? formatDistanceToNow(new Date(iso), { addSuffix: true }) : "—";
-
 export default async function GymsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; search?: string; plan?: string; city?: string }>;
+  searchParams: Promise<{ status?: string; search?: string; plan?: string }>;
 }) {
-  const [t, { status: sf, search: sq, plan: spPlan, city: spCity }] = await Promise.all([
+  const [t, { status: sf, search: sq, plan: spPlan }, planOptions] = await Promise.all([
     getTranslations("management.gyms"),
     searchParams,
+    getActiveSubscriptionPlanOptions(),
   ]);
 
   const result = await getGyms();
@@ -48,25 +43,9 @@ export default async function GymsPage({
   const rows = gyms
     .filter((g) => !sf || sf === "all" || g.status === sf)
     .filter((g) => !sq || g.name.toLowerCase().includes(sq.toLowerCase()))
-    .filter((g) => !spPlan || g.plan === spPlan)
-    .filter((g) => !spCity || g.address === spCity);
+    .filter((g) => !spPlan || g.plan === spPlan);
 
-  const planOptions = Array.from(new Set(gyms.map((g) => g.plan).filter(Boolean))).map((p) => ({
-    key: p,
-    label: t(`plan.${p}` as "plan.starter" | "plan.pro" | "plan.enterprise"),
-  }));
-
-  const cityOptions = Array.from(new Set(gyms.map((g) => g.address).filter(Boolean))).map((a) => ({
-    key: a,
-    label: a,
-  }));
-
-  const statusOptions = [
-    { key: "active", label: t("filters.active") },
-    { key: "suspended", label: t("filters.suspended") },
-    { key: "cancelled", label: t("filters.cancelled") },
-  ];
-
+  const planNameMap = Object.fromEntries(planOptions.map((p) => [p.key, p.label]));
   const totalMembers = gyms.reduce((s, g) => s + g.memberCount, 0);
 
   return (
@@ -93,12 +72,7 @@ export default async function GymsPage({
         <div className="flex items-center gap-2 flex-wrap">
           <Suspense>
             <GymsFilters
-              statusLabel={t("filters.status")}
-              planLabel={t("table.plan")}
-              cityLabel={t("filters.allCities")}
-              statusOptions={statusOptions}
               planOptions={planOptions}
-              cityOptions={cityOptions}
             />
           </Suspense>
         </div>
@@ -107,7 +81,6 @@ export default async function GymsPage({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-9"><input type="checkbox" /></TableHead>
                 <TableHead>{t("table.gym")}</TableHead>
                 <TableHead>{t("table.plan")}</TableHead>
                 <TableHead>{t("table.members")}</TableHead>
@@ -121,41 +94,35 @@ export default async function GymsPage({
               {rows.map((g) => {
                 const badge = STATUS_BADGE[g.status ?? ""] ?? "pending";
                 const statusLabel = t(`status.${g.status ?? "unknown"}` as "status.active" | "status.suspended" | "status.cancelled" | "status.unknown");
-                const planLabel = g.plan ? t(`plan.${g.plan}` as "plan.starter" | "plan.pro" | "plan.enterprise") as Plan : null;
                 return (
                   <TableRow key={g.id}>
-                    <TableCell><input type="checkbox" /></TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-[7px] bg-[var(--ink)] text-white flex items-center justify-center text-xs font-bold shrink-0">
-                          {initials(g.name)}
+                        <div className="w-9 h-9 rounded-[7px] bg-ink text-white flex items-center justify-center text-xs font-bold shrink-0">
+                          {getInitials(g.name)}
                         </div>
                         <div>
                           <span className="font-semibold">{g.name}</span>
                           <div className="text-[11px] text-[var(--muted)] mt-0.5 flex items-center gap-1.5">
-                            {g.address && <><span>{g.address}</span><span className="text-[var(--muted2)]">·</span></>}
+                            <span>{g.address}</span><span className="text-muted2">·</span>
                             <span className="font-mono text-[10px]">{g.id}</span>
                           </div>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      {planLabel ? <PlanBadge plan={planLabel} /> : <span className="text-muted-foreground">—</span>}
-                    </TableCell>
+                    <TableCell>{g.plan}</TableCell>
                     <TableCell className="w-[180px]">
                       <UsageBar used={g.memberCount} limit={0} compact />
                     </TableCell>
                     <TableCell className="tabular-nums font-semibold">
-                      {g.planPriceEgp ? (
-                        <>{g.planPriceEgp.toLocaleString()} <span className="text-muted-foreground text-[10px] font-normal">{t("currency")}</span></>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
+                      {
+                        `${(g.planPriceEgp || 0).toLocaleString()} ${t("currency")}`
+                      }
                     </TableCell>
                     <TableCell>
                       <span className={`fs-badge ${badge}`}><span className="dot" />{statusLabel}</span>
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">{lastSeen(g.lastActivityAt)}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs">{formatDistanceToNow(new Date(g.lastActivityAt || ""), { addSuffix: true })}</TableCell>
                     <TableCell><Icon name="more" size={16} color="var(--muted)" /></TableCell>
                   </TableRow>
                 );

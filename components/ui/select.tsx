@@ -309,18 +309,29 @@ export function SelectField<T extends SelectOptions>({
         >
           <div className="flex items-center gap-1.5 overflow-hidden h-full flex-1 min-w-0">
             {value && !hideClear && (
-              <button
-                type="button"
+              <span
+                role="button"
                 tabIndex={-1}
-                className="shrink-0 rounded p-0.5 text-[var(--muted2)] hover:text-[var(--text)] hover:bg-[var(--paper)] transition-colors"
+                className="shrink-0 rounded p-0.5 text-[var(--muted2)] hover:text-[var(--text)] hover:bg-[var(--paper)] transition-colors cursor-pointer"
+                onPointerDown={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                }}
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
                   onValueChange("")
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    onValueChange("")
+                  }
+                }}
               >
                 <X className="size-3" />
-              </button>
+              </span>
             )}
             <SelectValue
               placeholder={placeholder ?? label}

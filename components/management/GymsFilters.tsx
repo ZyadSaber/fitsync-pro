@@ -1,60 +1,51 @@
 "use client";
 
-import { useRouter, usePathname } from "@/i18n/navigation";
-import { useSearchParams } from "next/navigation";
 import { SelectField } from "@/components/ui/select";
 import type { SelectOptions } from "@/types/ui";
+import { useTranslations } from "next-intl";
+import { useMemo } from "react";
+import useFormManager from "@/hook/useFormManager";
 
 interface Props {
-  statusLabel: string;
-  planLabel: string;
-  cityLabel: string;
-  statusOptions: SelectOptions[];
   planOptions: SelectOptions[];
-  cityOptions: SelectOptions[];
 }
 
-export default function GymsFilters({ statusLabel, planLabel, cityLabel, statusOptions, planOptions, cityOptions }: Props) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+const GymsFilters = ({ planOptions }: Props) => {
+  const t = useTranslations("management.gyms");
 
-  const update = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) params.set(key, value);
-    else params.delete(key);
-    router.push(`${pathname}?${params.toString()}`);
-  };
+  const { handleToggle, formData } = useFormManager({
+    initialData: { status: "", plan: "" },
+    searchFields: ["status", "plan"],
+  });
+
+  const statusOptions = useMemo(() => [
+    { key: "active", label: t("filters.active") },
+    { key: "suspended", label: t("filters.suspended") },
+    { key: "cancelled", label: t("filters.cancelled") },
+  ], []);
 
   return (
     <>
       <SelectField
         name="status"
-        label={statusLabel}
+        label={t("filters.status")}
         options={statusOptions}
-        value={searchParams.get("status") ?? ""}
-        onValueChange={(v) => update("status", v)}
+        value={formData.status}
+        onValueChange={handleToggle("status")}
         hideClear={false}
-        className="min-w-[130px]"
+        containerClassName="w-[20%]"
       />
       <SelectField
         name="plan"
-        label={planLabel}
+        label={t("table.plan")}
         options={planOptions}
-        value={searchParams.get("plan") ?? ""}
-        onValueChange={(v) => update("plan", v)}
+        value={formData.plan}
+        onValueChange={handleToggle("plan")}
         hideClear={false}
-        className="min-w-[130px]"
-      />
-      <SelectField
-        name="city"
-        label={cityLabel}
-        options={cityOptions}
-        value={searchParams.get("city") ?? ""}
-        onValueChange={(v) => update("city", v)}
-        hideClear={false}
-        className="min-w-[130px]"
+        containerClassName="w-[20%]"
       />
     </>
   );
-}
+};
+
+export default GymsFilters;

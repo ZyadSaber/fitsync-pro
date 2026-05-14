@@ -927,6 +927,144 @@ VALUES
 
 
 -- ================================================================
+-- 21. PLATFORM SUBSCRIPTIONS
+-- PowerFit Cairo started on Starter, then upgraded to Pro.
+-- plan_id resolved via slug lookup into subscription_plans catalog
+-- (which is seeded by the subscription_plans.sql migration).
+-- ================================================================
+ALTER TABLE platform_subscriptions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE platform_activity_log  DISABLE ROW LEVEL SECURITY;
+
+INSERT INTO platform_subscriptions
+  (id, gym_id, plan_name, price_egp, billing_cycle, status,
+   started_at, next_billing_at, notes, plan_id)
+VALUES
+  -- Jan 2026 — Starter plan (cancelled on upgrade)
+  ('a0000000-0000-0000-0000-00000000b001',
+   'a0000000-0000-0000-0000-000000000001',
+   'starter', 1800, 'monthly', 'cancelled',
+   '2026-01-01 00:00:00+00', '2026-02-01 00:00:00+00',
+   'Upgraded to Pro — member count reached plan ceiling.',
+   (SELECT id FROM subscription_plans WHERE slug = 'starter')),
+
+  -- Feb 2026 — Pro plan (current, active)
+  ('a0000000-0000-0000-0000-00000000b002',
+   'a0000000-0000-0000-0000-000000000001',
+   'pro', 4500, 'monthly', 'active',
+   '2026-02-01 00:00:00+00', '2026-06-01 00:00:00+00',
+   NULL,
+   (SELECT id FROM subscription_plans WHERE slug = 'pro'));
+
+
+-- ================================================================
+-- 22. PLATFORM ACTIVITY LOG
+-- Mix of login, member_add, checkin, and plan_change events that
+-- reflect the gym's real activity visible in the super-admin view.
+-- ================================================================
+INSERT INTO platform_activity_log (gym_id, event_type, actor_id, metadata, created_at) VALUES
+
+  -- Gym created / onboarding
+  ('a0000000-0000-0000-0000-000000000001',
+   'gym_created',
+   'a0000000-0000-0000-0000-000000000010',
+   '{"gym_name": "PowerFit Cairo", "plan": "starter"}'::jsonb,
+   '2026-01-01 09:00:00+00'),
+
+  -- Admin logins (January)
+  ('a0000000-0000-0000-0000-000000000001',
+   'login',
+   'a0000000-0000-0000-0000-000000000010',
+   '{"role": "gym_admin"}'::jsonb,
+   '2026-01-02 08:10:00+00'),
+
+  ('a0000000-0000-0000-0000-000000000001',
+   'login',
+   'a0000000-0000-0000-0000-000000000010',
+   '{"role": "gym_admin"}'::jsonb,
+   '2026-01-15 07:55:00+00'),
+
+  -- Members added in January
+  ('a0000000-0000-0000-0000-000000000001',
+   'member_add',
+   'a0000000-0000-0000-0000-000000000010',
+   '{"client_id": "a0000000-0000-0000-0000-000000000205", "name": "Omar Farouk", "plan": "Annual"}'::jsonb,
+   '2026-01-01 10:00:00+00'),
+
+  ('a0000000-0000-0000-0000-000000000001',
+   'member_add',
+   'a0000000-0000-0000-0000-000000000010',
+   '{"client_id": "a0000000-0000-0000-0000-000000000204", "name": "Layla Ahmed", "plan": "Monthly"}'::jsonb,
+   '2026-01-01 10:15:00+00'),
+
+  -- Plan upgrade: Starter → Pro
+  ('a0000000-0000-0000-0000-000000000001',
+   'plan_change',
+   'a0000000-0000-0000-0000-000000000010',
+   '{"from": "starter", "to": "pro", "subscription_id": "a0000000-0000-0000-0000-00000000b002"}'::jsonb,
+   '2026-02-01 09:00:00+00'),
+
+  -- Members added in February / March
+  ('a0000000-0000-0000-0000-000000000001',
+   'member_add',
+   'a0000000-0000-0000-0000-000000000010',
+   '{"client_id": "a0000000-0000-0000-0000-000000000202", "name": "Youssef Ibrahim", "plan": "Monthly"}'::jsonb,
+   '2026-02-01 11:00:00+00'),
+
+  ('a0000000-0000-0000-0000-000000000001',
+   'member_add',
+   'a0000000-0000-0000-0000-000000000010',
+   '{"client_id": "a0000000-0000-0000-0000-000000000201", "name": "Sara Mostafa", "plan": "Quarterly"}'::jsonb,
+   '2026-03-01 10:30:00+00'),
+
+  -- Coach login
+  ('a0000000-0000-0000-0000-000000000001',
+   'login',
+   'a0000000-0000-0000-0000-000000000011',
+   '{"role": "coach"}'::jsonb,
+   '2026-03-10 07:45:00+00'),
+
+  -- Members added in April
+  ('a0000000-0000-0000-0000-000000000001',
+   'member_add',
+   'a0000000-0000-0000-0000-000000000010',
+   '{"client_id": "a0000000-0000-0000-0000-000000000200", "name": "Mohamed Ali", "plan": "Monthly"}'::jsonb,
+   '2026-04-01 09:00:00+00'),
+
+  ('a0000000-0000-0000-0000-000000000001',
+   'member_add',
+   'a0000000-0000-0000-0000-000000000010',
+   '{"client_id": "a0000000-0000-0000-0000-000000000203", "name": "Nour El-Din", "plan": "Monthly"}'::jsonb,
+   '2026-04-15 10:00:00+00'),
+
+  -- Member frozen
+  ('a0000000-0000-0000-0000-000000000001',
+   'member_status_change',
+   'a0000000-0000-0000-0000-000000000010',
+   '{"client_id": "a0000000-0000-0000-0000-000000000202", "name": "Youssef Ibrahim", "status": "frozen", "reason": "travel"}'::jsonb,
+   '2026-03-01 11:00:00+00'),
+
+  -- QR check-ins (sampled — most come from gym_checkins table directly)
+  ('a0000000-0000-0000-0000-000000000001',
+   'checkin',
+   'a0000000-0000-0000-0000-000000000020',
+   '{"client_id": "a0000000-0000-0000-0000-000000000200", "qr_code": "QR-MALI-001"}'::jsonb,
+   '2026-04-06 06:15:00+00'),
+
+  ('a0000000-0000-0000-0000-000000000001',
+   'checkin',
+   'a0000000-0000-0000-0000-000000000025',
+   '{"client_id": "a0000000-0000-0000-0000-000000000205", "qr_code": "QR-OFRK-006"}'::jsonb,
+   '2026-04-06 18:00:00+00'),
+
+  -- Admin login in May (most recent activity)
+  ('a0000000-0000-0000-0000-000000000001',
+   'login',
+   'a0000000-0000-0000-0000-000000000010',
+   '{"role": "gym_admin"}'::jsonb,
+   '2026-05-03 08:00:00+00');
+
+
+-- ================================================================
 -- Re-enable RLS
 -- ================================================================
 ALTER TABLE gyms              ENABLE ROW LEVEL SECURITY;
@@ -949,3 +1087,5 @@ ALTER TABLE nutrition_plans   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE daily_checkins    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE progress_photos   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE inbody_results    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE platform_subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE platform_activity_log  ENABLE ROW LEVEL SECURITY;

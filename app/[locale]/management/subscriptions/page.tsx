@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 const PLANS = [
   {
-    name: "Trial"   as Plan,
+    name: "Trial"      as Plan,
     priceMo: 0,
     cap: 100,
     count: 11,
@@ -14,7 +14,7 @@ const PLANS = [
     featured: false,
   },
   {
-    name: "Starter" as Plan,
+    name: "Starter"    as Plan,
     priceMo: 1800,
     cap: 200,
     count: 187,
@@ -23,7 +23,7 @@ const PLANS = [
     featured: false,
   },
   {
-    name: "Pro"     as Plan,
+    name: "Pro"        as Plan,
     priceMo: 4500,
     cap: 1000,
     count: 218,
@@ -32,7 +32,7 @@ const PLANS = [
     featured: true,
   },
   {
-    name: "Elite"   as Plan,
+    name: "Elite"      as Plan,
     priceMo: 9800,
     cap: 3000,
     count: 47,
@@ -41,12 +41,30 @@ const PLANS = [
     featured: false,
   },
   {
-    name: "Custom"  as Plan,
+    name: "Custom"     as Plan,
     priceMo: null,
     cap: 6000,
     count: 8,
     color: "#6D28D9",
     features: ["Negotiated cap", "SSO + API access", "SLA 99.95%"],
+    featured: false,
+  },
+  {
+    name: "Coach Solo" as Plan,
+    priceMo: 1200,
+    cap: 50,
+    count: 94,
+    color: "#059669",
+    features: ["50 clients", "Workout builder", "Nutrition plans"],
+    featured: false,
+  },
+  {
+    name: "Coach Pro"  as Plan,
+    priceMo: 2400,
+    cap: 200,
+    count: 61,
+    color: "#047857",
+    features: ["200 clients", "All Solo features", "Analytics", "Priority support"],
     featured: false,
   },
 ];
@@ -89,7 +107,7 @@ export default function SubscriptionsPage() {
       <div style={{ padding: 28, display: "flex", flexDirection: "column", gap: 20 }}>
 
         {/* Plan tiers */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 14 }}>
           {PLANS.map((p) => (
             <div
               key={p.name}

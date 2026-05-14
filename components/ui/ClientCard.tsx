@@ -1,4 +1,4 @@
-import Avatar from "./Avatar";
+import { Avatar, AvatarFallback } from "./Avatar";
 import Ring from "./Ring";
 import SparkLine from "./SparkLine";
 
@@ -44,7 +44,9 @@ export default function ClientCard({
         />
       )}
       <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-        <Avatar name={name} size="lg" />
+        <Avatar size="lg">
+          <AvatarFallback>{name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase()}</AvatarFallback>
+        </Avatar>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", lineHeight: 1.2 }}>{name}</div>
           <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2, display: "flex", gap: 6, alignItems: "center" }}>

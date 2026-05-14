@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Link } from "@/i18n/routing";
+import { Link } from "@/i18n/navigation";
 import { ReactNode } from "react";
 import { RefreshCcw, Home } from "lucide-react";
 import { useTranslations } from "next-intl";

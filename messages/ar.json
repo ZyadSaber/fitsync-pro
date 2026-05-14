@@ -204,11 +204,6 @@
         "cancelled": "ملغي",
         "unknown": "غير معروف"
       },
-      "plan": {
-        "starter": "مبتدئ",
-        "pro": "احترافي",
-        "enterprise": "مميز"
-      },
       "currency": "ج.م"
     }
   },
