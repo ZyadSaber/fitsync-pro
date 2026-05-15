@@ -7,7 +7,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 interface UseFormManagerProps<T> {
   initialData: T;
   schema?: ZodSchema<T>;
-  onSubmit?: (data: T) => void | Promise<void>;
+  onSubmit?: (data: T, resetForm: () => void) => void | Promise<void>;
   searchFields?: string[];
 }
 
@@ -119,7 +119,7 @@ const useFormManager = <T extends object>({
     e?.preventDefault();
     if (!validate() || !onSubmit) return;
     startTransition(() => {
-      Promise.resolve(onSubmit(formData));
+      Promise.resolve(onSubmit(formData, resetForm));
     });
   };
 

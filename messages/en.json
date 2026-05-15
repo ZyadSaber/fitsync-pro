@@ -14,8 +14,10 @@
     "extend": "Extend",
     "createOffer": "Create offer",
     "noResults": "No results.",
-      "langToggle": "عربى"
-
+    "langToggle": "عربى",
+    "delete": "Delete",
+    "deleteDesc": "Are you sure? This action cannot be undone.",
+    "cancel": "Cancel"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -179,7 +181,10 @@
       "subtitle": "{count} tenants · {members} members across the platform",
       "actions": {
         "exportCsv": "Export CSV",
-        "addGym": "Add gym"
+        "addGym": "Add gym",
+        "view": "View details",
+        "edit": "Edit",
+        "delete": "Delete"
       },
       "filters": {
         "all": "All",
@@ -204,7 +209,27 @@
         "cancelled": "Cancelled",
         "unknown": "Unknown"
       },
-      "currency": "EGP"
+      "currency": "EGP",
+      "dialog": {
+        "titleAdd": "Add gym",
+        "titleEdit": "Edit gym",
+        "fields": {
+          "name": "Gym name",
+          "address": "Address",
+          "phone": "Phone",
+          "logoUrl": "Logo URL"
+        },
+        "placeholders": {
+          "name": "Cairo Fit · Zamalek",
+          "address": "123 Tahrir St, Cairo",
+          "phone": "+20 10 0000 0000",
+          "logoUrl": "https://example.com/logo.png"
+        },
+        "cancel": "Cancel",
+        "saving": "Saving…",
+        "saveChanges": "Save changes",
+        "create": "Create gym"
+      }
     }
   },
   "index": {

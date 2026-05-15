@@ -1,9 +1,7 @@
-"use client"
-
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
-import { Loader2 } from "lucide-react"
+import { Loader2, LucideIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -52,12 +50,14 @@ function Button({
   children,
   isLoading = false,
   href,
+  icon: Icon,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
     isLoading?: boolean
-    href?: string
+    href?: string;
+    icon?: LucideIcon
   }) {
   const classes = cn(buttonVariants({ variant, size, className }))
 
@@ -86,6 +86,7 @@ function Button({
       disabled={isLoading || props.disabled}
       {...props}
     >
+      {Icon && <Icon className="w-3 h-3" />}
       {isLoading && <Loader2 className="size-4 animate-spin shrink-0" />}
       {children}
     </Comp>

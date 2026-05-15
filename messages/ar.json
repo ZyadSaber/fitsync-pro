@@ -14,7 +14,10 @@
     "extend": "تمديد",
     "createOffer": "إنشاء عرض",
     "noResults": "لا توجد نتائج.",
-    "langToggle": "English"
+    "langToggle": "English",
+    "delete": "حذف",
+    "deleteDesc": "هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء.",
+    "cancel": "إلغاء"
   },
   "nav": {
     "dashboard": "لوحة التحكم",
@@ -179,7 +182,10 @@
       "subtitle": "{count} مستأجر · {members} عضو على المنصة",
       "actions": {
         "exportCsv": "تصدير CSV",
-        "addGym": "إضافة نادٍ"
+        "addGym": "إضافة نادٍ",
+        "view": "عرض التفاصيل",
+        "edit": "تعديل",
+        "delete": "حذف"
       },
       "filters": {
         "all": "الكل",
@@ -204,7 +210,27 @@
         "cancelled": "ملغي",
         "unknown": "غير معروف"
       },
-      "currency": "ج.م"
+      "currency": "ج.م",
+      "dialog": {
+        "titleAdd": "إضافة نادٍ",
+        "titleEdit": "تعديل النادي",
+        "fields": {
+          "name": "اسم النادي",
+          "address": "العنوان",
+          "phone": "الهاتف",
+          "logoUrl": "رابط الشعار"
+        },
+        "placeholders": {
+          "name": "كايرو فيت · الزمالك",
+          "address": "123 شارع التحرير، القاهرة",
+          "phone": "+20 10 0000 0000",
+          "logoUrl": "https://example.com/logo.png"
+        },
+        "cancel": "إلغاء",
+        "saving": "جارٍ الحفظ…",
+        "saveChanges": "حفظ التغييرات",
+        "create": "إنشاء النادي"
+      }
     }
   },
   "index": {

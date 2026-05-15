@@ -5,10 +5,20 @@ import HeaderContent from "@/components/layout/Topbar";
 import UsageBar from "@/components/superadmin/UsageBar";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { getGyms, getActiveSubscriptionPlanOptions } from "@/services/management/gyms";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Ellipsis } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import GymsFilters from "@/components/management/GymsFilters";
+import GymsFilters from "@/components/management/gyms/GymsFilters";
+import GymsDialog from "@/components/management/gyms/GymsDialog";
+import getInitials from "@/lib/getInitials";
 import { Button } from "@/components/ui/button";
-import getInitials from "@/lib/getInitials"
+import DeleteDialog from "@/components/shared/delete-dialog";
 
 const STATUS_BADGE: Record<string, string> = {
   active: "active",
@@ -59,10 +69,7 @@ export default async function GymsPage({
               <Icon name="filter" size={13} />
               {t("actions.exportCsv")}
             </button>
-            <Button variant="accent">
-              <Icon name="plus" size={13} color="#fff" />
-              {t("actions.addGym")}
-            </Button>
+            <GymsDialog />
           </>
         }
       />
@@ -103,7 +110,7 @@ export default async function GymsPage({
                         </div>
                         <div>
                           <span className="font-semibold">{g.name}</span>
-                          <div className="text-[11px] text-[var(--muted)] mt-0.5 flex items-center gap-1.5">
+                          <div className="text-[11px] text-muted mt-0.5 flex items-center gap-1.5">
                             <span>{g.address}</span><span className="text-muted2">·</span>
                             <span className="font-mono text-[10px]">{g.id}</span>
                           </div>
@@ -122,8 +129,35 @@ export default async function GymsPage({
                     <TableCell>
                       <span className={`fs-badge ${badge}`}><span className="dot" />{statusLabel}</span>
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">{formatDistanceToNow(new Date(g.lastActivityAt || ""), { addSuffix: true })}</TableCell>
-                    <TableCell><Icon name="more" size={16} color="var(--muted)" /></TableCell>
+                    <TableCell className="text-muted-foreground text-xs" suppressHydrationWarning>{formatDistanceToNow(g.lastActivityAt || "", { addSuffix: true })}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            className="hover:bg-hairline2 h-7 w-7"
+                            variant="ghost"
+                            icon={Ellipsis}
+                          />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="start"
+                          className="border-hairline bg-white shadow-sm text-ink text-[13px]"
+                        >
+                          <DropdownMenuItem className="focus:bg-hairline2 focus:text-ink cursor-pointer">
+                            <GymsDialog gym={g} />
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator className="bg-[var(--hairline)]" />
+                          <DropdownMenuItem
+                            className="text-red-600 focus:bg-red-200 focus:text-red-800 cursor-pointer"
+                            onSelect={(e) => e.preventDefault()}
+                          >
+                            <DeleteDialog
+                              deleteText={t("actions.delete")}
+                            />
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
                 );
               })}

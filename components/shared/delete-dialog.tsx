@@ -1,4 +1,6 @@
 'use client'
+
+import { useTransition } from "react";
 import {
     Dialog,
     DialogContent,
@@ -9,33 +11,46 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Trash2 } from "lucide-react";
-import { useVisibility } from "@/hooks"
+import useVisibility from "@/hook/useVisibility";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 interface DeleteDialogProps {
-    deleteLoading: boolean;
-    deleteAction: () => void;
+    deleteAction?: () => Promise<void> | void;
     deleteClassName?: string;
-
+    deleteText?: string;
 }
 
-const DeleteDialog = ({ deleteLoading, deleteAction, deleteClassName }: DeleteDialogProps) => {
+const DeleteDialog = ({
+    deleteAction,
+    deleteClassName,
+    deleteText,
+}: DeleteDialogProps) => {
     const { visible, handleClose, handleStateChange } = useVisibility()
-    const t = useTranslations("Common")
+    const [isPending, startTransition] = useTransition()
+    const t = useTranslations("common")
 
     const submitDelete = () => {
-        handleClose()
-        deleteAction()
+        startTransition(async () => {
+            await deleteAction?.()
+            handleClose()
+        })
     }
 
     return (
         <Dialog open={visible} onOpenChange={handleStateChange}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className={cn("h-8 w-8 text-destructive hover:text-destructive", deleteClassName)}>
-                    <Trash2 className="h-4 w-4" />
-                </Button>
+                <button
+                    type="button"
+                    className={cn(
+                        "flex items-center gap-2 text-red-600 w-full",
+                        deleteClassName
+                    )}
+                >
+                    <Trash2 size={14} />
+                    {deleteText && <span>{deleteText}</span>}
+                </button>
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
@@ -48,14 +63,14 @@ const DeleteDialog = ({ deleteLoading, deleteAction, deleteClassName }: DeleteDi
                     <Button
                         variant="outline"
                         onClick={handleClose}
-                        disabled={deleteLoading}
+                        disabled={isPending}
                     >
                         {t("cancel")}
                     </Button>
                     <Button
                         variant="destructive"
                         onClick={submitDelete}
-                        disabled={deleteLoading}
+                        disabled={isPending}
                     >
                         {t("delete")}
                     </Button>
