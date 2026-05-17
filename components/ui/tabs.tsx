@@ -17,7 +17,7 @@ function Tabs({
       data-orientation={orientation}
       orientation={orientation}
       className={cn(
-        "group/tabs flex gap-2 data-[orientation=horizontal]:flex-col",
+        "group/tabs flex gap-4 data-[orientation=horizontal]:flex-col",
         className
       )}
       {...props}
@@ -26,12 +26,14 @@ function Tabs({
 }
 
 const tabsListVariants = cva(
-  "rounded-lg p-[3px] group-data-[orientation=horizontal]/tabs:h-9 data-[variant=line]:rounded-none group/tabs-list text-muted-foreground inline-flex w-fit items-center justify-center group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col",
+  "group/tabs-list inline-flex w-fit items-center justify-center group-data-[orientation=vertical]/tabs:flex-col group-data-[orientation=vertical]/tabs:h-fit",
   {
     variants: {
       variant: {
-        default: "bg-muted",
-        line: "gap-1 bg-transparent",
+        default:
+          "rounded-lg p-1 gap-0.5 bg-[var(--hairline2)] border border-[var(--hairline)] group-data-[orientation=horizontal]/tabs:h-10",
+        line:
+          "rounded-none gap-1 bg-transparent border-b border-[var(--hairline)] group-data-[orientation=horizontal]/tabs:h-10 pb-0",
       },
     },
     defaultVariants: {
@@ -64,10 +66,36 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring text-foreground/60 hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-all group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 group-data-[variant=default]/tabs-list:data-[state=active]:shadow-sm group-data-[variant=line]/tabs-list:data-[state=active]:shadow-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        "group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:border-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent",
-        "data-[state=active]:bg-background dark:data-[state=active]:text-foreground dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 data-[state=active]:text-foreground",
-        "after:bg-foreground after:absolute after:opacity-0 after:transition-opacity group-data-[orientation=horizontal]/tabs:after:inset-x-0 group-data-[orientation=horizontal]/tabs:after:bottom-[-5px] group-data-[orientation=horizontal]/tabs:after:h-0.5 group-data-[orientation=vertical]/tabs:after:inset-y-0 group-data-[orientation=vertical]/tabs:after:-right-1 group-data-[orientation=vertical]/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-[state=active]:after:opacity-100",
+        // base layout
+        "relative inline-flex h-[calc(100%-4px)] flex-1 items-center justify-center gap-1.5 whitespace-nowrap",
+        "px-3 py-1 text-sm font-semibold",
+        "transition-all duration-150",
+        // disabled
+        "disabled:pointer-events-none disabled:opacity-40",
+        // focus ring
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-1",
+        // icon sizing
+        "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        // vertical orientation
+        "group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start",
+
+        // ── default variant ──────────────────────────────────────────────
+        // inactive: muted text, no bg
+        "group-data-[variant=default]/tabs-list:rounded-md group-data-[variant=default]/tabs-list:text-[var(--muted)]",
+        "group-data-[variant=default]/tabs-list:hover:text-[var(--text)] group-data-[variant=default]/tabs-list:hover:bg-[var(--surface)]/60",
+        // active: white surface, accent text, subtle shadow
+        "group-data-[variant=default]/tabs-list:data-[state=active]:bg-[var(--surface)]",
+        "group-data-[variant=default]/tabs-list:data-[state=active]:text-[var(--accent)]",
+        "group-data-[variant=default]/tabs-list:data-[state=active]:shadow-sm",
+
+        // ── line variant ─────────────────────────────────────────────────
+        "group-data-[variant=line]/tabs-list:rounded-none group-data-[variant=line]/tabs-list:bg-transparent",
+        "group-data-[variant=line]/tabs-list:text-[var(--muted)] group-data-[variant=line]/tabs-list:hover:text-[var(--text)]",
+        // accent bottom border on active (drawn with a pseudo-element via after:)
+        "after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-[var(--accent)] after:opacity-0 after:transition-opacity",
+        "group-data-[variant=line]/tabs-list:data-[state=active]:text-[var(--accent)]",
+        "group-data-[variant=line]/tabs-list:data-[state=active]:after:opacity-100",
+
         className
       )}
       {...props}

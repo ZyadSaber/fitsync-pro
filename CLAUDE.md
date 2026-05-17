@@ -60,11 +60,43 @@ const { locale } = await params;
 
 Accessing them synchronously (as in older Next.js) will throw at runtime.
 
+### Platform admin (super admin)
+
+`/management/*` routes are a separate portal for the platform operator (not gym admins). Middleware protects these routes by checking `is_super_admin = true` on the user's profile. RLS policies on platform tables call the `public.is_super_admin()` SQL function. Do not conflate this role with the Gym Admin role.
+
+### Server Actions pattern
+
+All mutations go through Server Actions (`actions.ts` co-located with the route). Every action:
+1. Validates input with a Zod schema from `validations/` first.
+2. Returns `ActionResult<T>` from `types/common.ts` — a discriminated union `{ success: true; data: T } | { success: false; error: string }`.
+3. Calls `revalidatePath()` after a successful mutation.
+
+Zod schemas and their inferred types are exported from `validations/` and imported by both the action (server) and the form component (client) to keep validation in sync.
+
+### Services layer
+
+Data-access logic lives in `services/`, not in page components or actions directly. Service functions:
+- Return `{ data: T; error: null | string }` for reads and call the server Supabase client.
+- Use Supabase **views** (e.g., `gym_list`) for queries that would otherwise require multi-table JOINs — the view handles the JOIN and RLS applies via `security_invoker = true`.
+- Log errors with a contextual prefix: `console.error("[functionName]", error)`.
+
+The data flow is: **Page (Server Component) → service function → Supabase view/table** for reads, and **Client Component → Server Action → service/Supabase → revalidatePath** for writes.
+
+### Code organisation rules
+
+| Directory | What goes here |
+|---|---|
+| `types/` | TypeScript interfaces and discriminated union string-literal types (e.g. `GymPlan`, `BillingRecordStatus`) |
+| `validations/` | Zod schemas and their inferred `FormData` types |
+| `services/` | Data-access functions — Supabase queries, no business logic beyond mapping |
+| `lib/` | Utility helpers, Supabase client factories |
+| `actions.ts` | Next.js Server Actions, co-located with the route that owns them |
+
 ### Current state
 
-The UI is built with **hardcoded demo data** — no live database queries are wired into the page components yet. The full schema exists at `db/full_schema.sql`, seed data at `db/seed.sql`, and a migration helper at `db/migrate_to_user_type.sql`. When connecting real data, Server Components should fetch via the server Supabase client; mutations should use Server Actions.
+The `/management/gyms` section is live with real Supabase queries (the first fully wired feature). Other dashboard areas (`/admin`, `/coach`) still use hardcoded demo data. The full schema is at `db/full_schema.sql`; incremental migrations live in `db/migrations/`.
 
-Pages that exist today: `/admin` (dashboard), `/admin/members`, `/coach` (dashboard), `/coach/exercises`. Routes listed in the roles table (`/member`, `/client`, admin sub-pages like `/admin/plans`, `/admin/offers`, etc.) are not yet implemented.
+Pages that exist today: `/admin` (dashboard), `/admin/members`, `/coach` (dashboard), `/coach/exercises`, `/management` (platform dashboard), `/management/gyms`. Routes listed in the roles table (`/member`, `/client`, admin sub-pages like `/admin/plans`, `/admin/offers`, etc.) are not yet implemented.
 
 ### Localization
 
@@ -104,6 +136,10 @@ The root layout sets `dir="rtl"` and switches fonts when `locale === "ar"`. Cair
 Utility classes follow the `fs-*` prefix: `fs-btn`, `fs-input`, `fs-nav`, `fs-badge`, `fs-metric`, `fs-card`, `fs-av`, `fs-th`, `fs-td`, `fs-tr`. Button variants: `fs-btn primary`, `fs-btn accent`, `fs-btn ghost`, `fs-btn sm`. Badge variants: `active`, `frozen`, `expired`, `pending`, `gym`. Card variant: `fs-card pad` (adds `padding: 20px`). Typography helpers: `fs-num` (tabular numerals), `fs-mono` (monospace), `fs-eyebrow` (uppercase label), `fs-blink` (pulsing animation for live indicators).
 
 The custom `Icon` component at `components/ui/Icon.tsx` renders inline SVGs by name string. Use it for all icons inside the app shell — available names: `home`, `users`, `user`, `card`, `tag`, `qr`, `dumbbell`, `chart`, `plus`, `search`, `filter`, `bell`, `flame`, `whatsapp`, `logo`, `more`, `wallet`, `apple`, `google`, `play`.
+
+### Client-side data fetching
+
+`components/providers/QueryProvider.tsx` wraps the app with React Query (TanStack Query). It is configured with `staleTime: 60_000` and `retry: 1`. Use React Query for client-side mutations or optimistic updates where Server Actions are not enough. For straightforward reads, prefer Server Components fetching via the services layer.
 
 ### AppShell behaviour
 

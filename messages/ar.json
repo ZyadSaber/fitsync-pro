@@ -16,7 +16,10 @@
     "noResults": "لا توجد نتائج.",
     "langToggle": "English",
     "delete": "حذف",
+    "deleting": "جارٍ الحذف…",
     "deleteDesc": "هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء.",
+    "deleteSuccess": "تم الحذف بنجاح.",
+    "deleteFailed": "فشل الحذف. يرجى المحاولة مرة أخرى.",
     "cancel": "إلغاء"
   },
   "nav": {
@@ -218,18 +221,41 @@
           "name": "اسم النادي",
           "address": "العنوان",
           "phone": "الهاتف",
-          "logoUrl": "رابط الشعار"
+          "logo": "شعار النادي"
         },
         "placeholders": {
           "name": "كايرو فيت · الزمالك",
           "address": "123 شارع التحرير، القاهرة",
-          "phone": "+20 10 0000 0000",
-          "logoUrl": "https://example.com/logo.png"
+          "phone": "+20 10 0000 0000"
         },
         "cancel": "إلغاء",
         "saving": "جارٍ الحفظ…",
         "saveChanges": "حفظ التغييرات",
-        "create": "إنشاء النادي"
+        "create": "إنشاء النادي",
+        "uploading": "جارٍ الرفع…",
+        "uploadError": "فشل الرفع. حاول مرة أخرى.",
+        "loading": "جارٍ التحميل…",
+        "tabs": {
+          "info": "المعلومات",
+          "subscription": "الاشتراك",
+          "billing": "الفواتير"
+        },
+        "subscription": {
+          "plan": "الخطة",
+          "price": "السعر",
+          "billingCycle": "دورة الفوترة",
+          "memberLimit": "حد الأعضاء",
+          "unlimited": "غير محدود",
+          "startedAt": "تاريخ البدء",
+          "currentPeriod": "الفترة الحالية",
+          "nextBilling": "الفاتورة القادمة",
+          "features": "المميزات",
+          "noSubscription": "لا يوجد اشتراك نشط."
+        },
+        "billing": {
+          "paidAt": "تم الدفع",
+          "noRecords": "لا توجد سجلات فوترة بعد."
+        }
       }
     }
   },

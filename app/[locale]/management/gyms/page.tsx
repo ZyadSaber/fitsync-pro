@@ -1,24 +1,16 @@
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-import Icon from "@/components/ui/Icon";
 import HeaderContent from "@/components/layout/Topbar";
 import UsageBar from "@/components/superadmin/UsageBar";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { getGyms, getActiveSubscriptionPlanOptions } from "@/services/management/gyms";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Ellipsis } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import GymsFilters from "@/components/management/gyms/GymsFilters";
 import GymsDialog from "@/components/management/gyms/GymsDialog";
+import GymRowActions from "@/components/management/gyms/GymRowActions";
 import getInitials from "@/lib/getInitials";
 import { Button } from "@/components/ui/button";
-import DeleteDialog from "@/components/shared/delete-dialog";
+import { Download } from "lucide-react";
 
 const STATUS_BADGE: Record<string, string> = {
   active: "active",
@@ -55,7 +47,6 @@ export default async function GymsPage({
     .filter((g) => !sq || g.name.toLowerCase().includes(sq.toLowerCase()))
     .filter((g) => !spPlan || g.plan === spPlan);
 
-  const planNameMap = Object.fromEntries(planOptions.map((p) => [p.key, p.label]));
   const totalMembers = gyms.reduce((s, g) => s + g.memberCount, 0);
 
   return (
@@ -65,10 +56,12 @@ export default async function GymsPage({
         subtitle={t("subtitle", { count: gyms.length, members: totalMembers.toLocaleString() })}
         actions={
           <>
-            <button className="fs-btn ghost">
-              <Icon name="filter" size={13} />
+            <Button
+              variant="ghost"
+            >
+              <Download size={13} />
               {t("actions.exportCsv")}
-            </button>
+            </Button>
             <GymsDialog />
           </>
         }
@@ -98,69 +91,55 @@ export default async function GymsPage({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((g) => {
-                const badge = STATUS_BADGE[g.status ?? ""] ?? "pending";
-                const statusLabel = t(`status.${g.status ?? "unknown"}` as "status.active" | "status.suspended" | "status.cancelled" | "status.unknown");
-                return (
-                  <TableRow key={g.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-[7px] bg-ink text-white flex items-center justify-center text-xs font-bold shrink-0">
-                          {getInitials(g.name)}
-                        </div>
-                        <div>
-                          <span className="font-semibold">{g.name}</span>
-                          <div className="text-[11px] text-muted mt-0.5 flex items-center gap-1.5">
-                            <span>{g.address}</span><span className="text-muted2">·</span>
-                            <span className="font-mono text-[10px]">{g.id}</span>
+              {
+                rows.map((g) => {
+                  const badge = STATUS_BADGE[g.status ?? ""] ?? "pending";
+                  const statusLabel = t(`status.${g.status ?? "unknown"}` as "status.active" | "status.suspended" | "status.cancelled" | "status.unknown");
+                  return (
+                    <TableRow key={g.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-9 h-9 rounded-[7px] bg-ink text-white flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden"
+                          >
+                            {
+                              g.logo_url
+                                ? <img src={g.logo_url} alt={g.name} className="w-full h-full object-cover" />
+                                : getInitials(g.name)
+                            }
+                          </div>
+                          <div>
+                            <span className="font-semibold">{g.name}</span>
+                            <div className="text-[11px] text-muted mt-0.5 flex items-center gap-1.5">
+                              <span>{g.address}</span>
+                              <span className="text-muted2">·</span>
+                              <div className="font-mono text-[10px]" dir="ltr">{g.phone}</div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{g.plan}</TableCell>
-                    <TableCell className="w-[180px]">
-                      <UsageBar used={g.memberCount} limit={0} compact />
-                    </TableCell>
-                    <TableCell className="tabular-nums font-semibold">
-                      {
-                        `${(g.planPriceEgp || 0).toLocaleString()} ${t("currency")}`
-                      }
-                    </TableCell>
-                    <TableCell>
-                      <span className={`fs-badge ${badge}`}><span className="dot" />{statusLabel}</span>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-xs" suppressHydrationWarning>{formatDistanceToNow(g.lastActivityAt || "", { addSuffix: true })}</TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            className="hover:bg-hairline2 h-7 w-7"
-                            variant="ghost"
-                            icon={Ellipsis}
-                          />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="start"
-                          className="border-hairline bg-white shadow-sm text-ink text-[13px]"
-                        >
-                          <DropdownMenuItem className="focus:bg-hairline2 focus:text-ink cursor-pointer">
-                            <GymsDialog gym={g} />
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator className="bg-[var(--hairline)]" />
-                          <DropdownMenuItem
-                            className="text-red-600 focus:bg-red-200 focus:text-red-800 cursor-pointer"
-                            onSelect={(e) => e.preventDefault()}
-                          >
-                            <DeleteDialog
-                              deleteText={t("actions.delete")}
-                            />
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+                      </TableCell>
+                      <TableCell>
+                        {g.plan}
+                      </TableCell>
+                      <TableCell className="w-[180px]">
+                        <UsageBar used={g.memberCount} limit={4} compact />
+                      </TableCell>
+                      <TableCell className="tabular-nums font-semibold">
+                        {
+                          `${(g.planPriceEgp || 0).toLocaleString()} ${t("currency")}`
+                        }
+                      </TableCell>
+                      <TableCell>
+                        <span className={`fs-badge ${badge}`}><span className="dot" />{statusLabel}</span>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-xs" suppressHydrationWarning>{formatDistanceToNow(g.lastActivityAt || "", { addSuffix: true })}</TableCell>
+                      <TableCell>
+                        <GymRowActions gym={g} />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              }
             </TableBody>
           </Table>
         </div>

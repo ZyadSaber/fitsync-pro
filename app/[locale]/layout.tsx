@@ -4,6 +4,7 @@ import { routing } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import { Toaster } from "@/components/ui/sonner";
+import QueryProvider from "@/components/providers/QueryProvider";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -38,10 +39,12 @@ export default async function LocaleLayout({
       </head>
       <body className="h-full" suppressHydrationWarning>
         <NextIntlClientProvider messages={messages} locale={locale}>
-          <AppShell locale={locale}>
-            {children}
-          </AppShell>
-          <Toaster />
+          <QueryProvider>
+            <AppShell locale={locale}>
+              {children}
+            </AppShell>
+            <Toaster />
+          </QueryProvider>
         </NextIntlClientProvider>
       </body>
     </html>

@@ -16,7 +16,7 @@
 
 ---
 
-## 👑 Super Admin — Platform Management
+## 👑 Management — Platform Management
 
 > Platform-level role that sits above all gyms and coaches. Only FitSync staff access this. Protected by a separate `super_admin` flag on `profiles`.
 
@@ -29,24 +29,23 @@
 
 ---
 
-### Super Admin Portal — `/superadmin`
+### Management Portal — `/management`
 
-- ⬜ 🧠 Middleware guard — redirect anyone without `is_super_admin` away from `/superadmin/*`
-- ⬜ 🧠 `/superadmin` — Platform dashboard: total gyms, total members, MRR (EGP), active today, churn this month
-- ⬜ 🧠 `/superadmin/gyms` — Gyms table: name, city, plan tier, member count, last activity, subscription status badge; search + filter by plan/status
-- ⬜ 🧠 `/superadmin/gyms/new` — Register a new gym: name, owner name, phone, city, assign platform plan, set trial end date
-- ⬜ 🧠 `/superadmin/gyms/[id]` — Gym detail: profile info, subscription history, member count over time, coach list, recent check-ins, activity log feed
-- ⬜ 🧠 `/superadmin/gyms/[id]/subscription` — Edit plan tier, override price, mark as suspended/cancelled, add manual note
-- ⬜ 🧠 `/superadmin/subscriptions` — All subscriptions table: gym, plan, price, next billing date, status; bulk filter by status
-- ⬜ 🧠 `/superadmin/activity` — Platform-wide activity log: who did what at which gym, filterable by gym / event type / date range
-- ⬜ 🧠 `/superadmin/coaches` — All independent online coaches: name, client count, last login, subscription status
-- ⬜ 🧠 `/superadmin/settings` — Platform config: plan tier definitions, pricing defaults, trial period length
+- ✅ 🧠 Middleware guard — redirect anyone without `is_super_admin` away from `/management/*`
+- ✅ 🧠 `/management` — Platform dashboard: total gyms, total members, MRR (EGP), active today, churn this month
+- ✅ 🧠 `/management/gyms` — Gyms table: name, address, plan tier, member count, MRR, last activity, subscription status badge; search + filter by plan/status
+- ✅ 🧠 `/management/gyms/new` — Create gym dialog (name, address, phone, logo URL) via `GymsDialog` embedded in the list page
+- ⬜ 🧠 `/management/gyms/[id]` — `GymsDialog` with tabs: **View** (subscription history, member count, coach list, recent check-ins, activity log) · **Edit** (name, address, phone, logo URL)
+- ⬜ 🧠 `/management/subscriptions` — All subscriptions table: gym, plan, price, next billing date, status; bulk filter by status
+- ⬜ 🧠 `/management/activity` — Platform-wide activity log: who did what at which gym, filterable by gym / event type / date range
+- ⬜ 🧠 `/management/coaches` — All independent online coaches: name, client count, last login, subscription status
+- ⬜ 🧠 `/management/settings` — Platform config: plan tier definitions, pricing defaults, trial period length
 
 ---
 
-### Super Admin Success Checklist
+### Management Success Checklist
 
-- ⬜ 🧠 Zero gym can see another gym's super admin data (RLS audit)
+- ⬜ 🧠 Zero gym can see another gym's management data (RLS audit)
 - ⬜ 👤 At least one FitSync staff account has `is_super_admin = true` in production
 - ⬜ 🤝 Subscription statuses sync with Paymob webhooks (Phase 3)
 

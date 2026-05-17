@@ -13,9 +13,14 @@ function Dialog({
 }
 
 function DialogTrigger({
+  className,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
-  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
+  return <DialogPrimitive.Trigger
+    className={cn("text-start", className)}
+    data-slot="dialog-trigger"
+    {...props}
+  />
 }
 
 function DialogPortal({
@@ -77,7 +82,12 @@ function DialogContent({
   )
 }
 
-function DialogHeader({ className, children, ...props }: React.ComponentProps<"div">) {
+function DialogHeader({
+  className,
+  children,
+  hideClose,
+  ...props
+}: React.ComponentProps<"div"> & { hideClose?: boolean }) {
   return (
     <div
       data-slot="dialog-header"
@@ -85,19 +95,21 @@ function DialogHeader({ className, children, ...props }: React.ComponentProps<"d
       {...props}
     >
       <div className="flex flex-col gap-1.5 min-w-0">{children}</div>
-      <DialogPrimitive.Close
-        data-slot="dialog-close"
-        className={cn(
-          "shrink-0 rounded-md p-1",
-          "text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--hairline2)]",
-          "transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent)]",
-          "disabled:pointer-events-none",
-          "[&_svg]:pointer-events-none [&_svg]:shrink-0"
-        )}
-      >
-        <X className="size-4" />
-        <span className="sr-only">Close</span>
-      </DialogPrimitive.Close>
+      {!hideClose && (
+        <DialogPrimitive.Close
+          data-slot="dialog-close"
+          className={cn(
+            "shrink-0 rounded-md p-1",
+            "text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--hairline2)]",
+            "transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent)]",
+            "disabled:pointer-events-none",
+            "[&_svg]:pointer-events-none [&_svg]:shrink-0"
+          )}
+        >
+          <X className="size-4" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+      )}
     </div>
   )
 }

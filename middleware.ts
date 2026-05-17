@@ -7,6 +7,7 @@ const handleI18nRouting = createIntlMiddleware(routing);
 
 const GYM_STAFF_ROUTES = ["/admin"];
 const COACH_ROUTES = ["/coach"];
+const MANAGEMENT_ROUTES = ["/management"];
 const AUTH_ROUTES = ["/", "/sign-in", "/sign-up"];
 
 // Default dashboard per user_type
@@ -101,8 +102,9 @@ export async function middleware(request: NextRequest) {
 
   const isGymRoute = isUnderAny(pathWithoutLocale, GYM_STAFF_ROUTES);
   const isCoachRoute = isUnderAny(pathWithoutLocale, COACH_ROUTES);
+  const isManagementRoute = isUnderAny(pathWithoutLocale, MANAGEMENT_ROUTES);
 
-  if (!isGymRoute && !isCoachRoute) {
+  if (!isGymRoute && !isCoachRoute && !isManagementRoute) {
     return handleI18nRouting(request);
   }
 
@@ -119,11 +121,15 @@ export async function middleware(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("user_type")
+    .select("user_type, is_super_admin")
     .eq("id", user.id)
     .single();
 
   const userType = profile?.user_type ?? "member";
+
+  if (isManagementRoute && !profile?.is_super_admin) {
+    return NextResponse.redirect(new URL(`/${locale}`, request.url));
+  }
 
   if (isGymRoute && userType !== "gym") {
     return NextResponse.redirect(new URL(`/${locale}`, request.url));

@@ -16,7 +16,10 @@
     "noResults": "No results.",
     "langToggle": "عربى",
     "delete": "Delete",
+    "deleting": "Deleting…",
     "deleteDesc": "Are you sure? This action cannot be undone.",
+    "deleteSuccess": "Deleted successfully.",
+    "deleteFailed": "Failed to delete. Please try again.",
     "cancel": "Cancel"
   },
   "nav": {
@@ -217,18 +220,41 @@
           "name": "Gym name",
           "address": "Address",
           "phone": "Phone",
-          "logoUrl": "Logo URL"
+          "logo": "Gym logo"
         },
         "placeholders": {
           "name": "Cairo Fit · Zamalek",
           "address": "123 Tahrir St, Cairo",
-          "phone": "+20 10 0000 0000",
-          "logoUrl": "https://example.com/logo.png"
+          "phone": "+20 10 0000 0000"
         },
         "cancel": "Cancel",
         "saving": "Saving…",
         "saveChanges": "Save changes",
-        "create": "Create gym"
+        "create": "Create gym",
+        "uploading": "Uploading…",
+        "uploadError": "Upload failed. Please try again.",
+        "loading": "Loading…",
+        "tabs": {
+          "info": "Info",
+          "subscription": "Subscription",
+          "billing": "Billing"
+        },
+        "subscription": {
+          "plan": "Plan",
+          "price": "Price",
+          "billingCycle": "Billing cycle",
+          "memberLimit": "Member limit",
+          "unlimited": "Unlimited",
+          "startedAt": "Started",
+          "currentPeriod": "Current period",
+          "nextBilling": "Next billing",
+          "features": "Features",
+          "noSubscription": "No active subscription."
+        },
+        "billing": {
+          "paidAt": "Paid",
+          "noRecords": "No billing records yet."
+        }
       }
     }
   },
