@@ -2,7 +2,7 @@ import MetricCard from "@/components/ui/MetricCard";
 import Icon from "@/components/ui/Icon";
 import HeaderContent from "@/components/layout/Topbar";
 import RevenueArea from "@/components/superadmin/RevenueArea";
-// import PlanBadge, { type Plan } from "@/components/superadmin/PlanBadge";
+import { type Plan } from "@/components/superadmin/PlanBadge";
 import { Button } from "@/components/ui/button";
 
 const MRR_SERIES = [180, 192, 205, 211, 224, 238, 247, 263, 278, 286, 294, 312];

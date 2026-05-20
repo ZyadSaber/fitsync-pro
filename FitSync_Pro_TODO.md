@@ -35,7 +35,7 @@
 - ✅ 🧠 `/management` — Platform dashboard: total gyms, total members, MRR (EGP), active today, churn this month
 - ✅ 🧠 `/management/gyms` — Gyms table: name, address, plan tier, member count, MRR, last activity, subscription status badge; search + filter by plan/status
 - ✅ 🧠 `/management/gyms/new` — Create gym dialog (name, address, phone, logo URL) via `GymsDialog` embedded in the list page
-- ⬜ 🧠 `/management/gyms/[id]` — `GymsDialog` with tabs: **View** (subscription history, member count, coach list, recent check-ins, activity log) · **Edit** (name, address, phone, logo URL)
+- ✅ 🧠 `GymsDialog` with tabs: **View** (subscription history, member count, coach list, recent check-ins, activity log) · **Edit** (name, address, phone, logo URL)
 - ⬜ 🧠 `/management/subscriptions` — All subscriptions table: gym, plan, price, next billing date, status; bulk filter by status
 - ⬜ 🧠 `/management/activity` — Platform-wide activity log: who did what at which gym, filterable by gym / event type / date range
 - ⬜ 🧠 `/management/coaches` — All independent online coaches: name, client count, last login, subscription status

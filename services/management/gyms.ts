@@ -14,7 +14,6 @@ import type { SelectOptions } from "@/types/ui";
 import { gymSchema, type GymFormData } from "@/validations/gymSchema";
 import extractMessage from "@/lib/extractMessage";
 
-export type { GymFormData, GymListItem, PlatformSubscriptionDetails, PlatformBillingRecord };
 
 // ---------------------------------------------------------------------------
 // Subscription plan catalog
@@ -46,7 +45,7 @@ export async function getGyms(): Promise<GymsResult> {
   try {
     const { data, error } = await supabase
       .from("gym_list")
-      .select("id, name, address, phone, logo_url, created_at, plan_name, price_egp, subscription_status, member_count, last_activity_at");
+      .select("id, name, address, phone, logo_url, created_at, plan_name, price_egp, subscription_status, member_count, last_activity_at, member_limit, plan_id");
 
     if (error) throw error;
 
@@ -54,15 +53,17 @@ export async function getGyms(): Promise<GymsResult> {
       data.map(item => ({
         id: item.id,
         name: item.name,
-        address: item.address ?? null,
-        phone: item.phone ?? null,
-        logo_url: item.logo_url ?? null,
+        address: item.address ?? "",
+        phone: item.phone ?? "",
+        logo_url: item.logo_url ?? "",
         joinedAt: item.created_at,
-        plan: item.plan_name ?? null,
+        plan: item.plan_name ?? "",
+        plan_id: item.plan_id ?? "",
         planPriceEgp: item.price_egp != null ? Number(item.price_egp) : ("" as ""),
-        status: item.subscription_status ?? null,
+        status: item.subscription_status ?? "unknown",
         memberCount: Number(item.member_count ?? 0),
-        lastActivityAt: item.last_activity_at ?? null,
+        lastActivityAt: item.last_activity_at ?? "",
+        member_limit: Number(item.member_limit ?? 0),
       }));
 
     return { data: computedData, error: null };

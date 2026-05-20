@@ -1,253 +1,201 @@
-import Icon from "@/components/ui/Icon";
+import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
+import { format } from "date-fns";
+import { Download } from "lucide-react";
 import HeaderContent from "@/components/layout/Topbar";
-import PlanBadge, { type Plan } from "@/components/superadmin/PlanBadge";
 import { Button } from "@/components/ui/button";
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
+import { getSubscriptionPlanStats, getPlatformBillingRecords } from "@/services/management/subscriptions";
+import { getGyms } from "@/services/management/gyms";
+import SubscriptionsFilters from "@/components/management/subscriptions/SubscriptionsFilters";
+import BillingRowActions from "@/components/management/subscriptions/BillingRowActions";
+import PlanDialog from "@/components/management/subscriptions/PlanDialog";
+import InvoiceDialog from "@/components/management/subscriptions/InvoiceDialog";
+import PlanCard from "@/components/management/subscriptions/PlanCard";
+import PlanTypeTabs from "@/components/management/subscriptions/PlanTypeTabs";
+import type { SelectOptions } from "@/types/ui";
+import type { SubscriptionPlanType } from "@/types/subscriptions";
+import isArrayHasData from "@/lib/isArrayHasData";
 
-const PLANS = [
-  {
-    name: "Trial"      as Plan,
-    priceMo: 0,
-    cap: 100,
-    count: 11,
-    color: "#D97706",
-    features: ["14 days", "No card needed", "All Pro features"],
-    featured: false,
-  },
-  {
-    name: "Starter"    as Plan,
-    priceMo: 1800,
-    cap: 200,
-    count: 187,
-    color: "#475569",
-    features: ["200 members", "5 GB storage", "Email support"],
-    featured: false,
-  },
-  {
-    name: "Pro"        as Plan,
-    priceMo: 4500,
-    cap: 1000,
-    count: 218,
-    color: "#2D5BFF",
-    features: ["1,000 members", "100 GB storage", "WhatsApp tier", "Priority support"],
-    featured: true,
-  },
-  {
-    name: "Elite"      as Plan,
-    priceMo: 9800,
-    cap: 3000,
-    count: 47,
-    color: "#0B0F1A",
-    features: ["3,000 members", "500 GB storage", "Multi-branch", "Dedicated CSM"],
-    featured: false,
-  },
-  {
-    name: "Custom"     as Plan,
-    priceMo: null,
-    cap: 6000,
-    count: 8,
-    color: "#6D28D9",
-    features: ["Negotiated cap", "SSO + API access", "SLA 99.95%"],
-    featured: false,
-  },
-  {
-    name: "Coach Solo" as Plan,
-    priceMo: 1200,
-    cap: 50,
-    count: 94,
-    color: "#059669",
-    features: ["50 clients", "Workout builder", "Nutrition plans"],
-    featured: false,
-  },
-  {
-    name: "Coach Pro"  as Plan,
-    priceMo: 2400,
-    cap: 200,
-    count: 61,
-    color: "#047857",
-    features: ["200 clients", "All Solo features", "Analytics", "Priority support"],
-    featured: false,
-  },
-];
-
-const INVOICES = [
-  { id: "INV-26-04812", tenant: "Cairo Fit",          amount: 4500,  status: "paid",     due: "01 May 2026", paid: "01 May 2026" },
-  { id: "INV-26-04813", tenant: "Apex Fitness",       amount: 9800,  status: "paid",     due: "01 May 2026", paid: "01 May 2026" },
-  { id: "INV-26-04814", tenant: "Iron House",         amount: 4500,  status: "past_due", due: "04 May 2026", paid: "—"           },
-  { id: "INV-26-04815", tenant: "Olympia Sports Hub", amount: 22000, status: "paid",     due: "02 May 2026", paid: "02 May 2026" },
-  { id: "INV-26-04816", tenant: "Salma El-Ghazaly",   amount: 1200,  status: "paid",     due: "03 May 2026", paid: "03 May 2026" },
-  { id: "INV-26-04817", tenant: "CoreLab",            amount: 4500,  status: "retrying", due: "07 May 2026", paid: "—"           },
-  { id: "INV-26-04818", tenant: "Karim Khalil",       amount: 2400,  status: "paid",     due: "04 May 2026", paid: "04 May 2026" },
-  { id: "INV-26-04819", tenant: "FlexFit",            amount: 9800,  status: "open",     due: "12 May 2026", paid: "—"           },
-];
-
-const INVOICE_STATUS: Record<string, { badge: string; label: string }> = {
-  paid:     { badge: "active",  label: "Paid"     },
-  past_due: { badge: "expired", label: "Past due" },
-  retrying: { badge: "pending", label: "Retrying" },
-  open:     { badge: "frozen",  label: "Open"     },
+const BILLING_BADGE: Record<string, { badge: string; label: string }> = {
+  paid: { badge: "active", label: "Paid" },
+  pending: { badge: "frozen", label: "Open" },
+  failed: { badge: "expired", label: "Past due" },
+  refunded: { badge: "pending", label: "Refunded" },
 };
 
-export default function SubscriptionsPage() {
+const fmt = (iso: string | null) =>
+  iso ? format(new Date(iso), "d MMM yyyy") : "—";
+
+const invoiceId = (id: string, createdAt: string) =>
+  `INV-${new Date(createdAt).getFullYear().toString().slice(-2)}-${id.slice(0, 5).toUpperCase()}`;
+
+export default async function SubscriptionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; planType?: string }>;
+}) {
+  const [t, { status: sf, planType: pt }, plansResult, billingResult, gymsResult] = await Promise.all([
+    getTranslations("management.subscriptions"),
+    searchParams,
+    getSubscriptionPlanStats(),
+    getPlatformBillingRecords(),
+    getGyms(),
+  ]);
+
+  if (plansResult.error && billingResult.error) {
+    return (
+      <div className="p-7">
+        <p className="text-sm font-mono text-red-600 bg-red-50 border border-red-200 rounded-lg p-4 whitespace-pre-wrap">
+          {plansResult.error}
+        </p>
+      </div>
+    );
+  }
+
+  const validTypes: SubscriptionPlanType[] = ["gym", "online_coach", "both"];
+  const activePlanType = validTypes.includes(pt as SubscriptionPlanType) ? (pt as SubscriptionPlanType) : null;
+  const plans = activePlanType
+    ? plansResult.data.filter((p) => p.type === activePlanType)
+    : plansResult.data;
+  const allRecords = billingResult.data;
+  const rows = allRecords.filter((r) => !sf || sf === "all" || r.status === sf);
+
+  const pastDueCount = allRecords.filter((r) => r.status === "failed").length;
+  const pendingCount = allRecords.filter((r) => r.status === "pending").length;
+
+  const gymOptions: SelectOptions[] = (gymsResult.data ?? []).map((g) => ({
+    key: g.id,
+    label: g.name,
+  }));
+
+  const statusOptions: SelectOptions[] = [
+    { key: "paid", label: t("status.paid") },
+    { key: "pending", label: t("status.pending") },
+    { key: "failed", label: t("status.failed") },
+    { key: "refunded", label: t("status.refunded") },
+  ];
+
   return (
     <>
       <HeaderContent
-        title="Subscriptions & billing"
-        subtitle="Plan catalog, MRR per plan, and recent invoices"
+        title={t("title")}
+        subtitle={t("subtitle")}
         actions={
           <>
-            <button className="fs-btn ghost">Download invoices</button>
-            <Button variant="accent">
-              <Icon name="plus" size={13} color="#fff" />
-              New plan
+            <Button variant="ghost">
+              <Download size={13} />
+              {t("actions.downloadInvoices")}
             </Button>
+            <PlanDialog />
           </>
         }
       />
 
-      <div style={{ padding: 28, display: "flex", flexDirection: "column", gap: 20 }}>
+      <div className="p-7 flex flex-col gap-5">
 
-        {/* Plan tiers */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 14 }}>
-          {PLANS.map((p) => (
-            <div
-              key={p.name}
-              className="fs-card"
-              style={{
-                padding: 16,
-                position: "relative",
-                borderColor: p.featured ? p.color : "var(--hairline)",
-                borderWidth: p.featured ? 1.5 : 1,
-                display: "flex",
-                flexDirection: "column",
-                gap: 12,
-              }}
-            >
-              {p.featured && (
-                <span
-                  style={{
-                    position: "absolute",
-                    top: -8,
-                    left: 12,
-                    background: p.color,
-                    color: "#fff",
-                    fontSize: 9,
-                    fontWeight: 700,
-                    padding: "2px 6px",
-                    borderRadius: 3,
-                    letterSpacing: "0.08em",
-                  }}
-                >
-                  MOST POPULAR
-                </span>
-              )}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <PlanBadge plan={p.name} />
-                <span className="fs-mono" style={{ fontSize: 10, color: "var(--muted)" }}>
-                  {p.count} tenants
-                </span>
-              </div>
-              <div>
-                <div className="fs-num" style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em" }}>
-                  {p.priceMo === null
-                    ? "Contact"
-                    : p.priceMo === 0
-                    ? "Free"
-                    : (
-                      <>
-                        {p.priceMo.toLocaleString()}{" "}
-                        <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 500 }}>EGP/mo</span>
-                      </>
-                    )}
-                </div>
-                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
-                  up to {p.cap.toLocaleString()} members
-                </div>
-              </div>
-              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 5, fontSize: 11 }}>
-                {p.features.map((f) => (
-                  <li key={f} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <Icon name="check" size={11} color={p.color} stroke={2.4} />
-                    {f}
-                  </li>
+        {/* Plan tier cards */}
+        {isArrayHasData(plansResult.data) && (
+          <div className="flex flex-col gap-3">
+            <Suspense>
+              <PlanTypeTabs />
+            </Suspense>
+            {isArrayHasData(plans) ? (
+              <div
+                className="grid gap-3.5"
+                style={{ gridTemplateColumns: `repeat(7, 1fr)` }}
+              >
+                {plans.map((p) => (
+                  <PlanCard key={p.id} plan={p} t={t} />
                 ))}
-              </ul>
-              <div style={{ borderTop: "1px solid var(--hairline2)", paddingTop: 10, marginTop: "auto" }}>
-                <div style={{ fontSize: 10, color: "var(--muted)", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                  MRR
-                </div>
-                <div className="fs-num" style={{ fontSize: 14, fontWeight: 700, marginTop: 2 }}>
-                  {(p.count * (p.priceMo ?? 1800)).toLocaleString()}{" "}
-                  <span style={{ fontSize: 10, color: "var(--muted)", fontWeight: 500 }}>EGP</span>
-                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ) : (
+              <p className="text-sm text-muted py-4">{t("plans.noResults")}</p>
+            )}
+          </div>
+        )}
 
         {/* Invoices */}
-        <div className="fs-card" style={{ padding: 0, overflow: "hidden" }}>
-          <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--hairline)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div className="fs-card p-0 overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-[var(--hairline)] flex items-center justify-between gap-3">
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600 }}>Recent invoices</div>
-              <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
-                May 2026 billing cycle · 8 of 460 shown
+              <div className="text-sm font-semibold">{t("invoices.title")}</div>
+              <div className="text-[11px] text-muted mt-0.5">
+                {t("invoices.subtitle", {
+                  cycle: format(new Date(), "MMMM yyyy"),
+                  shown: rows.length,
+                  total: allRecords.length,
+                })}
               </div>
             </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button className="fs-btn ghost sm">All</button>
-              <button className="fs-btn ghost sm" style={{ color: "var(--red)", borderColor: "var(--red)" }}>
-                Past due · 1
-              </button>
-              <button className="fs-btn ghost sm">Retrying · 1</button>
+            <div className="flex gap-2 items-center">
+              <Suspense>
+                <SubscriptionsFilters statusOptions={statusOptions} />
+              </Suspense>
+              {pastDueCount > 0 && (
+                <span className="fs-badge expired">{t("invoices.pastDue")} · {pastDueCount}</span>
+              )}
+              {pendingCount > 0 && (
+                <span className="fs-badge frozen">{t("invoices.open")} · {pendingCount}</span>
+              )}
+              <InvoiceDialog gyms={gymOptions} />
             </div>
           </div>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th className="fs-th">Invoice</th>
-                <th className="fs-th">Tenant</th>
-                <th className="fs-th">Amount</th>
-                <th className="fs-th">Status</th>
-                <th className="fs-th">Due</th>
-                <th className="fs-th">Paid</th>
-                <th className="fs-th" style={{ width: 48 }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {INVOICES.map((inv) => {
-                const st = INVOICE_STATUS[inv.status];
+
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t("invoices.invoice")}</TableHead>
+                <TableHead>{t("invoices.tenant")}</TableHead>
+                <TableHead>{t("invoices.amount")}</TableHead>
+                <TableHead>{t("invoices.status")}</TableHead>
+                <TableHead>{t("invoices.due")}</TableHead>
+                <TableHead>{t("invoices.paid")}</TableHead>
+                <TableHead className="w-12" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((inv) => {
+                const st = BILLING_BADGE[inv.status] ?? { badge: "pending", label: inv.status };
                 return (
-                  <tr key={inv.id} className="fs-tr">
-                    <td className="fs-td fs-mono" style={{ fontSize: 12 }}>
-                      {inv.id}
-                    </td>
-                    <td className="fs-td">
-                      <span style={{ fontWeight: 600 }}>{inv.tenant}</span>
-                    </td>
-                    <td className="fs-td fs-num" style={{ fontWeight: 600 }}>
-                      {inv.amount.toLocaleString()}{" "}
-                      <span style={{ color: "var(--muted)", fontSize: 10, fontWeight: 400 }}>EGP</span>
-                    </td>
-                    <td className="fs-td">
+                  <TableRow key={inv.id}>
+                    <TableCell className="fs-mono text-xs">
+                      {invoiceId(inv.id, inv.created_at)}
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-semibold">{inv.gym_name}</span>
+                    </TableCell>
+                    <TableCell className="fs-num font-semibold">
+                      {inv.amount_egp.toLocaleString()}{" "}
+                      <span className="text-muted text-[10px] font-normal">{t("currency")}</span>
+                    </TableCell>
+                    <TableCell>
                       <span className={`fs-badge ${st.badge}`}>
                         <span className="dot" />
-                        {st.label}
+                        {t(`status.${inv.status}` as "status.paid" | "status.pending" | "status.failed" | "status.refunded")}
                       </span>
-                    </td>
-                    <td className="fs-td" style={{ color: "var(--muted)", fontSize: 12 }}>
-                      {inv.due}
-                    </td>
-                    <td className="fs-td" style={{ color: "var(--muted)", fontSize: 12 }}>
-                      {inv.paid}
-                    </td>
-                    <td className="fs-td">
-                      <Icon name="more" size={16} color="var(--muted)" />
-                    </td>
-                  </tr>
+                    </TableCell>
+                    <TableCell className="text-muted text-xs">
+                      {fmt(inv.next_billing_at)}
+                    </TableCell>
+                    <TableCell className="text-muted text-xs">
+                      {fmt(inv.paid_at)}
+                    </TableCell>
+                    <TableCell>
+                      <BillingRowActions record={inv} gyms={gymOptions} />
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+              {rows.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-10 text-sm text-muted">
+                    No billing records found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
       </div>
     </>

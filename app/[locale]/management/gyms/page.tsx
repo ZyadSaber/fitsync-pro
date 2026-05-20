@@ -122,7 +122,10 @@ export default async function GymsPage({
                         {g.plan}
                       </TableCell>
                       <TableCell className="w-[180px]">
-                        <UsageBar used={g.memberCount} limit={4} compact />
+                        {g.member_limit != null
+                          ? <UsageBar used={g.memberCount} limit={+g.member_limit} />
+                          : <span className="text-xs text-muted-foreground">—</span>
+                        }
                       </TableCell>
                       <TableCell className="tabular-nums font-semibold">
                         {
@@ -132,7 +135,7 @@ export default async function GymsPage({
                       <TableCell>
                         <span className={`fs-badge ${badge}`}><span className="dot" />{statusLabel}</span>
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-xs" suppressHydrationWarning>{formatDistanceToNow(g.lastActivityAt || "", { addSuffix: true })}</TableCell>
+                      <TableCell className="text-muted-foreground text-xs" suppressHydrationWarning>{g.lastActivityAt ? formatDistanceToNow(g.lastActivityAt, { addSuffix: true }) : "-"}</TableCell>
                       <TableCell>
                         <GymRowActions gym={g} />
                       </TableCell>

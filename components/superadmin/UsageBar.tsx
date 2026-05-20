@@ -1,9 +1,11 @@
+import { Progress } from "@/components/ui/progress";
+
 export default function UsageBar({
   used,
   limit,
   height = 6,
   showLabel = true,
-  compact = false,
+  compact,
 }: {
   used: number;
   limit: number;
@@ -11,46 +13,43 @@ export default function UsageBar({
   showLabel?: boolean;
   compact?: boolean;
 }) {
-  const pct = Math.min(100, Math.round((used / limit) * 100));
-  const color =
-    pct >= 95 ? "var(--red)" : pct >= 80 ? "var(--amber)" : "var(--accent)";
+  const pct = limit === 0 ? 0 : Math.min(100, Math.round((used / limit) * 100));
+
+  const indicatorColor =
+    pct >= 95 ? "bg-red-600" : pct >= 80 ? "bg-amber-600" : "bg-[var(--accent)]";
+
+  const labelColor =
+    pct >= 95
+      ? "text-red-600"
+      : pct >= 80
+      ? "text-amber-600"
+      : "text-[var(--accent)]";
+
+  const effectiveShowLabel = showLabel && !compact;
 
   return (
-    <div style={{ width: "100%" }}>
-      {showLabel && (
-        <div
-          className="fs-mono"
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: compact ? 10 : 11,
-            marginBottom: 4,
-            color: "var(--muted)",
-          }}
-        >
-          <span style={{ color: pct >= 80 ? color : "var(--ink)", fontWeight: 600 }}>
-            {used.toLocaleString()} / {limit.toLocaleString()}
+    <div className="w-full space-y-1">
+      {effectiveShowLabel && (
+        <div className="fs-mono flex items-center justify-between text-[11px]">
+          <span
+            className={`font-semibold ${pct >= 80 ? labelColor : "text-[var(--ink)]"}`}
+          >
+            {used.toLocaleString()}
+            <span className="text-[var(--muted)] font-normal mx-0.5">/</span>
+            {limit.toLocaleString()}
           </span>
-          <span style={{ color, fontWeight: 600 }}>{pct}%</span>
+          <span className={`font-semibold tabular-nums ${labelColor}`}>
+            {pct}%
+          </span>
         </div>
       )}
-      <div
-        style={{
-          height,
-          background: "var(--hairline2)",
-          borderRadius: 999,
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            height: "100%",
-            width: `${pct}%`,
-            background: color,
-            borderRadius: 999,
-          }}
-        />
-      </div>
+
+      <Progress
+        value={pct}
+        className="bg-[var(--hairline2)]"
+        indicatorClassName={indicatorColor}
+        style={{ height }}
+      />
     </div>
   );
 }

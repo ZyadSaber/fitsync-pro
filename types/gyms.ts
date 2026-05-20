@@ -33,14 +33,16 @@ export interface GymListItem {
   id: string;
   name: string;
   address: string | "";
-  phone: string | null;
-  logo_url: string | null;
+  phone: string | "";
+  logo_url: string | "";
   joinedAt: string;
   plan: GymPlan | "";
   planPriceEgp: number | "";
   status: GymStatus | "";
   memberCount: number;
   lastActivityAt: string | "";
+  member_limit: number | "";
+  plan_id: string | "";
 }
 
 export type BillingRecordStatus = "paid" | "pending" | "failed" | "refunded";

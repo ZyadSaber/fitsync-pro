@@ -257,6 +257,101 @@
           "noRecords": "لا توجد سجلات فوترة بعد."
         }
       }
+    },
+    "subscriptions": {
+      "title": "الاشتراكات والفواتير",
+      "subtitle": "كتالوج الخطط، الإيراد الشهري لكل خطة، والفواتير الأخيرة",
+      "currency": "جنيه",
+      "actions": {
+        "downloadInvoices": "تنزيل الفواتير",
+        "newPlan": "خطة جديدة"
+      },
+      "plans": {
+        "tenants": "{count} مستأجر",
+        "mrr": "الإيراد الشهري",
+        "mostPopular": "الأكثر شيوعاً",
+        "free": "مجاني",
+        "contact": "تواصل معنا",
+        "perMonth": "جنيه/شهر",
+        "upTo": "حتى {count} عضو",
+        "noResults": "لا توجد خطط تطابق هذا الفلتر.",
+        "type": {
+          "all": "الكل",
+          "gym": "الجيم",
+          "online_coach": "مدرب",
+          "both": "كلاهما"
+        }
+      },
+      "invoices": {
+        "title": "الفواتير الأخيرة",
+        "subtitle": "دورة فوترة {cycle} · {shown} من أصل {total}",
+        "invoice": "فاتورة",
+        "tenant": "المستأجر",
+        "amount": "المبلغ",
+        "status": "الحالة",
+        "due": "تاريخ الاستحقاق",
+        "paid": "تاريخ الدفع",
+        "all": "الكل",
+        "pastDue": "متأخرة",
+        "open": "مفتوحة"
+      },
+      "status": {
+        "paid": "مدفوعة",
+        "pending": "مفتوحة",
+        "failed": "متأخرة",
+        "refunded": "مستردة"
+      },
+      "dialog": {
+        "titleNew": "خطة جديدة",
+        "titleEdit": "تعديل الخطة",
+        "editBtn": "تعديل الخطة",
+        "fields": {
+          "name": "اسم الخطة",
+          "namePlaceholder": "برو",
+          "slug": "المعرّف",
+          "slugPlaceholder": "pro",
+          "description": "الوصف",
+          "descriptionPlaceholder": "منصة متكاملة للأندية المتنامية",
+          "type": "نوع الخطة",
+          "billingCycle": "دورة الفوترة",
+          "priceLabel": "السعر (جنيه / دورة)",
+          "pricePlaceholder": "4500",
+          "memberLimit": "حد الأعضاء",
+          "memberLimitPlaceholder": "1000",
+          "duration": "المدة (أيام)",
+          "durationPlaceholder": "30",
+          "features": "المميزات (واحدة في كل سطر)",
+          "featuresPlaceholder": "1,000 عضو\n100 جيجا تخزين\nدعم أولوية"
+        },
+        "sections": {
+          "pricing": "التسعير",
+          "limits": "الحدود"
+        },
+        "toggles": {
+          "contactPricing": "تسعير بالتواصل",
+          "unlimitedMembers": "أعضاء غير محدودين",
+          "activeLabel": "نشط (مرئي للعملاء)"
+        },
+        "billing": {
+          "monthly": "شهري",
+          "yearly": "سنوي"
+        },
+        "types": {
+          "gym": "نادٍ",
+          "online_coach": "مدرب أونلاين",
+          "both": "كلاهما"
+        },
+        "actions": {
+          "cancel": "إلغاء",
+          "saving": "جارٍ الحفظ…",
+          "saveChanges": "حفظ التغييرات",
+          "createPlan": "إنشاء الخطة"
+        },
+        "toast": {
+          "created": "تم إنشاء الخطة",
+          "updated": "تم تحديث الخطة"
+        }
+      }
     }
   },
   "index": {

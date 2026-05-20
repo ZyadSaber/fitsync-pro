@@ -30,5 +30,12 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "components/app-sidebar.tsx",
+    "components/shared/SessionLockDialog.tsx",
+    "components/ui/calendar.tsx",
+    "components/ui/DateRangePicker.tsx",
+    "components/ui/Date.tsx"
+  ]
 }

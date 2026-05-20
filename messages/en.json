@@ -256,6 +256,101 @@
           "noRecords": "No billing records yet."
         }
       }
+    },
+    "subscriptions": {
+      "title": "Subscriptions & billing",
+      "subtitle": "Plan catalog, MRR per plan, and recent invoices",
+      "currency": "EGP",
+      "actions": {
+        "downloadInvoices": "Download invoices",
+        "newPlan": "New plan"
+      },
+      "plans": {
+        "tenants": "{count} tenants",
+        "mrr": "MRR",
+        "mostPopular": "MOST POPULAR",
+        "free": "Free",
+        "contact": "Contact",
+        "perMonth": "EGP/mo",
+        "upTo": "up to {count} members",
+        "noResults": "No plans match this filter.",
+        "type": {
+          "all": "All",
+          "gym": "Gym",
+          "online_coach": "Coach",
+          "both": "Both"
+        }
+      },
+      "invoices": {
+        "title": "Recent invoices",
+        "subtitle": "{cycle} billing cycle · {shown} of {total} shown",
+        "invoice": "Invoice",
+        "tenant": "Tenant",
+        "amount": "Amount",
+        "status": "Status",
+        "due": "Due",
+        "paid": "Paid",
+        "all": "All",
+        "pastDue": "Past due",
+        "open": "Open"
+      },
+      "status": {
+        "paid": "Paid",
+        "pending": "Open",
+        "failed": "Past due",
+        "refunded": "Refunded"
+      },
+      "dialog": {
+        "titleNew": "New plan",
+        "titleEdit": "Edit plan",
+        "editBtn": "Edit plan",
+        "fields": {
+          "name": "Plan name",
+          "namePlaceholder": "Pro",
+          "slug": "Slug",
+          "slugPlaceholder": "pro",
+          "description": "Description",
+          "descriptionPlaceholder": "Full platform for growing gyms",
+          "type": "Plan type",
+          "billingCycle": "Billing cycle",
+          "priceLabel": "Price (EGP / cycle)",
+          "pricePlaceholder": "4500",
+          "memberLimit": "Member limit",
+          "memberLimitPlaceholder": "1000",
+          "duration": "Duration (days)",
+          "durationPlaceholder": "30",
+          "features": "Features (one per line)",
+          "featuresPlaceholder": "1,000 members\n100 GB storage\nPriority support"
+        },
+        "sections": {
+          "pricing": "Pricing",
+          "limits": "Limits"
+        },
+        "toggles": {
+          "contactPricing": "Contact pricing",
+          "unlimitedMembers": "Unlimited members",
+          "activeLabel": "Active (visible to customers)"
+        },
+        "billing": {
+          "monthly": "Monthly",
+          "yearly": "Yearly"
+        },
+        "types": {
+          "gym": "Gym",
+          "online_coach": "Online Coach",
+          "both": "Both"
+        },
+        "actions": {
+          "cancel": "Cancel",
+          "saving": "Saving…",
+          "saveChanges": "Save changes",
+          "createPlan": "Create plan"
+        },
+        "toast": {
+          "created": "Plan created",
+          "updated": "Plan updated"
+        }
+      }
     }
   },
   "index": {
