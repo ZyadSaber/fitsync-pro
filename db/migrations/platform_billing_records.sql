@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS platform_billing_records (
   status           TEXT        NOT NULL DEFAULT 'pending'
                                CHECK (status IN ('paid', 'pending', 'failed', 'refunded')),
   paid_at          TIMESTAMPTZ,
-  notes            TEXT,
+  notes            TEXT DEFAULT '',
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
 
   CONSTRAINT chk_period_end_after_start CHECK (period_end > period_start),

@@ -34,14 +34,19 @@ export default function PlanCard({ plan, t }: { plan: SubscriptionPlanStats; t: 
                 </>
               )}
         </div>
-        {plan.member_limit != null && (
-          <div className="text-[11px] text-muted mt-0.5">
-            {t("plans.upTo", { count: plan.member_limit.toLocaleString() })}
-          </div>
-        )}
       </div>
 
       <ul className="m-0 p-0 list-none flex flex-col gap-1 text-[11px]">
+        <li className="flex items-center gap-1.5">
+          <Icon name="check" size={11} color={color} stroke={2.4} />
+          {plan.member_limit === null
+            ? t("plans.unlimited")
+            : t("plans.members", { count: plan.member_limit.toLocaleString() })}
+        </li>
+        <li className="flex items-center gap-1.5">
+          <Icon name="check" size={11} color={color} stroke={2.4} />
+          {t("plans.days", { count: plan.duration_days })}
+        </li>
         {plan.features.map((f) => (
           <li key={f} className="flex items-center gap-1.5">
             <Icon name="check" size={11} color={color} stroke={2.4} />

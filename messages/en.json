@@ -104,7 +104,8 @@
       "clientPlan": "Hypertrophy 12W · Week 4",
       "copyright": "© 2026 FitSync Pro",
       "privacy": "Privacy",
-      "terms": "Terms"    },
+      "terms": "Terms"
+    },
     "login": {
       "newHere": "New here?",
       "createAccount": "Create an account →",
@@ -273,6 +274,9 @@
         "contact": "Contact",
         "perMonth": "EGP/mo",
         "upTo": "up to {count} members",
+        "members": "{count} members",
+        "unlimited": "Unlimited",
+        "days": "{count} days",
         "noResults": "No plans match this filter.",
         "type": {
           "all": "All",
@@ -341,6 +345,7 @@
           "both": "Both"
         },
         "actions": {
+          "add": "Add",
           "cancel": "Cancel",
           "saving": "Saving…",
           "saveChanges": "Save changes",
@@ -350,6 +355,90 @@
           "created": "Plan created",
           "updated": "Plan updated"
         }
+      }
+    },
+    "coaches": {
+      "title": "Online coaches",
+      "subtitle": "{count} coaches · {clients} active clients",
+      "actions": {
+        "exportCsv": "Export CSV",
+        "edit": "Edit",
+        "delete": "Delete",
+        "addCoach": "Add coach"
+      },
+      "table": {
+        "coach": "Coach",
+        "plan": "Plan",
+        "clients": "Clients",
+        "joined": "Joined"
+      },
+      "billing": {
+        "active": "Active",
+        "suspended": "Suspended",
+        "cancelled": "Cancelled",
+        "none": "No plan"
+      },
+      "kpis": {
+        "total": "Total coaches",
+        "totalSub": "on the platform",
+        "activeBilling": "Active billing",
+        "activeBillingSub": "paying coaches",
+        "clients": "Total clients",
+        "clientsSub": "across all coaches"
+      },
+      "empty": "No coaches found",
+      "dialog": {
+        "titleEdit": "Edit coach",
+        "fields": {
+          "fullName": "Full name",
+          "phone": "Phone",
+          "bio": "Bio",
+          "publicSlug": "Profile slug",
+          "specialties": "Specialties",
+          "email": "Email"
+        },
+        "placeholders": {
+          "fullName": "Coach name",
+          "phone": "+20 10 0000 0000",
+          "bio": "A short bio about the coach…",
+          "publicSlug": "coach-ahmed",
+          "specialty": "e.g. Strength training",
+          "email": "coach@example.com",
+          "searchUsers": "Search by name or phone…"
+        },
+        "toggles": {
+          "onlineCoach": "Online coach (visible on public directory)"
+        },
+        "actions": {
+          "add": "Add",
+          "cancel": "Cancel",
+          "saving": "Saving…",
+          "saveChanges": "Save changes",
+          "create": "Create coach",
+          "promote": "Make coach"
+        },
+        "toast": {
+          "updated": "Coach updated",
+          "created": "Coach created",
+          "promoted": "User promoted to online coach"
+        },
+        "titleAdd": "Add coach",
+        "tabs": {
+          "existing": "Existing users",
+          "new": "New user"
+        },
+        "noUsersFound": "No users match your search",
+        "noUsersAvailable": "All platform users are already coaches"
+      },
+      "filters": {
+        "billingStatus": "Billing status",
+        "active": "Active billing",
+        "inactive": "Inactive",
+        "all": "All"
+      },
+      "userType": {
+        "member": "Member",
+        "gym": "Gym member"
       }
     }
   },

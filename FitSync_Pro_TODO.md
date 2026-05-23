@@ -182,8 +182,9 @@
 - ⬜ 🧠 `/coach/online/checkins` — Chronological feed of all client daily check-in logs
 - ⬜ 🧠 `/coach/online/photos/[clientId]` — Side-by-side weekly front/side/back photo comparison
 - ⬜ 🧠 `/coach/clients/[id]/logs` — Coach views actual weights vs prescribed
-- ⬜ 🧠 `/coach/invites` — Generate, copy, and track invite links
-- ⬜ 🧠 `/join/coach/[token]` — Client lands here → signs up → auto-joins coach
+- ⬜ 🧠 `/coach/invites` — Generate, copy, and track invite links (token-based, single-use, expiry enforced)
+- ⬜ 🧠 `/join/[token]` — Client clicks invite link → auto-joins and is linked to that coach
+- ⬜ 🧠 `/management/coaches` — Invite new coach by email (admin creates account, coach sets password via confirmation email)
 - ⬜ 🧠 Coach portal: two tabs — **Gym clients** / **Online clients** (same account)
 
 ---

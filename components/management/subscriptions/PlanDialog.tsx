@@ -1,6 +1,7 @@
 "use client";
 
 import { z } from "zod";
+import { useState, useRef } from "react";
 import { useTranslations } from "next-intl";
 import {
   Dialog,
@@ -14,6 +15,7 @@ import Textarea from "@/components/ui/textarea";
 import { SelectField } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import Icon from "@/components/ui/Icon";
+import { Plus, Trash2, ChevronUp, ChevronDown, GripVertical } from "lucide-react";
 import useFormManager from "@/hook/useFormManager";
 import useVisibility from "@/hook/useVisibility";
 import { planFormSchema, type PlanFormData } from "@/validations/subscriptionSchema";
@@ -29,6 +31,8 @@ export default function PlanDialog({ plan }: Props) {
   const t = useTranslations("management.subscriptions.dialog");
   const isEdit = !!plan;
   const { visible: open, handleOpen, handleClose, handleStateChange } = useVisibility();
+  const [newFeature, setNewFeature] = useState("");
+  const addInputRef = useRef<HTMLInputElement>(null);
 
   const BILLING_OPTIONS = [
     { key: "monthly", label: t("billing.monthly") },
@@ -44,17 +48,16 @@ export default function PlanDialog({ plan }: Props) {
   const { formData, handleChange, handleFieldChange, handleToggle, errors, handleSubmit, loading } =
     useFormManager<PlanFormData>({
       initialData: {
-        name: "",
-        slug: "",
-        description: "",
-        price_egp: "",
-        billing_cycle: "monthly",
-        duration_days: "30",
-        member_limit: "",
-        type: "gym",
-        features: "",
-        is_active: true,
-        ...(plan as unknown as Partial<PlanFormData>),
+        name: plan?.name ?? "",
+        slug: plan?.slug ?? "",
+        description: plan?.description ?? "",
+        price_egp: String(plan?.price_egp || ""),
+        billing_cycle: plan?.billing_cycle ?? "monthly",
+        duration_days: String(plan?.duration_days || "30"),
+        member_limit: String(plan?.member_limit || ""),
+        type: plan?.type ?? "gym",
+        features: plan?.features ?? [],
+        is_active: plan?.is_active ?? true,
       },
       schema: planFormSchema as z.ZodSchema<PlanFormData>,
       onSubmit: async (data, reset) => {
@@ -70,6 +73,30 @@ export default function PlanDialog({ plan }: Props) {
 
   const isContactPricing = formData.price_egp === "";
   const isUnlimited = formData.member_limit === "";
+
+  const features = (formData.features as string[]) ?? [];
+
+  const setFeatures = (next: string[]) =>
+    handleFieldChange({ name: "features", value: next });
+
+  const addFeature = () => {
+    const trimmed = newFeature.trim();
+    if (!trimmed) return;
+    setFeatures([...features, trimmed]);
+    setNewFeature("");
+    addInputRef.current?.focus();
+  };
+
+  const removeFeature = (index: number) =>
+    setFeatures(features.filter((_, i) => i !== index));
+
+  const moveFeature = (index: number, direction: -1 | 1) => {
+    const next = [...features];
+    const target = index + direction;
+    if (target < 0 || target >= next.length) return;
+    [next[index], next[target]] = [next[target], next[index]];
+    setFeatures(next);
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleStateChange}>
@@ -212,14 +239,71 @@ export default function PlanDialog({ plan }: Props) {
             </div>
           </div>
 
-          <Textarea
-            name="features"
-            label={t("fields.features")}
-            placeholder={t("fields.featuresPlaceholder")}
-            value={formData.features}
-            onChange={handleChange}
-            rows={4}
-          />
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium">{t("fields.features")}</span>
+
+            {/* Add feature card */}
+            <div className="border-2 border-dashed border-[var(--hairline)] rounded-lg p-3 flex gap-2 items-center bg-[var(--hairline2)]/40 hover:border-[var(--accent)] transition-colors">
+              <Plus size={16} className="text-[var(--accent)] shrink-0" />
+              <input
+                ref={addInputRef}
+                type="text"
+                value={newFeature}
+                onChange={(e) => setNewFeature(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addFeature())}
+                placeholder={t("fields.featuresPlaceholder")}
+                className="flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--muted2)]"
+              />
+              <button
+                type="button"
+                onClick={addFeature}
+                disabled={!newFeature.trim()}
+                className="text-xs font-semibold text-[var(--accent)] disabled:text-[var(--muted2)] disabled:cursor-not-allowed hover:underline"
+              >
+                {t("actions.add")}
+              </button>
+            </div>
+
+            {/* Feature cards */}
+            {features.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                {features.map((feature, i) => (
+                  <div
+                    key={i}
+                    className="border border-[var(--hairline)] rounded-lg px-3 py-2 flex items-center gap-2 bg-[var(--surface)]"
+                  >
+                    <GripVertical size={14} className="text-[var(--muted2)] shrink-0" />
+                    <span className="flex-1 text-sm">{feature}</span>
+                    <div className="flex items-center gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => moveFeature(i, -1)}
+                        disabled={i === 0}
+                        className="p-1 rounded hover:bg-[var(--hairline2)] disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <ChevronUp size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveFeature(i, 1)}
+                        disabled={i === features.length - 1}
+                        className="p-1 rounded hover:bg-[var(--hairline2)] disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <ChevronDown size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeFeature(i)}
+                        className="p-1 rounded hover:bg-red-50 text-[var(--muted2)] hover:text-[var(--red)] transition-colors"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           <Switch
             checked={formData.is_active}

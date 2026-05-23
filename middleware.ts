@@ -5,13 +5,10 @@ import { routing } from "./i18n/routing";
 
 const handleI18nRouting = createIntlMiddleware(routing);
 
-const GYM_STAFF_ROUTES = ["/admin"];
-const COACH_ROUTES = ["/coach"];
-const MANAGEMENT_ROUTES = ["/management"];
 const AUTH_ROUTES = ["/", "/sign-in", "/sign-up"];
 
-// Default dashboard per user_type
-const DEFAULT_ROUTE: Record<string, string> = {
+const ROLE_HOME: Record<string, string> = {
+  super_admin: "/management",
   gym: "/admin",
   coach: "/coach",
   member: "/member",
@@ -23,13 +20,11 @@ function extractLocaleAndPath(pathname: string) {
     (routing.locales as readonly string[]).find(
       (l) => pathname.startsWith(`/${l}/`) || pathname === `/${l}`
     ) ?? routing.defaultLocale;
-
-  const pathWithoutLocale = pathname.slice(`/${locale}`.length) || "/";
-  return { locale, pathWithoutLocale };
+  return { locale, pathWithoutLocale: pathname.slice(`/${locale}`.length) || "/" };
 }
 
-function isUnderAny(path: string, prefixes: string[]) {
-  return prefixes.some((p) => path === p || path.startsWith(`${p}/`));
+function isUnder(path: string, prefix: string) {
+  return path === prefix || path.startsWith(`${prefix}/`);
 }
 
 function buildSupabaseClient(request: NextRequest) {
@@ -41,9 +36,7 @@ function buildSupabaseClient(request: NextRequest) {
       cookies: {
         getAll: () => request.cookies.getAll(),
         setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           response = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
@@ -55,19 +48,16 @@ function buildSupabaseClient(request: NextRequest) {
   return { supabase, getResponse: () => response };
 }
 
-function forwardAuthCookies(
-  from: NextResponse,
-  to: NextResponse
-): NextResponse {
-  from.cookies.getAll().forEach((cookie) => {
-    to.cookies.set(cookie.name, cookie.value, {
-      path: cookie.path,
-      sameSite: cookie.sameSite as "lax" | "strict" | "none" | undefined,
-      secure: cookie.secure,
-      httpOnly: cookie.httpOnly,
-      maxAge: cookie.maxAge,
-    });
-  });
+function forwardCookies(from: NextResponse, to: NextResponse) {
+  from.cookies.getAll().forEach((c) =>
+    to.cookies.set(c.name, c.value, {
+      path: c.path,
+      sameSite: c.sameSite as "lax" | "strict" | "none" | undefined,
+      secure: c.secure,
+      httpOnly: c.httpOnly,
+      maxAge: c.maxAge,
+    })
+  );
   return to;
 }
 
@@ -75,45 +65,37 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const { locale, pathWithoutLocale } = extractLocaleAndPath(pathname);
 
-  // Auth routes — redirect logged-in users to their dashboard
-  if (isUnderAny(pathWithoutLocale, AUTH_ROUTES)) {
-    const { supabase, getResponse } = buildSupabaseClient(request);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  const { supabase, getResponse } = buildSupabaseClient(request);
+  const { data: { user } } = await supabase.auth.getUser();
 
+  // ── Public auth pages ────────────────────────────────────────────────────
+  if (AUTH_ROUTES.some((r) => pathWithoutLocale === r)) {
     if (user) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("user_type")
+        .select("user_type, is_super_admin")
         .eq("id", user.id)
         .single();
 
-      const userType = profile?.user_type ?? "member";
-      const dest = DEFAULT_ROUTE[userType] ?? "/";
-      const redirect = NextResponse.redirect(
-        new URL(`/${locale}${dest}`, request.url)
+      const role = profile?.is_super_admin ? "super_admin" : (profile?.user_type ?? "client");
+      const dest = ROLE_HOME[role] ?? "/";
+      return forwardCookies(
+        getResponse(),
+        NextResponse.redirect(new URL(`/${locale}${dest}`, request.url))
       );
-      return forwardAuthCookies(getResponse(), redirect);
     }
-
     return handleI18nRouting(request);
   }
 
-  const isGymRoute = isUnderAny(pathWithoutLocale, GYM_STAFF_ROUTES);
-  const isCoachRoute = isUnderAny(pathWithoutLocale, COACH_ROUTES);
-  const isManagementRoute = isUnderAny(pathWithoutLocale, MANAGEMENT_ROUTES);
+  // ── Protected routes ─────────────────────────────────────────────────────
+  const isProtected =
+    isUnder(pathWithoutLocale, "/management") ||
+    isUnder(pathWithoutLocale, "/admin") ||
+    isUnder(pathWithoutLocale, "/coach") ||
+    isUnder(pathWithoutLocale, "/member") ||
+    isUnder(pathWithoutLocale, "/client");
 
-  if (!isGymRoute && !isCoachRoute && !isManagementRoute) {
-    return handleI18nRouting(request);
-  }
-
-  // ── Protected route: check auth ──────────────────────────────────────────
-  const { supabase, getResponse } = buildSupabaseClient(request);
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  if (!isProtected) return handleI18nRouting(request);
 
   if (!user) {
     return NextResponse.redirect(new URL(`/${locale}`, request.url));
@@ -125,22 +107,33 @@ export async function middleware(request: NextRequest) {
     .eq("id", user.id)
     .single();
 
-  const userType = profile?.user_type ?? "member";
+  const isSuperAdmin = !!profile?.is_super_admin;
+  const userType = profile?.user_type ?? "client";
 
-  if (isManagementRoute && !profile?.is_super_admin) {
+  // Super admin: only /management is allowed
+  if (isSuperAdmin) {
+    if (!isUnder(pathWithoutLocale, "/management")) {
+      return NextResponse.redirect(new URL(`/${locale}/management`, request.url));
+    }
+    return forwardCookies(getResponse(), handleI18nRouting(request));
+  }
+
+  // Regular users: block /management and enforce their own section
+  if (isUnder(pathWithoutLocale, "/management")) {
     return NextResponse.redirect(new URL(`/${locale}`, request.url));
   }
 
-  if (isGymRoute && userType !== "gym") {
-    return NextResponse.redirect(new URL(`/${locale}`, request.url));
+  const allowed =
+    (userType === "gym"    && isUnder(pathWithoutLocale, "/admin"))  ||
+    (userType === "coach"  && isUnder(pathWithoutLocale, "/coach"))  ||
+    (userType === "member" && isUnder(pathWithoutLocale, "/member")) ||
+    (userType === "client" && isUnder(pathWithoutLocale, "/client"));
+
+  if (!allowed) {
+    return NextResponse.redirect(new URL(`/${locale}${ROLE_HOME[userType] ?? "/"}`, request.url));
   }
 
-  if (isCoachRoute && userType !== "coach") {
-    return NextResponse.redirect(new URL(`/${locale}`, request.url));
-  }
-
-  const intlResponse = handleI18nRouting(request);
-  return forwardAuthCookies(getResponse(), intlResponse);
+  return forwardCookies(getResponse(), handleI18nRouting(request));
 }
 
 export const config = {

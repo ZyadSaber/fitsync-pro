@@ -5,9 +5,9 @@ CREATE TABLE gyms (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name          TEXT NOT NULL,
   owner_id      UUID REFERENCES auth.users(id),
-  address       TEXT,
-  phone         TEXT,
-  logo_url      TEXT,
+  address       TEXT DEFAULT '',
+  phone         TEXT DEFAULT '',
+  logo_url      TEXT DEFAULT '',
   created_at    TIMESTAMPTZ DEFAULT now()
 );
 
@@ -22,9 +22,9 @@ CREATE TABLE profiles (
   gym_id        UUID REFERENCES gyms(id),        -- NULL for online-only users
   user_type     TEXT NOT NULL DEFAULT 'member'
                 CHECK (user_type IN ('member', 'gym', 'coach')),
-  full_name     TEXT,
-  phone         TEXT,
-  avatar_url    TEXT,
+  full_name     TEXT DEFAULT '',
+  phone         TEXT DEFAULT '',
+  avatar_url    TEXT DEFAULT '',
   created_at    TIMESTAMPTZ DEFAULT now()
 );
 
@@ -45,17 +45,15 @@ CREATE TRIGGER on_auth_user_created
 
 -- ============================================================
 -- COACHES
--- Online-only coach:  gym_id = NULL, is_online_coach = true
--- Gym coach:          gym_id = set,  is_online_coach = false (or true for dual)
+-- Online-only coach:  gym_id = NULL
+-- Gym coach:          gym_id = set
 -- ============================================================
 CREATE TABLE coaches (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   profile_id      UUID REFERENCES profiles(id) ON DELETE CASCADE,
   gym_id          UUID REFERENCES gyms(id),       -- NULL = standalone online coach
-  bio             TEXT,
-  specialties     TEXT[],
-  is_online_coach BOOLEAN DEFAULT false,
-  public_slug     TEXT UNIQUE,                    -- fitsync.app/c/coach-ahmed
+  bio             TEXT DEFAULT '',
+  specialties     TEXT[] DEFAULT '{}',
   created_at      TIMESTAMPTZ DEFAULT now()
 );
 
@@ -69,9 +67,9 @@ CREATE TABLE clients (
   id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   profile_id          UUID REFERENCES profiles(id) ON DELETE CASCADE,
   gym_id              UUID REFERENCES gyms(id),    -- NULL for online-only clients
-  membership_status   TEXT CHECK (membership_status IN ('active', 'frozen', 'expired')),
-  membership_type     TEXT,
-  start_date          DATE,
+  membership_status   TEXT DEFAULT 'active' CHECK (membership_status IN ('active', 'frozen', 'expired')),
+  membership_type     TEXT DEFAULT '',
+  start_date          DATE DEFAULT CURRENT_DATE,
   end_date            DATE,
   qr_code             TEXT UNIQUE,                 -- gym door check-in token
   created_at          TIMESTAMPTZ DEFAULT now()
@@ -126,9 +124,9 @@ CREATE TABLE gym_classes (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   gym_id          UUID REFERENCES gyms(id) ON DELETE CASCADE,
   name            TEXT NOT NULL,
-  description     TEXT,
-  price_egp       NUMERIC,
-  schedule        JSONB,
+  description     TEXT DEFAULT '',
+  price_egp       NUMERIC DEFAULT 0,
+  schedule        JSONB DEFAULT '{}',
   coach_id        UUID REFERENCES coaches(id),
   is_active       BOOLEAN DEFAULT true
 );
@@ -150,11 +148,11 @@ CREATE TABLE exercises (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   coach_id        UUID REFERENCES coaches(id) ON DELETE CASCADE,
   name            TEXT NOT NULL,
-  description     TEXT,
-  muscle_group    TEXT[],
-  equipment       TEXT,
-  difficulty      TEXT CHECK (difficulty IN ('beginner', 'intermediate', 'advanced')),
-  video_url       TEXT,              -- YouTube unlisted URL
+  description     TEXT DEFAULT '',
+  muscle_group    TEXT[] DEFAULT '{}',
+  equipment       TEXT DEFAULT '',
+  difficulty      TEXT DEFAULT 'beginner' CHECK (difficulty IN ('beginner', 'intermediate', 'advanced')),
+  video_url       TEXT DEFAULT '',   -- YouTube unlisted URL
   created_at      TIMESTAMPTZ DEFAULT now()
 );
 
@@ -175,17 +173,17 @@ CREATE TABLE workout_plan_days (
   plan_id         UUID REFERENCES workout_plans(id) ON DELETE CASCADE,
   week_number     INT NOT NULL,
   day_of_week     TEXT NOT NULL,     -- "Monday", "Tuesday" ...
-  label           TEXT               -- "Push Day", "Rest Day" ...
+  label           TEXT DEFAULT ''    -- "Push Day", "Rest Day" ...
 );
 
 CREATE TABLE workout_plan_exercises (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   day_id          UUID REFERENCES workout_plan_days(id) ON DELETE CASCADE,
   exercise_id     UUID REFERENCES exercises(id),
-  sets            INT,
-  reps            TEXT,              -- "8-12" or "AMRAP"
-  rest_seconds    INT,
-  notes           TEXT,
+  sets            INT DEFAULT 0,
+  reps            TEXT DEFAULT '',   -- "8-12" or "AMRAP"
+  rest_seconds    INT DEFAULT 0,
+  notes           TEXT DEFAULT '',
   sort_order      INT DEFAULT 0
 );
 
@@ -208,16 +206,16 @@ CREATE TABLE workout_logs (
   day_id          UUID REFERENCES workout_plan_days(id),
   logged_at       DATE DEFAULT CURRENT_DATE,
   completed       BOOLEAN DEFAULT false,
-  notes           TEXT
+  notes           TEXT DEFAULT ''
 );
 
 CREATE TABLE workout_log_sets (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   log_id          UUID REFERENCES workout_logs(id) ON DELETE CASCADE,
   exercise_id     UUID REFERENCES exercises(id),
-  set_number      INT,
-  reps_done       INT,
-  weight_kg       NUMERIC
+  set_number      INT DEFAULT 0,
+  reps_done       INT DEFAULT 0,
+  weight_kg       NUMERIC DEFAULT 0
 );
 
 -- ============================================================
@@ -227,11 +225,11 @@ CREATE TABLE nutrition_plans (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   coach_id        UUID REFERENCES coaches(id),
   client_id       UUID REFERENCES clients(id),
-  calories        INT,
-  protein_g       INT,
-  carbs_g         INT,
-  fats_g          INT,
-  meal_notes      TEXT,
+  calories        INT DEFAULT 0,
+  protein_g       INT DEFAULT 0,
+  carbs_g         INT DEFAULT 0,
+  fats_g          INT DEFAULT 0,
+  meal_notes      TEXT DEFAULT '',
   updated_at      TIMESTAMPTZ DEFAULT now()
 );
 
@@ -243,11 +241,11 @@ CREATE TABLE daily_checkins (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id       UUID REFERENCES clients(id) ON DELETE CASCADE,
   date            DATE DEFAULT CURRENT_DATE,
-  weight_kg       NUMERIC,
-  energy_level    INT CHECK (energy_level BETWEEN 1 AND 5),
-  sleep_hours     NUMERIC,
-  water_litres    NUMERIC,
-  notes           TEXT,
+  weight_kg       NUMERIC DEFAULT 0,
+  energy_level    INT DEFAULT 1 CHECK (energy_level BETWEEN 1 AND 5),
+  sleep_hours     NUMERIC DEFAULT 0,
+  water_litres    NUMERIC DEFAULT 0,
+  notes           TEXT DEFAULT '',
   created_at      TIMESTAMPTZ DEFAULT now(),
   UNIQUE (client_id, date)           -- one per client per day
 );
@@ -259,9 +257,9 @@ CREATE TABLE progress_photos (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id       UUID REFERENCES clients(id) ON DELETE CASCADE,
   taken_at        DATE DEFAULT CURRENT_DATE,
-  front_url       TEXT,
-  side_url        TEXT,
-  back_url        TEXT
+  front_url       TEXT DEFAULT '',
+  side_url        TEXT DEFAULT '',
+  back_url        TEXT DEFAULT ''
 );
 
 -- ============================================================
@@ -272,12 +270,12 @@ CREATE TABLE inbody_results (
   client_id       UUID REFERENCES clients(id) ON DELETE CASCADE,
   gym_id          UUID REFERENCES gyms(id),
   tested_at       DATE NOT NULL,
-  weight_kg       NUMERIC,
-  muscle_mass_kg  NUMERIC,
-  body_fat_pct    NUMERIC,
-  bmi             NUMERIC,
-  visceral_fat    INT,
-  raw_pdf_url     TEXT               -- Supabase Storage path
+  weight_kg       NUMERIC DEFAULT 0,
+  muscle_mass_kg  NUMERIC DEFAULT 0,
+  body_fat_pct    NUMERIC DEFAULT 0,
+  bmi             NUMERIC DEFAULT 0,
+  visceral_fat    INT DEFAULT 0,
+  raw_pdf_url     TEXT DEFAULT ''    -- Supabase Storage path
 );
 
 -- GYMS: only the owner can access their gym row

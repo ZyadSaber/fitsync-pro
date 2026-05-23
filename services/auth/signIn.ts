@@ -20,11 +20,15 @@ export async function signIn(email: string, password: string): Promise<SignInRes
 
     const { data: profile } = await supabase
         .from("profiles")
-        .select("user_type, gym_id")
+        .select("user_type, gym_id, is_super_admin")
         .eq("id", data.user.id)
         .single()
 
     const locale = await getLocale()
+
+    if (profile?.is_super_admin) {
+        redirect({ href: "/management", locale })
+    }
 
     const userType = profile?.user_type ?? "member"
     const gymId = profile?.gym_id

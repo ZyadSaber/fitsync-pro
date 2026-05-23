@@ -53,7 +53,7 @@ export async function createSubscriptionPlan(data: PlanFormData): Promise<Action
         duration_days: parseInt(parsed.data.duration_days) || 30,
         member_limit: parseInt(parsed.data.member_limit),
         type: parsed.data.type,
-        features: parsed.data.features.split("\n").map((f) => f.trim()).filter(Boolean),
+        features: parsed.data.features,
         is_active: parsed.data.is_active,
       })
       .select("id")
@@ -86,7 +86,7 @@ export async function updateSubscriptionPlan(id: string, data: PlanFormData): Pr
         duration_days: parseInt(parsed.data.duration_days) || 30,
         member_limit: parsed.data.member_limit === "" ? null : parseInt(parsed.data.member_limit) || null,
         type: parsed.data.type,
-        features: parsed.data.features.split("\n").map((f) => f.trim()).filter(Boolean),
+        features: parsed.data.features,
         is_active: parsed.data.is_active,
         updated_at: new Date().toISOString(),
       })

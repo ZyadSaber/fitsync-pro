@@ -274,6 +274,9 @@
         "contact": "تواصل معنا",
         "perMonth": "جنيه/شهر",
         "upTo": "حتى {count} عضو",
+        "members": "{count} عضو",
+        "unlimited": "غير محدود",
+        "days": "{count} يوم",
         "noResults": "لا توجد خطط تطابق هذا الفلتر.",
         "type": {
           "all": "الكل",
@@ -342,6 +345,7 @@
           "both": "كلاهما"
         },
         "actions": {
+          "add": "إضافة",
           "cancel": "إلغاء",
           "saving": "جارٍ الحفظ…",
           "saveChanges": "حفظ التغييرات",
@@ -351,6 +355,90 @@
           "created": "تم إنشاء الخطة",
           "updated": "تم تحديث الخطة"
         }
+      }
+    },
+    "coaches": {
+      "title": "المدربون الأونلاين",
+      "subtitle": "{count} مدرب · {clients} عميل نشط",
+      "actions": {
+        "exportCsv": "تصدير CSV",
+        "edit": "تعديل",
+        "delete": "حذف",
+        "addCoach": "إضافة مدرب"
+      },
+      "table": {
+        "coach": "المدرب",
+        "plan": "الخطة",
+        "clients": "العملاء",
+        "joined": "تاريخ الانضمام"
+      },
+      "billing": {
+        "active": "نشط",
+        "suspended": "موقوف",
+        "cancelled": "ملغي",
+        "none": "بدون خطة"
+      },
+      "kpis": {
+        "total": "إجمالي المدربين",
+        "totalSub": "على المنصة",
+        "activeBilling": "فوترة نشطة",
+        "activeBillingSub": "مدربون يدفعون",
+        "clients": "إجمالي العملاء",
+        "clientsSub": "عبر جميع المدربين"
+      },
+      "empty": "لا يوجد مدربون",
+      "dialog": {
+        "titleEdit": "تعديل المدرب",
+        "fields": {
+          "fullName": "الاسم الكامل",
+          "phone": "الهاتف",
+          "bio": "نبذة",
+          "publicSlug": "رابط الملف",
+          "specialties": "التخصصات",
+          "email": "البريد الإلكتروني"
+        },
+        "placeholders": {
+          "fullName": "اسم المدرب",
+          "phone": "+20 10 0000 0000",
+          "bio": "نبذة مختصرة عن المدرب…",
+          "publicSlug": "coach-ahmed",
+          "specialty": "مثال: تدريب القوة",
+          "email": "coach@example.com",
+          "searchUsers": "بحث بالاسم أو الهاتف…"
+        },
+        "toggles": {
+          "onlineCoach": "مدرب أونلاين (يظهر في الدليل العام)"
+        },
+        "actions": {
+          "add": "إضافة",
+          "cancel": "إلغاء",
+          "saving": "جارٍ الحفظ…",
+          "saveChanges": "حفظ التغييرات",
+          "create": "إنشاء مدرب",
+          "promote": "ترقية لمدرب"
+        },
+        "toast": {
+          "updated": "تم تحديث بيانات المدرب",
+          "created": "تم إنشاء المدرب",
+          "promoted": "تمت ترقية المستخدم إلى مدرب أونلاين"
+        },
+        "titleAdd": "إضافة مدرب",
+        "tabs": {
+          "existing": "المستخدمون الحاليون",
+          "new": "مستخدم جديد"
+        },
+        "noUsersFound": "لا يوجد مستخدمون مطابقون للبحث",
+        "noUsersAvailable": "جميع مستخدمي المنصة مدربون بالفعل"
+      },
+      "filters": {
+        "billingStatus": "حالة الفوترة",
+        "active": "فوترة نشطة",
+        "inactive": "غير نشط",
+        "all": "الكل"
+      },
+      "userType": {
+        "member": "عضو",
+        "gym": "عضو جيم"
       }
     }
   },

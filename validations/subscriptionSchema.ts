@@ -12,7 +12,7 @@ export const planFormSchema = z.object({
   duration_days: z.string().min(1, "Duration required"),
   member_limit: z.string(),    // "" = unlimited (null in DB)
   type: z.enum(["gym", "online_coach", "both"]),
-  features: z.string(),        // newline-separated → string[] on save
+  features: z.array(z.string()).default([]),
   is_active: z.boolean(),
 });
 

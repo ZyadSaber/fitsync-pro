@@ -72,6 +72,7 @@ export default function SignInComponent({ onSwitchToSignup }: SignInComponentPro
                     placeholder={t("auth.login.passwordPlaceholder")}
                     value={formData.password}
                     onChange={handleChange}
+                    onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
                     error={t(errors.password)}
                 />
             </div>

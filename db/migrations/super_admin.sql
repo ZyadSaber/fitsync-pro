@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS platform_subscriptions (
                   CHECK (status IN ('active', 'suspended', 'cancelled')),
   started_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   next_billing_at TIMESTAMPTZ,
-  notes           TEXT,
+  notes           TEXT DEFAULT '',
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS platform_activity_log (
   gym_id      UUID REFERENCES gyms(id) ON DELETE SET NULL,
   event_type  TEXT NOT NULL,   -- 'login' | 'member_add' | 'checkin' | 'plan_change' | …
   actor_id    UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  metadata    JSONB,
+  metadata    JSONB DEFAULT '{}',
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

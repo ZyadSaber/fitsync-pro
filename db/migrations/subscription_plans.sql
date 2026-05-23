@@ -13,8 +13,8 @@ CREATE TABLE IF NOT EXISTS subscription_plans (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name           TEXT NOT NULL,
   slug           TEXT UNIQUE NOT NULL,
-  description    TEXT,
-  price_egp      NUMERIC,             -- NULL = contact sales / custom pricing
+  description    TEXT DEFAULT '',
+  price_egp      NUMERIC DEFAULT 0,   -- NULL = contact sales / custom pricing
   billing_cycle  TEXT NOT NULL DEFAULT 'monthly'
                  CHECK (billing_cycle IN ('monthly', 'yearly')),
   duration_days  INT NOT NULL DEFAULT 30,

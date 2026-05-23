@@ -35,13 +35,22 @@ export default async function SubscriptionsPage({
 }: {
   searchParams: Promise<{ status?: string; planType?: string }>;
 }) {
-  const [t, { status: sf, planType: pt }, plansResult, billingResult, gymsResult] = await Promise.all([
-    getTranslations("management.subscriptions"),
-    searchParams,
-    getSubscriptionPlanStats(),
-    getPlatformBillingRecords(),
-    getGyms(),
-  ]);
+  const
+    [t,
+      {
+        status: sf,
+        planType: pt
+      },
+      plansResult,
+      billingResult,
+      gymsResult
+    ] = await Promise.all([
+      getTranslations("management.subscriptions"),
+      searchParams,
+      getSubscriptionPlanStats(),
+      getPlatformBillingRecords(),
+      getGyms(),
+    ]);
 
   if (plansResult.error && billingResult.error) {
     return (
