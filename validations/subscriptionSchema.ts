@@ -32,3 +32,26 @@ export const invoiceFormSchema = z.object({
 });
 
 export type InvoiceFormData = z.infer<typeof invoiceFormSchema>;
+
+export const installmentRowSchema = z.object({
+  due_date: z.string().min(1, "Date required"),
+  amount:   z.string().min(1, "Amount required"),
+  label:    z.string().optional().or(z.literal("")),
+});
+export type InstallmentRow = z.infer<typeof installmentRowSchema>;
+
+export const assignPlanSchema = z.object({
+  tenant_type:   z.enum(["gym", "online_coach"]),
+  gym_id:        z.string().optional().or(z.literal("")),
+  coach_id:      z.string().optional().or(z.literal("")),
+  plan_id:       z.string().min(1, "Select a plan"),
+  billing_cycle: z.enum(["monthly", "yearly"]),
+  started_at:    z.string().min(1, "Start date required"),
+  quantity:      z.string().min(1),
+  notes:         z.string().optional().or(z.literal("")),
+}).refine(
+  (d) => d.tenant_type === "gym" ? !!d.gym_id : !!d.coach_id,
+  (d) => ({ message: d.tenant_type === "gym" ? "Select a gym" : "Select a coach", path: [d.tenant_type === "gym" ? "gym_id" : "coach_id"] })
+);
+
+export type AssignPlanFormData = z.infer<typeof assignPlanSchema>;

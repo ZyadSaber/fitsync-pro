@@ -26,7 +26,7 @@ const SubscriptionsFilters = ({ statusOptions }: Props) => {
       value={formData.status}
       onValueChange={handleToggle("status")}
       hideClear={false}
-      containerClassName="w-[20%]"
+      containerClassName="w-36"
     />
   );
 };

@@ -5,7 +5,7 @@ import { Download } from "lucide-react";
 import HeaderContent from "@/components/layout/Topbar";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
-import { getSubscriptionPlanStats, getPlatformBillingRecords } from "@/services/management/subscriptions";
+import { getSubscriptionPlanStats, getPlatformBillingRecords, getCoachSelectOptions } from "@/services/management/subscriptions";
 import { getGyms } from "@/services/management/gyms";
 import SubscriptionsFilters from "@/components/management/subscriptions/SubscriptionsFilters";
 import BillingRowActions from "@/components/management/subscriptions/BillingRowActions";
@@ -13,6 +13,7 @@ import PlanDialog from "@/components/management/subscriptions/PlanDialog";
 import InvoiceDialog from "@/components/management/subscriptions/InvoiceDialog";
 import PlanCard from "@/components/management/subscriptions/PlanCard";
 import PlanTypeTabs from "@/components/management/subscriptions/PlanTypeTabs";
+import AssignPlanDialog from "@/components/management/subscriptions/AssignPlanDialog";
 import type { SelectOptions } from "@/types/ui";
 import type { SubscriptionPlanType } from "@/types/subscriptions";
 import isArrayHasData from "@/lib/isArrayHasData";
@@ -43,13 +44,15 @@ export default async function SubscriptionsPage({
       },
       plansResult,
       billingResult,
-      gymsResult
+      gymsResult,
+      coachOptions
     ] = await Promise.all([
       getTranslations("management.subscriptions"),
       searchParams,
       getSubscriptionPlanStats(),
       getPlatformBillingRecords(),
       getGyms(),
+      getCoachSelectOptions(),
     ]);
 
   if (plansResult.error && billingResult.error) {
@@ -96,6 +99,11 @@ export default async function SubscriptionsPage({
               <Download size={13} />
               {t("actions.downloadInvoices")}
             </Button>
+            <AssignPlanDialog
+              gyms={gymOptions}
+              coaches={coachOptions}
+              plans={plansResult.data}
+            />
             <PlanDialog />
           </>
         }
@@ -151,8 +159,9 @@ export default async function SubscriptionsPage({
             </div>
           </div>
 
+          <div className="max-h-[388px] overflow-y-auto">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 z-10">
               <TableRow>
                 <TableHead>{t("invoices.invoice")}</TableHead>
                 <TableHead>{t("invoices.tenant")}</TableHead>
@@ -205,6 +214,7 @@ export default async function SubscriptionsPage({
               )}
             </TableBody>
           </Table>
+          </div>
         </div>
       </div>
     </>

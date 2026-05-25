@@ -51,7 +51,12 @@
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Zyad Saber\\\\Documents\\\\fitsync-pro\\\\app\" -Recurse -Filter \"*.tsx\" -File)",
       "Bash(Sort-Object FullName)",
       "Bash(rm -r \"C:/Users/Zyad Saber/Documents/fitsync-pro/app/[locale]/management/gyms/new\")",
-      "Bash(rm -r \"C:/Users/Zyad Saber/Documents/fitsync-pro/app/[locale]/management/gyms/[id]\")"
+      "Bash(rm -r \"C:/Users/Zyad Saber/Documents/fitsync-pro/app/[locale]/management/gyms/[id]\")",
+      "PowerShell(Get-ChildItem -Path \"F:\\\\fitsync-pro\\\\app\\\\[locale]\\\\management\" -Recurse -File | Select-Object -ExpandProperty FullName | ForEach-Object { $_.Replace\\(\"F:\\\\fitsync-pro\\\\\", \"\"\\) } | Sort-Object)",
+      "Read(//f/F/fitsync-pro/**)",
+      "Read(//f/F/fitsync-pro/messages/**)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
   }
 }

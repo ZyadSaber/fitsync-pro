@@ -1,4 +1,17 @@
 export type BillingCycle = "monthly" | "yearly";
+export type TenantType = "gym" | "online_coach";
+
+export interface AssignPlanForm {
+  tenant_type:   TenantType;
+  gym_id:        string;
+  coach_id:      string;
+  plan_id:       string;
+  billing_cycle: BillingCycle;
+  started_at:    string;
+  quantity:      string;
+  notes:         string;
+}
+
 export type BillingStatus = "paid" | "pending" | "failed" | "refunded";
 export type SubscriptionPlanType = "gym" | "online_coach" | "both";
 
