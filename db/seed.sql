@@ -929,7 +929,7 @@ VALUES
 -- ================================================================
 -- 21. PLATFORM SUBSCRIPTIONS
 -- PowerFit Cairo started on Starter, then upgraded to Pro.
--- plan_id resolved via slug lookup into subscription_plans catalog
+-- plan_id resolved via name lookup into subscription_plans catalog
 -- (which is seeded by the subscription_plans.sql migration).
 -- ================================================================
 ALTER TABLE platform_subscriptions DISABLE ROW LEVEL SECURITY;
@@ -942,18 +942,18 @@ VALUES
   -- Jan 2026 — Starter plan (cancelled on upgrade)
   ('a0000000-0000-0000-0000-00000000b001',
    'a0000000-0000-0000-0000-000000000001',
-   'starter', 1800, 'monthly', 'cancelled',
+   'Starter', 1800, 'monthly', 'cancelled',
    '2026-01-01 00:00:00+00', '2026-02-01 00:00:00+00',
    'Upgraded to Pro — member count reached plan ceiling.',
-   (SELECT id FROM subscription_plans WHERE slug = 'starter')),
+   (SELECT id FROM subscription_plans WHERE name = 'Starter')),
 
   -- Feb 2026 — Pro plan (current, active)
   ('a0000000-0000-0000-0000-00000000b002',
    'a0000000-0000-0000-0000-000000000001',
-   'pro', 4500, 'monthly', 'active',
+   'Pro', 4500, 'monthly', 'active',
    '2026-02-01 00:00:00+00', '2026-06-01 00:00:00+00',
    NULL,
-   (SELECT id FROM subscription_plans WHERE slug = 'pro'));
+   (SELECT id FROM subscription_plans WHERE name = 'Pro'));
 
 
 -- ================================================================

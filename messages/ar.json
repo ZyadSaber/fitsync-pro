@@ -275,15 +275,17 @@
         "perMonth": "جنيه/شهر",
         "upTo": "حتى {count} عضو",
         "members": "{count} عضو",
+        "coaches": "{count} مدرب",
         "unlimited": "غير محدود",
+        "unlimitedCoaches": "مدربون بلا حدود",
         "days": "{count} يوم",
         "noResults": "لا توجد خطط تطابق هذا الفلتر.",
         "type": {
           "all": "الكل",
           "gym": "الجيم",
-          "online_coach": "مدرب",
-          "both": "كلاهما"
-        }
+          "online_coach": "مدرب"
+        },
+        "loadError": "تعذر تحميل الخطط."
       },
       "invoices": {
         "title": "الفواتير الأخيرة",
@@ -296,7 +298,9 @@
         "paid": "تاريخ الدفع",
         "all": "الكل",
         "pastDue": "متأخرة",
-        "open": "مفتوحة"
+        "open": "مفتوحة",
+        "noResults": "لا توجد فواتير.",
+        "loadError": "تعذر تحميل الفواتير."
       },
       "status": {
         "paid": "مدفوعة",
@@ -311,8 +315,6 @@
         "fields": {
           "name": "اسم الخطة",
           "namePlaceholder": "برو",
-          "slug": "المعرّف",
-          "slugPlaceholder": "pro",
           "description": "الوصف",
           "descriptionPlaceholder": "منصة متكاملة للأندية المتنامية",
           "type": "نوع الخطة",
@@ -321,6 +323,8 @@
           "pricePlaceholder": "4500",
           "memberLimit": "حد الأعضاء",
           "memberLimitPlaceholder": "1000",
+          "coachLimit": "حد المدربين",
+          "coachLimitPlaceholder": "غير محدود",
           "duration": "المدة (أيام)",
           "durationPlaceholder": "30",
           "features": "المميزات (واحدة في كل سطر)",
@@ -341,8 +345,7 @@
         },
         "types": {
           "gym": "نادٍ",
-          "online_coach": "مدرب أونلاين",
-          "both": "كلاهما"
+          "online_coach": "مدرب أونلاين"
         },
         "actions": {
           "add": "إضافة",

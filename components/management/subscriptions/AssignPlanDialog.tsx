@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { format, addMonths, addYears } from "date-fns";
 import {
   Dialog,
@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { SelectField } from "@/components/ui/select";
 import Icon from "@/components/ui/Icon";
-import { Trash2, Plus, Sparkles } from "lucide-react";
+import { Trash2, Plus, Sparkles, ChevronUp, ChevronDown, GripVertical } from "lucide-react";
 import useVisibility from "@/hook/useVisibility";
 import useFormManager from "@/hook/useFormManager";
 import { assignPlanSchema } from "@/validations/subscriptionSchema";
@@ -42,6 +42,11 @@ const EMPTY_FORM: AssignPlanForm = {
   started_at:    today,
   quantity:      "1",
   notes:         "",
+  custom_price:         "",
+  custom_member_limit:  "",
+  custom_coach_limit:   "",
+  custom_duration_days: "",
+  custom_features:      [],
 };
 
 const emptyRow = (due_date = today): InstallmentRow => ({
@@ -61,6 +66,8 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
 
   const [installments, setInstallments] = useState<InstallmentRow[]>([emptyRow()]);
   const [splitCount, setSplitCount] = useState("2");
+  const [newFeature, setNewFeature] = useState("");
+  const featureInputRef = useRef<HTMLInputElement>(null);
 
   const {
     formData: form,
@@ -75,6 +82,12 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
     initialData: EMPTY_FORM,
     schema: assignPlanSchema,
     onSubmit: async (data, resetFormFn) => {
+      const plan = plans.find((p) => p.id === data.plan_id);
+      if (plan && plan.price_egp === null && !(parseFloat(data.custom_price) > 0)) {
+        toast.error("Enter a negotiated price for this custom plan");
+        return;
+      }
+
       const invalid = installments.some(
         (r) => !r.due_date || !r.amount || parseFloat(r.amount) <= 0
       );
@@ -98,7 +111,7 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
 
   const planOptions = useMemo((): SelectOptions[] =>
     plans
-      .filter((p) => p.is_active && (p.type === form.tenant_type || p.type === "both"))
+      .filter((p) => p.is_active && p.type === form.tenant_type)
       .map((p) => ({ key: p.id, label: p.name })),
     [plans, form.tenant_type]
   );
@@ -108,8 +121,12 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
     [plans, form.plan_id]
   );
 
-  const qty          = Math.max(1, parseInt(form.quantity) || 1);
-  const unitPrice    = selectedPlan?.price_egp ?? null;
+  const qty           = Math.max(1, parseInt(form.quantity) || 1);
+  const isContactPlan = selectedPlan?.price_egp === null;
+  const customPrice   = parseFloat(form.custom_price) || 0;
+  const unitPrice     = selectedPlan
+    ? (isContactPlan ? (customPrice > 0 ? customPrice : null) : selectedPlan.price_egp)
+    : null;
   const planTotal    = unitPrice !== null ? unitPrice * qty : null;
   const billed       = installments.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
   const remaining    = planTotal !== null ? planTotal - billed : null;
@@ -117,7 +134,10 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
   const isGym        = form.tenant_type === "gym";
 
   const cycleDays    = form.billing_cycle === "yearly" ? 365 : 30;
-  const coverageDays = (selectedPlan?.duration_days ?? cycleDays) * qty;
+  const effectiveDuration = isContactPlan
+    ? (parseInt(form.custom_duration_days) || selectedPlan?.duration_days || cycleDays)
+    : (selectedPlan?.duration_days ?? cycleDays);
+  const coverageDays = effectiveDuration * qty;
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -125,9 +145,61 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
     resetForm();
     setInstallments([emptyRow()]);
     setSplitCount("2");
+    setNewFeature("");
   };
 
   const handleClose_ = () => { resetAll(); handleClose(); };
+
+  // ── Plan selection ──────────────────────────────────────────────────────────
+  // Picking a contact-pricing plan seeds the negotiable terms from the template
+  // so the admin tweaks rather than re-types them. Any other plan clears them.
+
+  const handlePlanChange = (v: string) => {
+    const plan = plans.find((p) => p.id === v);
+    if (plan && plan.price_egp === null) {
+      handleChangeMultiInputs({
+        plan_id:              v,
+        custom_member_limit:  plan.member_limit === null ? "" : String(plan.member_limit),
+        custom_coach_limit:   plan.coach_limit === null ? "" : String(plan.coach_limit),
+        custom_duration_days: String(plan.duration_days),
+        custom_features:      [...plan.features],
+      });
+    } else {
+      handleChangeMultiInputs({
+        plan_id:              v,
+        custom_price:         "",
+        custom_member_limit:  "",
+        custom_coach_limit:   "",
+        custom_duration_days: "",
+        custom_features:      [],
+      });
+    }
+  };
+
+  // ── Custom-plan feature editor ──────────────────────────────────────────────
+
+  const features = form.custom_features ?? [];
+  const setFeatures = (next: string[]) =>
+    handleFieldChange({ name: "custom_features", value: next });
+
+  const addFeature = () => {
+    const trimmed = newFeature.trim();
+    if (!trimmed) return;
+    setFeatures([...features, trimmed]);
+    setNewFeature("");
+    featureInputRef.current?.focus();
+  };
+
+  const removeFeature = (i: number) =>
+    setFeatures(features.filter((_, idx) => idx !== i));
+
+  const moveFeature = (i: number, direction: -1 | 1) => {
+    const next = [...features];
+    const target = i + direction;
+    if (target < 0 || target >= next.length) return;
+    [next[i], next[target]] = [next[target], next[i]];
+    setFeatures(next);
+  };
 
   // ── Installment mutations ───────────────────────────────────────────────────
 
@@ -196,7 +268,7 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
                 options={TENANT_TYPE_OPTIONS}
                 value={form.tenant_type}
                 onValueChange={(v) =>
-                  handleChangeMultiInputs({ tenant_type: v, gym_id: "", coach_id: "", plan_id: "" })
+                  handleChangeMultiInputs({ tenant_type: v, gym_id: "", coach_id: "", plan_id: "", custom_price: "" })
                 }
                 hideClear
                 containerClassName="w-full"
@@ -235,7 +307,7 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
                 label="Plan"
                 options={planOptions}
                 value={form.plan_id}
-                onValueChange={(v) => handleFieldChange({ name: "plan_id", value: v })}
+                onValueChange={handlePlanChange}
                 error={errors.plan_id}
                 containerClassName="w-full"
               />
@@ -280,6 +352,157 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
               </div>
             </div>
 
+            {/* Negotiated terms — only for contact-pricing ("Custom") plans.
+                These build the private plan created for this tenant on submit. */}
+            {selectedPlan && isContactPlan && (
+              <div className="flex flex-col gap-3 mt-1 rounded-lg border border-[var(--accent-soft)] bg-[var(--accent-soft)]/30 p-3">
+                <div className="flex items-center gap-1.5">
+                  <Sparkles size={12} className="text-[var(--accent)]" />
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--accent)]">
+                    Negotiated terms
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  {/* Price */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] px-0.5">
+                      Price (EGP)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      name="custom_price"
+                      placeholder="e.g. 12000"
+                      value={form.custom_price}
+                      onChange={(e) => handleFieldChange({ name: "custom_price", value: e.target.value })}
+                      className="fs-input h-9"
+                    />
+                  </div>
+
+                  {/* Duration */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] px-0.5">
+                      Duration (days)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      name="custom_duration_days"
+                      placeholder="e.g. 30"
+                      value={form.custom_duration_days}
+                      onChange={(e) => handleFieldChange({ name: "custom_duration_days", value: e.target.value })}
+                      className="fs-input h-9"
+                    />
+                  </div>
+
+                  {/* Member limit */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] px-0.5">
+                      Member limit
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      name="custom_member_limit"
+                      placeholder="Empty = unlimited"
+                      value={form.custom_member_limit}
+                      onChange={(e) => handleFieldChange({ name: "custom_member_limit", value: e.target.value })}
+                      className="fs-input h-9"
+                    />
+                  </div>
+
+                  {/* Coach limit — gym plans only */}
+                  {isGym && (
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] px-0.5">
+                        Coach limit
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        name="custom_coach_limit"
+                        placeholder="Empty = unlimited"
+                        value={form.custom_coach_limit}
+                        onChange={(e) => handleFieldChange({ name: "custom_coach_limit", value: e.target.value })}
+                        className="fs-input h-9"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Features */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] px-0.5">
+                    Features
+                  </label>
+                  <div className="flex gap-2 items-center rounded-md border border-dashed border-[var(--hairline)] bg-white px-2.5 h-9">
+                    <Plus size={14} className="text-[var(--accent)] shrink-0" />
+                    <input
+                      ref={featureInputRef}
+                      type="text"
+                      value={newFeature}
+                      onChange={(e) => setNewFeature(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addFeature())}
+                      placeholder="Add a feature and press Enter"
+                      className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-[var(--muted2)]"
+                    />
+                    <button
+                      type="button"
+                      onClick={addFeature}
+                      disabled={!newFeature.trim()}
+                      className="text-[11px] font-semibold text-[var(--accent)] disabled:text-[var(--muted2)] disabled:cursor-not-allowed hover:underline"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  {features.length > 0 && (
+                    <div className="flex flex-col gap-1">
+                      {features.map((feature, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center gap-2 rounded-md border border-[var(--hairline)] bg-white px-2.5 py-1.5"
+                        >
+                          <GripVertical size={13} className="text-[var(--muted2)] shrink-0" />
+                          <span className="flex-1 text-[12px]">{feature}</span>
+                          <div className="flex items-center gap-0.5">
+                            <button
+                              type="button"
+                              onClick={() => moveFeature(i, -1)}
+                              disabled={i === 0}
+                              className="p-1 rounded hover:bg-[var(--hairline2)] disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              <ChevronUp size={12} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveFeature(i, 1)}
+                              disabled={i === features.length - 1}
+                              className="p-1 rounded hover:bg-[var(--hairline2)] disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              <ChevronDown size={12} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeFeature(i)}
+                              className="p-1 rounded hover:bg-red-50 text-[var(--muted2)] hover:text-[var(--red)] transition-colors"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <span className="text-[11px] text-[var(--muted)]">
+                  Creates a private <span className="font-semibold">{selectedPlan.name}</span> plan for this {isGym ? "gym" : "coach"} with these terms.
+                </span>
+              </div>
+            )}
+
             {/* Coverage summary pill */}
             {selectedPlan && (
               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -304,7 +527,9 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
                   </>
                 )}
                 {unitPrice === null && (
-                  <span className="text-[11px] text-[var(--muted)] italic">Custom pricing</span>
+                  <span className="text-[11px] text-[var(--amber)] italic">
+                    {isContactPlan ? "Enter a negotiated price above" : "Custom pricing"}
+                  </span>
                 )}
               </div>
             )}

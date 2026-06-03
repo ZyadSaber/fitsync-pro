@@ -64,7 +64,7 @@ export default function SignupComponent({ onSwitchToSignIn }: SignupComponentPro
                 label={t("auth.signup.nameLabel")}
                 className="fs-input w-full h-[46px] text-[14px] rounded-lg px-4"
                 containerClassName="mb-2"
-                error={t(errors.name)}
+                error={t(errors?.name||"")}
                 placeholder={t("auth.signup.namePlaceholder")}
             />
 
@@ -75,7 +75,7 @@ export default function SignupComponent({ onSwitchToSignIn }: SignupComponentPro
                 label={t("auth.signup.emailLabel")}
                 className="fs-input w-full h-[46px] text-[14px] rounded-lg px-4"
                 containerClassName="mb-2"
-                error={t(errors.email)}
+                error={t(errors?.email||"")}
                 placeholder={t("auth.signup.emailPlaceholder")}
                 type="email"
             />
@@ -87,7 +87,7 @@ export default function SignupComponent({ onSwitchToSignIn }: SignupComponentPro
                 label={t("auth.signup.passwordLabel")}
                 className="fs-input w-full h-[46px] text-[14px] rounded-lg px-4"
                 containerClassName="mb-2"
-                error={t(errors.password)}
+                error={t(errors?.password||"")}
                 placeholder={t("auth.signup.passwordPlaceholder")}
                 type="password"
             />

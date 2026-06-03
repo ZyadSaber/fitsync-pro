@@ -47,12 +47,14 @@ export async function createSubscriptionPlan(data: PlanFormData): Promise<Action
       .from("subscription_plans")
       .insert({
         name: parsed.data.name,
-        slug: parsed.data.slug,
         description: parsed.data.description,
-        price_egp: parseFloat(parsed.data.price_egp) || 0,
+        price_egp: parsed.data.price_egp === "" ? null : parseFloat(parsed.data.price_egp) || 0,
         billing_cycle: parsed.data.billing_cycle,
         duration_days: parseInt(parsed.data.duration_days) || 30,
-        member_limit: parseInt(parsed.data.member_limit),
+        member_limit: parsed.data.member_limit === "" ? null : parseInt(parsed.data.member_limit) || null,
+        coach_limit: parsed.data.type === "gym"
+          ? (parsed.data.coach_limit === "" ? null : parseInt(parsed.data.coach_limit) || null)
+          : null,
         type: parsed.data.type,
         features: parsed.data.features,
         is_active: parsed.data.is_active,
@@ -80,12 +82,14 @@ export async function updateSubscriptionPlan(id: string, data: PlanFormData): Pr
       .from("subscription_plans")
       .update({
         name: parsed.data.name,
-        slug: parsed.data.slug,
         description: parsed.data.description || null,
         price_egp: parsed.data.price_egp === "" ? null : parseFloat(parsed.data.price_egp) || 0,
         billing_cycle: parsed.data.billing_cycle,
         duration_days: parseInt(parsed.data.duration_days) || 30,
         member_limit: parsed.data.member_limit === "" ? null : parseInt(parsed.data.member_limit) || null,
+        coach_limit: parsed.data.type === "gym"
+          ? (parsed.data.coach_limit === "" ? null : parseInt(parsed.data.coach_limit) || null)
+          : null,
         type: parsed.data.type,
         features: parsed.data.features,
         is_active: parsed.data.is_active,
@@ -128,6 +132,7 @@ export type BillingListResult = { data: BillingRecordListItem[]; error: null | s
 
 export async function getPlatformBillingRecords(filter?: {
   status?: string;
+  planType?: string;
 }): Promise<BillingListResult> {
   const supabase = await createServerSupabaseClient();
 
@@ -140,6 +145,18 @@ export async function getPlatformBillingRecords(filter?: {
 
     if (filter?.status && filter.status !== "all") {
       query = query.eq("status", filter.status) as typeof query;
+    }
+
+    // planType maps to the tenant that owns the record: a gym subscription
+    // always carries a gym plan, a coach subscription an online_coach plan.
+    // Exactly one of (gym_id, coach_id) is set on every row, so filtering by
+    // the *other* column being NULL selects the requested plan type.
+    const emptyTenantCol =
+      filter?.planType === "gym" ? "coach_id"
+      : filter?.planType === "online_coach" ? "gym_id"
+      : null;
+    if (emptyTenantCol) {
+      query = query.is(emptyTenantCol, null) as typeof query;
     }
 
     const { data, error } = await query;
@@ -155,6 +172,42 @@ export async function getPlatformBillingRecords(filter?: {
     };
   } catch (err) {
     return { data: [], error: extractMessage(err, "[getPlatformBillingRecords]") };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Billing status counts (accurate totals, independent of the row page size)
+// ---------------------------------------------------------------------------
+
+export type BillingCounts = { total: number; pastDue: number; pending: number };
+
+export async function getBillingStatusCounts(): Promise<{ data: BillingCounts; error: null | string }> {
+  const supabase = await createServerSupabaseClient();
+
+  try {
+    const base = () =>
+      supabase.from("platform_billing_records").select("*", { count: "exact", head: true });
+
+    const [total, pastDue, pending] = await Promise.all([
+      base(),
+      base().eq("status", "failed"),
+      base().eq("status", "pending"),
+    ]);
+
+    if (total.error) throw total.error;
+    if (pastDue.error) throw pastDue.error;
+    if (pending.error) throw pending.error;
+
+    return {
+      data: {
+        total: total.count ?? 0,
+        pastDue: pastDue.count ?? 0,
+        pending: pending.count ?? 0,
+      },
+      error: null,
+    };
+  } catch (err) {
+    return { data: { total: 0, pastDue: 0, pending: 0 }, error: extractMessage(err, "[getBillingStatusCounts]") };
   }
 }
 
@@ -290,15 +343,47 @@ export async function assignPlanToTenant(
 
   const { data: plan, error: planError } = await supabase
     .from("subscription_plans")
-    .select("slug, price_egp, duration_days")
+    .select("id, name, description, price_egp, duration_days, member_limit, coach_limit, type, features")
     .eq("id", parsed.data.plan_id)
     .single();
 
   if (planError || !plan) return { success: false, error: "Plan not found" };
 
+  const isGym = parsed.data.tenant_type === "gym";
+  const ownerGymId = isGym ? parsed.data.gym_id || null : null;
+  const ownerCoachId = !isGym ? parsed.data.coach_id || null : null;
+
+  // A contact-pricing template (price_egp = null) must be turned into a
+  // private, tenant-specific plan carrying the fully negotiated terms.
+  const isContactPlan = plan.price_egp === null;
+
+  // Resolve the private plan's terms: negotiated values for a contact plan,
+  // the template's own values otherwise. "" member/coach limits mean unlimited.
+  let unitPrice    = plan.price_egp ?? 0;
+  let memberLimit  = plan.member_limit;
+  let coachLimit   = plan.coach_limit;
+  let durationDays = plan.duration_days;
+  let features     = plan.features;
+
+  if (isContactPlan) {
+    const custom = parseFloat(parsed.data.custom_price ?? "");
+    if (!custom || custom <= 0) {
+      return { success: false, error: "Enter a negotiated price for this custom plan" };
+    }
+    unitPrice = custom;
+
+    const ml = parsed.data.custom_member_limit ?? "";
+    memberLimit = ml === "" ? null : parseInt(ml) || null;
+
+    const cl = parsed.data.custom_coach_limit ?? "";
+    coachLimit = plan.type === "gym" ? (cl === "" ? null : parseInt(cl) || null) : null;
+
+    durationDays = parseInt(parsed.data.custom_duration_days ?? "") || plan.duration_days;
+    features     = parsed.data.custom_features ?? [];
+  }
+
   const qty = Math.max(1, parseInt(parsed.data.quantity) || 1);
-  const cycleDays = parsed.data.billing_cycle === "yearly" ? 365 : 30;
-  const totalDays = plan.duration_days * qty;
+  const totalDays = durationDays * qty;
 
   const started = new Date(parsed.data.started_at);
   const ended = new Date(started);
@@ -308,15 +393,50 @@ export async function assignPlanToTenant(
   const sorted = [...installments].sort((a, b) => a.due_date.localeCompare(b.due_date));
   const lastDue = sorted[sorted.length - 1]?.due_date ?? null;
 
+  // Track partial writes so we can roll them back on any later failure.
+  let createdPrivatePlanId: string | null = null;
+  let createdSubId: string | null = null;
+
   try {
+    let planId = plan.id;
+    let planName = plan.name;
+
+    if (isContactPlan) {
+      const { data: priv, error: privError } = await supabase
+        .from("subscription_plans")
+        .insert({
+          name:           plan.name,
+          description:    plan.description,
+          price_egp:      unitPrice,
+          billing_cycle:  parsed.data.billing_cycle,
+          duration_days:  durationDays,
+          member_limit:   memberLimit,
+          coach_limit:    coachLimit,
+          type:           plan.type,
+          features:       features,
+          is_active:      true,
+          is_private:     true,
+          owner_gym_id:   ownerGymId,
+          owner_coach_id: ownerCoachId,
+        })
+        .select("id, name")
+        .single();
+
+      if (privError || !priv) throw privError ?? new Error("Failed to create private plan");
+
+      createdPrivatePlanId = priv.id;
+      planId = priv.id;
+      planName = priv.name;
+    }
+
     const { data: sub, error: subError } = await supabase
       .from("platform_subscriptions")
       .insert({
-        gym_id:         parsed.data.tenant_type === "gym" ? parsed.data.gym_id : null,
-        coach_id:       parsed.data.tenant_type === "online_coach" ? parsed.data.coach_id : null,
-        plan_id:        parsed.data.plan_id,
-        plan_name:      plan.slug,
-        price_egp:      plan.price_egp ?? 0,
+        gym_id:         ownerGymId,
+        coach_id:       ownerCoachId,
+        plan_id:        planId,
+        plan_name:      planName,
+        price_egp:      unitPrice,
         billing_cycle:  parsed.data.billing_cycle,
         status:         "active",
         started_at:     parsed.data.started_at,
@@ -327,11 +447,12 @@ export async function assignPlanToTenant(
       .single();
 
     if (subError) throw subError;
+    createdSubId = sub.id;
 
     const billingRows = installments.map((inst) => ({
       subscription_id: sub.id,
-      gym_id:          parsed.data.tenant_type === "gym" ? parsed.data.gym_id : null,
-      coach_id:        parsed.data.tenant_type === "online_coach" ? parsed.data.coach_id : null,
+      gym_id:          ownerGymId,
+      coach_id:        ownerCoachId,
       amount_egp:      parseFloat(inst.amount),
       billing_cycle:   parsed.data.billing_cycle,
       period_start:    parsed.data.started_at,
@@ -350,6 +471,14 @@ export async function assignPlanToTenant(
     REVALIDATE();
     return { success: true, id: sub.id };
   } catch (err) {
+    // Compensate for any partial writes so we never leave an orphan
+    // subscription or a private plan with no subscription behind it.
+    if (createdSubId) {
+      await supabase.from("platform_subscriptions").delete().eq("id", createdSubId);
+    }
+    if (createdPrivatePlanId) {
+      await supabase.from("subscription_plans").delete().eq("id", createdPrivatePlanId);
+    }
     return { success: false, error: extractMessage(err, "[assignPlanToTenant]") };
   }
 }

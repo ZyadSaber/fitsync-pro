@@ -7,7 +7,7 @@ import type { SubscriptionPlanType } from "@/types/subscriptions";
 
 type Tab = "all" | SubscriptionPlanType;
 
-const TABS: Tab[] = ["all", "gym", "online_coach", "both"];
+const TABS: Tab[] = ["all", "gym", "online_coach"];
 
 export default function PlanTypeTabs() {
   const t = useTranslations("management.subscriptions");

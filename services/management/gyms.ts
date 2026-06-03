@@ -24,13 +24,13 @@ export async function getActiveSubscriptionPlanOptions(): Promise<SelectOptions[
 
   const { data, error } = await supabase
     .from("subscription_plans")
-    .select("slug, name")
+    .select("name")
     .eq("is_active", true)
     .order("name");
 
   if (error || !isArrayHasData(data)) return [];
 
-  return data.map((plan) => ({ key: plan.slug, label: plan.name }));
+  return data.map((plan) => ({ key: plan.name, label: plan.name }));
 }
 
 // ---------------------------------------------------------------------------

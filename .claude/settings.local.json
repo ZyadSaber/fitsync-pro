@@ -56,7 +56,11 @@
       "Read(//f/F/fitsync-pro/**)",
       "Read(//f/F/fitsync-pro/messages/**)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git stash *)",
+      "Bash(npx eslint *)",
+      "Bash(echo \"=== exit $? ===\")",
+      "Bash(git push *)"
     ]
   }
 }

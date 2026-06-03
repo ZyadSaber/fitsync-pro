@@ -123,11 +123,11 @@ SELECT
   ps.created_at,
 
   -- derived from subscription_plans
-  sp.slug                               AS plan_slug,
   sp.name                               AS plan_name,
   COALESCE(sp.billing_cycle, 'monthly') AS billing_cycle,
   sp.duration_days,
   sp.member_limit,
+  sp.coach_limit,
   sp.features,
 
   -- derived from latest billing record
@@ -150,7 +150,7 @@ LEFT JOIN LATERAL (
 
 -- ------------------------------------------------------------
 -- 5. RECREATE gym_list view
---    plan_name now comes from subscription_plans.slug only —
+--    plan_name now comes from subscription_plans.name —
 --    the legacy fallback to sub.plan_name is removed.
 -- ------------------------------------------------------------
 CREATE OR REPLACE VIEW gym_list
@@ -161,7 +161,7 @@ SELECT
   g.name,
   g.address,
   g.created_at,
-  sp.slug                                AS plan_name,
+  sp.name                                AS plan_name,
   COALESCE(sp.price_egp, sub.price_egp) AS price_egp,
   sub.status                             AS subscription_status,
   COUNT(DISTINCT c.id)                   AS member_count,
@@ -181,5 +181,5 @@ LEFT JOIN platform_activity_log pal
   ON pal.gym_id = g.id
 GROUP BY
   g.id, g.name, g.address, g.created_at,
-  sp.slug, sp.price_egp, sub.price_egp, sub.status
+  sp.name, sp.price_egp, sub.price_egp, sub.status
 ORDER BY g.created_at DESC;

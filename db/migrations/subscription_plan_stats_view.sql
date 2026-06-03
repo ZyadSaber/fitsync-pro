@@ -8,12 +8,12 @@ WITH (security_invoker = true) AS
 SELECT
   sp.id,
   sp.name,
-  sp.slug,
   sp.description,
   sp.price_egp,
   sp.billing_cycle,
   sp.duration_days,
   sp.member_limit,
+  sp.coach_limit,
   sp.type,
   sp.features,
   sp.is_active,

@@ -28,6 +28,5 @@ export interface CoachListItem {
 
   // plan
   plan_name: string | null;
-  plan_slug: string | null;
   member_limit: number | null;
 }

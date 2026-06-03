@@ -67,7 +67,6 @@ export default function GymSubscriptionTab({ gymId }: Props) {
         <div className="flex flex-col gap-1">
           <span className="text-xs text-[var(--muted)]">{t("subscription.plan")}</span>
           <span className="font-semibold text-sm">{sub.plan_name ?? "—"}</span>
-          {sub.plan_slug && <span className="fs-badge gym self-start">{sub.plan_slug}</span>}
         </div>
         <span className={`fs-badge ${subBadge[sub.status] ?? ""}`}>
           {tGyms(`status.${sub.status}`)}

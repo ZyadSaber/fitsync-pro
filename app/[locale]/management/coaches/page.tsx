@@ -50,7 +50,7 @@ export default async function CoachesPage({
         (c.phone ?? "").toLowerCase().includes(q)
       );
     })
-    .filter((c) => !spPlan || c.plan_slug === spPlan)
+    .filter((c) => !spPlan || c.plan_name === spPlan)
     .filter((c) => {
       if (!spActive || spActive === "all") return true;
       return spActive === "true" ? c.is_billing_active : !c.is_billing_active;

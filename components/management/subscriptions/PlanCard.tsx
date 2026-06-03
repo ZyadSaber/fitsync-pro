@@ -6,7 +6,7 @@ import type { SubscriptionPlanStats } from "@/types/subscriptions";
 type T = (key: string, values?: Record<string, string | number | Date>) => string;
 
 export default function PlanCard({ plan, t }: { plan: SubscriptionPlanStats; t: T }) {
-  const color = PLAN_COLOR[plan.slug] ?? "accent";
+  const color = PLAN_COLOR[plan.name.toLowerCase().replace(/\s+/g, "_")] ?? "accent";
 
   return (
     <div className="fs-card p-4 flex flex-col gap-3">
@@ -43,6 +43,14 @@ export default function PlanCard({ plan, t }: { plan: SubscriptionPlanStats; t: 
             ? t("plans.unlimited")
             : t("plans.members", { count: plan.member_limit.toLocaleString() })}
         </li>
+        {plan.type === "gym" && (
+          <li className="flex items-center gap-1.5">
+            <Icon name="check" size={11} color={color} stroke={2.4} />
+            {plan.coach_limit === null
+              ? t("plans.unlimitedCoaches")
+              : t("plans.coaches", { count: plan.coach_limit.toLocaleString() })}
+          </li>
+        )}
         <li className="flex items-center gap-1.5">
           <Icon name="check" size={11} color={color} stroke={2.4} />
           {t("plans.days", { count: plan.duration_days })}

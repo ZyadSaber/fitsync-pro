@@ -62,7 +62,7 @@ export default function SignInComponent({ onSwitchToSignup }: SignInComponentPro
                     placeholder={t("auth.login.emailPlaceholder")}
                     value={formData.email}
                     onChange={handleChange}
-                    error={t(errors.email)}
+                    error={t(errors?.email||"")}
                 />
                 <Input
                     label={t("auth.login.passwordLabel")}
@@ -73,7 +73,7 @@ export default function SignInComponent({ onSwitchToSignup }: SignInComponentPro
                     value={formData.password}
                     onChange={handleChange}
                     onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-                    error={t(errors.password)}
+                    error={t(errors?.password||"")}
                 />
             </div>
 

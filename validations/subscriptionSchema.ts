@@ -2,16 +2,13 @@ import { z } from "zod";
 
 export const planFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  slug: z
-    .string()
-    .min(2, "Slug required")
-    .regex(/^[a-z0-9_]+$/, "Lowercase letters, numbers, underscores only"),
   description: z.string().optional().or(z.literal("")),
   price_egp: z.string(),       // "" = contact pricing (null in DB)
   billing_cycle: z.enum(["monthly", "yearly"]),
   duration_days: z.string().min(1, "Duration required"),
   member_limit: z.string(),    // "" = unlimited (null in DB)
-  type: z.enum(["gym", "online_coach", "both"]),
+  coach_limit: z.string(),     // gym plans only — "" = unlimited (null in DB)
+  type: z.enum(["gym", "online_coach"]),
   features: z.array(z.string()).default([]),
   is_active: z.boolean(),
 });
@@ -49,6 +46,11 @@ export const assignPlanSchema = z.object({
   started_at:    z.string().min(1, "Start date required"),
   quantity:      z.string().min(1),
   notes:         z.string().optional().or(z.literal("")),
+  custom_price:  z.string().optional().or(z.literal("")),
+  custom_member_limit:  z.string().optional().or(z.literal("")),
+  custom_coach_limit:   z.string().optional().or(z.literal("")),
+  custom_duration_days: z.string().optional().or(z.literal("")),
+  custom_features:      z.array(z.string()).default([]),
 }).refine(
   (d) => d.tenant_type === "gym" ? !!d.gym_id : !!d.coach_id,
   (d) => ({ message: d.tenant_type === "gym" ? "Select a gym" : "Select a coach", path: [d.tenant_type === "gym" ? "gym_id" : "coach_id"] })

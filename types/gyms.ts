@@ -1,27 +1,17 @@
-export type GymPlan =
-  | "trial"
-  | "starter"
-  | "pro"
-  | "elite"
-  | "enterprise"   // legacy slug — kept for backward compat with old rows
-  | "custom"
-  | "coach_solo"
-  | "coach_pro";
-
 export type GymStatus = "active" | "suspended" | "cancelled";
 
-export type SubscriptionPlanType = "gym" | "online_coach" | "both";
+export type SubscriptionPlanType = "gym" | "online_coach";
 export type BillingCycle = "monthly" | "yearly";
 
 export interface SubscriptionPlan {
   id: string;
   name: string;
-  slug: GymPlan;
   description: string | null;
   price_egp: number | null;
   billing_cycle: BillingCycle;
   duration_days: number;
   member_limit: number | null;
+  coach_limit: number | null;
   type: SubscriptionPlanType;
   features: string[];
   is_active: boolean;
@@ -36,7 +26,7 @@ export interface GymListItem {
   phone: string | "";
   logo_url: string | "";
   joinedAt: string;
-  plan: GymPlan | "";
+  plan: string;
   planPriceEgp: number | "";
   status: GymStatus | "";
   memberCount: number;
@@ -73,11 +63,11 @@ export interface PlatformSubscriptionDetails {
   notes: string | null;
   created_at: string;
   // derived from subscription_plans
-  plan_slug: GymPlan | null;
   plan_name: string | null;
   billing_cycle: BillingCycle;
   duration_days: number | null;
   member_limit: number | null;
+  coach_limit: number | null;
   features: string[];
   // derived from latest billing record
   latest_billing_record_id: string | null;

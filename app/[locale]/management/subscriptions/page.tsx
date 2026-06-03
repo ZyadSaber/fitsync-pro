@@ -5,7 +5,7 @@ import { Download } from "lucide-react";
 import HeaderContent from "@/components/layout/Topbar";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
-import { getSubscriptionPlanStats, getPlatformBillingRecords, getCoachSelectOptions } from "@/services/management/subscriptions";
+import { getSubscriptionPlanStats, getPlatformBillingRecords, getBillingStatusCounts, getCoachSelectOptions } from "@/services/management/subscriptions";
 import { getGyms } from "@/services/management/gyms";
 import SubscriptionsFilters from "@/components/management/subscriptions/SubscriptionsFilters";
 import BillingRowActions from "@/components/management/subscriptions/BillingRowActions";
@@ -18,11 +18,11 @@ import type { SelectOptions } from "@/types/ui";
 import type { SubscriptionPlanType } from "@/types/subscriptions";
 import isArrayHasData from "@/lib/isArrayHasData";
 
-const BILLING_BADGE: Record<string, { badge: string; label: string }> = {
-  paid: { badge: "active", label: "Paid" },
-  pending: { badge: "frozen", label: "Open" },
-  failed: { badge: "expired", label: "Past due" },
-  refunded: { badge: "pending", label: "Refunded" },
+const BILLING_BADGE: Record<string, string> = {
+  paid: "active",
+  pending: "frozen",
+  failed: "expired",
+  refunded: "pending",
 };
 
 const fmt = (iso: string | null) =>
@@ -36,45 +36,29 @@ export default async function SubscriptionsPage({
 }: {
   searchParams: Promise<{ status?: string; planType?: string }>;
 }) {
-  const
-    [t,
-      {
-        status: sf,
-        planType: pt
-      },
-      plansResult,
-      billingResult,
-      gymsResult,
-      coachOptions
-    ] = await Promise.all([
+  const { status: sf, planType: pt } = await searchParams;
+
+  const [t, plansResult, billingResult, countsResult, gymsResult, coachOptions] =
+    await Promise.all([
       getTranslations("management.subscriptions"),
-      searchParams,
       getSubscriptionPlanStats(),
-      getPlatformBillingRecords(),
+      getPlatformBillingRecords({ status: sf, planType: pt }),
+      getBillingStatusCounts(),
       getGyms(),
       getCoachSelectOptions(),
     ]);
 
-  if (plansResult.error && billingResult.error) {
-    return (
-      <div className="p-7">
-        <p className="text-sm font-mono text-red-600 bg-red-50 border border-red-200 rounded-lg p-4 whitespace-pre-wrap">
-          {plansResult.error}
-        </p>
-      </div>
-    );
-  }
-
-  const validTypes: SubscriptionPlanType[] = ["gym", "online_coach", "both"];
+  const validTypes: SubscriptionPlanType[] = ["gym", "online_coach"];
   const activePlanType = validTypes.includes(pt as SubscriptionPlanType) ? (pt as SubscriptionPlanType) : null;
   const plans = activePlanType
     ? plansResult.data.filter((p) => p.type === activePlanType)
     : plansResult.data;
-  const allRecords = billingResult.data;
-  const rows = allRecords.filter((r) => !sf || sf === "all" || r.status === sf);
 
-  const pastDueCount = allRecords.filter((r) => r.status === "failed").length;
-  const pendingCount = allRecords.filter((r) => r.status === "pending").length;
+  // Rows come back already filtered by the database (see getPlatformBillingRecords).
+  const rows = billingResult.data;
+
+  // Counts are exact totals across every record, independent of the row page size.
+  const { total: totalRecords, pastDue: pastDueCount, pending: pendingCount } = countsResult.data;
 
   const gymOptions: SelectOptions[] = (gymsResult.data ?? []).map((g) => ({
     key: g.id,
@@ -112,7 +96,11 @@ export default async function SubscriptionsPage({
       <div className="p-7 flex flex-col gap-5">
 
         {/* Plan tier cards */}
-        {isArrayHasData(plansResult.data) && (
+        {plansResult.error ? (
+          <p className="text-sm font-mono text-red-600 bg-red-50 border border-red-200 rounded-lg p-4 whitespace-pre-wrap">
+            {t("plans.loadError")}
+          </p>
+        ) : isArrayHasData(plansResult.data) && (
           <div className="flex flex-col gap-3">
             <Suspense>
               <PlanTypeTabs />
@@ -120,7 +108,7 @@ export default async function SubscriptionsPage({
             {isArrayHasData(plans) ? (
               <div
                 className="grid gap-3.5"
-                style={{ gridTemplateColumns: `repeat(7, 1fr)` }}
+                style={{ gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))" }}
               >
                 {plans.map((p) => (
                   <PlanCard key={p.id} plan={p} t={t} />
@@ -141,7 +129,7 @@ export default async function SubscriptionsPage({
                 {t("invoices.subtitle", {
                   cycle: format(new Date(), "MMMM yyyy"),
                   shown: rows.length,
-                  total: allRecords.length,
+                  total: totalRecords,
                 })}
               </div>
             </div>
@@ -159,6 +147,11 @@ export default async function SubscriptionsPage({
             </div>
           </div>
 
+          {billingResult.error ? (
+            <p className="m-5 text-sm font-mono text-red-600 bg-red-50 border border-red-200 rounded-lg p-4 whitespace-pre-wrap">
+              {t("invoices.loadError")}
+            </p>
+          ) : (
           <div className="max-h-[388px] overflow-y-auto">
           <Table>
             <TableHeader className="sticky top-0 z-10">
@@ -174,7 +167,7 @@ export default async function SubscriptionsPage({
             </TableHeader>
             <TableBody>
               {rows.map((inv) => {
-                const st = BILLING_BADGE[inv.status] ?? { badge: "pending", label: inv.status };
+                const badgeClass = BILLING_BADGE[inv.status] ?? "pending";
                 return (
                   <TableRow key={inv.id}>
                     <TableCell className="fs-mono text-xs">
@@ -188,7 +181,7 @@ export default async function SubscriptionsPage({
                       <span className="text-muted text-[10px] font-normal">{t("currency")}</span>
                     </TableCell>
                     <TableCell>
-                      <span className={`fs-badge ${st.badge}`}>
+                      <span className={`fs-badge ${badgeClass}`}>
                         <span className="dot" />
                         {t(`status.${inv.status}` as "status.paid" | "status.pending" | "status.failed" | "status.refunded")}
                       </span>
@@ -208,13 +201,14 @@ export default async function SubscriptionsPage({
               {rows.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-10 text-sm text-muted">
-                    No billing records found.
+                    {t("invoices.noResults")}
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
           </div>
+          )}
         </div>
       </div>
     </>

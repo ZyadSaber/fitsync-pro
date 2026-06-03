@@ -111,7 +111,6 @@ SELECT
 
   -- plan
   sp.name                                   AS plan_name,
-  sp.slug                                   AS plan_slug,
   sp.member_limit
 
 FROM coaches c

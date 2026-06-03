@@ -275,15 +275,17 @@
         "perMonth": "EGP/mo",
         "upTo": "up to {count} members",
         "members": "{count} members",
+        "coaches": "{count} coaches",
         "unlimited": "Unlimited",
+        "unlimitedCoaches": "Unlimited coaches",
         "days": "{count} days",
         "noResults": "No plans match this filter.",
         "type": {
           "all": "All",
           "gym": "Gym",
-          "online_coach": "Coach",
-          "both": "Both"
-        }
+          "online_coach": "Coach"
+        },
+        "loadError": "Could not load plans."
       },
       "invoices": {
         "title": "Recent invoices",
@@ -296,7 +298,9 @@
         "paid": "Paid",
         "all": "All",
         "pastDue": "Past due",
-        "open": "Open"
+        "open": "Open",
+        "noResults": "No billing records found.",
+        "loadError": "Could not load invoices."
       },
       "status": {
         "paid": "Paid",
@@ -311,8 +315,6 @@
         "fields": {
           "name": "Plan name",
           "namePlaceholder": "Pro",
-          "slug": "Slug",
-          "slugPlaceholder": "pro",
           "description": "Description",
           "descriptionPlaceholder": "Full platform for growing gyms",
           "type": "Plan type",
@@ -321,6 +323,8 @@
           "pricePlaceholder": "4500",
           "memberLimit": "Member limit",
           "memberLimitPlaceholder": "1000",
+          "coachLimit": "Coach limit",
+          "coachLimitPlaceholder": "Unlimited",
           "duration": "Duration (days)",
           "durationPlaceholder": "30",
           "features": "Features (one per line)",
@@ -341,8 +345,7 @@
         },
         "types": {
           "gym": "Gym",
-          "online_coach": "Online Coach",
-          "both": "Both"
+          "online_coach": "Online Coach"
         },
         "actions": {
           "add": "Add",

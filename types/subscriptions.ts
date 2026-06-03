@@ -10,20 +10,27 @@ export interface AssignPlanForm {
   started_at:    string;
   quantity:      string;
   notes:         string;
+  // Contact-pricing ("Custom") plans let the admin negotiate every term of the
+  // private plan that gets created. Ignored for fixed-price catalog plans.
+  custom_price:         string;   // negotiated price (required for contact plans)
+  custom_member_limit:  string;   // "" = unlimited
+  custom_coach_limit:   string;   // gym plans only — "" = unlimited
+  custom_duration_days: string;
+  custom_features:      string[];
 }
 
 export type BillingStatus = "paid" | "pending" | "failed" | "refunded";
-export type SubscriptionPlanType = "gym" | "online_coach" | "both";
+export type SubscriptionPlanType = "gym" | "online_coach";
 
 export interface SubscriptionPlanStats {
   id: string;
   name: string;
-  slug: string;
   description: string | null;
   price_egp: number | null;
   billing_cycle: BillingCycle;
   duration_days: number;
   member_limit: number | null;
+  coach_limit: number | null;   // gym plans only — coaches who can access the platform
   type: SubscriptionPlanType;
   features: string[];
   is_active: boolean;

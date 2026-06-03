@@ -42,19 +42,18 @@ export default function PlanDialog({ plan }: Props) {
   const TYPE_OPTIONS = [
     { key: "gym", label: t("types.gym") },
     { key: "online_coach", label: t("types.online_coach") },
-    { key: "both", label: t("types.both") },
   ];
 
   const { formData, handleChange, handleFieldChange, handleToggle, errors, handleSubmit, loading } =
     useFormManager<PlanFormData>({
       initialData: {
         name: plan?.name ?? "",
-        slug: plan?.slug ?? "",
         description: plan?.description ?? "",
         price_egp: String(plan?.price_egp || ""),
         billing_cycle: plan?.billing_cycle ?? "monthly",
         duration_days: String(plan?.duration_days || "30"),
         member_limit: String(plan?.member_limit || ""),
+        coach_limit: String(plan?.coach_limit || ""),
         type: plan?.type ?? "gym",
         features: plan?.features ?? [],
         is_active: plan?.is_active ?? true,
@@ -73,6 +72,7 @@ export default function PlanDialog({ plan }: Props) {
 
   const isContactPricing = formData.price_egp === "";
   const isUnlimited = formData.member_limit === "";
+  const isGym = formData.type === "gym";
 
   const features = (formData.features as string[]) ?? [];
 
@@ -117,28 +117,15 @@ export default function PlanDialog({ plan }: Props) {
         </DialogHeader>
 
         <div className="flex flex-col gap-1 mt-1">
-          <div className="flex gap-2">
-            <Input
-              name="name"
-              label={t("fields.name")}
-              placeholder={t("fields.namePlaceholder")}
-              value={formData.name}
-              onChange={handleChange}
-              error={errors.name}
-              required
-              containerClassName="flex-1"
-            />
-            <Input
-              name="slug"
-              label={t("fields.slug")}
-              placeholder={t("fields.slugPlaceholder")}
-              value={formData.slug}
-              onChange={handleChange}
-              error={errors.slug}
-              required
-              containerClassName="flex-1"
-            />
-          </div>
+          <Input
+            name="name"
+            label={t("fields.name")}
+            placeholder={t("fields.namePlaceholder")}
+            value={formData.name}
+            onChange={handleChange}
+            error={errors.name}
+            required
+          />
 
           <Textarea
             name="description"
@@ -237,6 +224,17 @@ export default function PlanDialog({ plan }: Props) {
                 containerClassName={isUnlimited ? "w-full" : "flex-1"}
               />
             </div>
+            {isGym && (
+              <Input
+                name="coach_limit"
+                label={t("fields.coachLimit")}
+                placeholder={t("fields.coachLimitPlaceholder")}
+                value={formData.coach_limit}
+                onChange={handleChange}
+                type="text"
+                inputMode="numeric"
+              />
+            )}
           </div>
 
           <div className="flex flex-col gap-1.5">

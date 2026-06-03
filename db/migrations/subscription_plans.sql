@@ -12,15 +12,15 @@
 CREATE TABLE IF NOT EXISTS subscription_plans (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name           TEXT NOT NULL,
-  slug           TEXT UNIQUE NOT NULL,
   description    TEXT DEFAULT '',
   price_egp      NUMERIC DEFAULT 0,   -- NULL = contact sales / custom pricing
   billing_cycle  TEXT NOT NULL DEFAULT 'monthly'
                  CHECK (billing_cycle IN ('monthly', 'yearly')),
   duration_days  INT NOT NULL DEFAULT 30,
   member_limit   INT,                 -- NULL = unlimited
+  coach_limit    INT,                 -- gym plans only; NULL = unlimited
   type           TEXT NOT NULL DEFAULT 'gym'
-                 CHECK (type IN ('gym', 'online_coach', 'both')),
+                 CHECK (type IN ('gym', 'online_coach')),
   features       TEXT[] NOT NULL DEFAULT '{}',
   is_active      BOOLEAN NOT NULL DEFAULT true,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -49,20 +49,15 @@ CREATE POLICY "authenticated reads active subscription_plans" ON subscription_pl
 -- ------------------------------------------------------------
 -- 2. Seed default plans
 -- ------------------------------------------------------------
-INSERT INTO subscription_plans (name, slug, description, price_egp, billing_cycle, duration_days, member_limit, type, features) VALUES
-  ('Trial',      'trial',      '14-day free trial with all Pro features',   0,     'monthly', 14,  100,  'gym',          ARRAY['14 days', 'No card needed', 'All Pro features']),
-  ('Starter',    'starter',    'Essential tools for small gyms',            1800,  'monthly', 30,  200,  'gym',          ARRAY['200 members', '5 GB storage', 'Email support']),
-  ('Pro',        'pro',        'Full platform for growing gyms',            4500,  'monthly', 30,  1000, 'gym',          ARRAY['1,000 members', '100 GB storage', 'WhatsApp tier', 'Priority support']),
-  ('Elite',      'elite',      'Enterprise-grade for large facilities',     9800,  'monthly', 30,  3000, 'gym',          ARRAY['3,000 members', '500 GB storage', 'Multi-branch', 'Dedicated CSM']),
-  ('Custom',     'custom',     'Negotiated terms for enterprise clients',   NULL,  'monthly', 30,  6000, 'both',         ARRAY['Negotiated cap', 'SSO + API access', 'SLA 99.95%']),
-  ('Coach Solo', 'coach_solo', 'For independent online coaches',            1200,  'monthly', 30,  50,   'online_coach', ARRAY['50 clients', 'Workout builder', 'Nutrition plans']),
-  ('Coach Pro',  'coach_pro',  'Scaling online coaching business',          2400,  'monthly', 30,  200,  'online_coach', ARRAY['200 clients', 'All Solo features', 'Analytics', 'Priority support'])
-ON CONFLICT (slug) DO NOTHING;
-
--- Keep the legacy 'enterprise' slug mapped to Elite
-INSERT INTO subscription_plans (name, slug, description, price_egp, billing_cycle, duration_days, member_limit, type, features)
-  VALUES ('Elite', 'enterprise', 'Enterprise-grade for large facilities (legacy slug)', 9800, 'monthly', 30, 3000, 'gym', ARRAY['3,000 members', '500 GB storage', 'Multi-branch', 'Dedicated CSM'])
-ON CONFLICT (slug) DO NOTHING;
+INSERT INTO subscription_plans (name, description, price_egp, billing_cycle, duration_days, member_limit, coach_limit, type, features) VALUES
+  ('Trial',      '14-day free trial with all Pro features',   0,     'monthly', 14,  100,  2,    'gym',          ARRAY['14 days', 'No card needed', 'All Pro features']),
+  ('Starter',    'Essential tools for small gyms',            1800,  'monthly', 30,  200,  3,    'gym',          ARRAY['200 members', '5 GB storage', 'Email support']),
+  ('Pro',        'Full platform for growing gyms',            4500,  'monthly', 30,  1000, 10,   'gym',          ARRAY['1,000 members', '100 GB storage', 'WhatsApp tier', 'Priority support']),
+  ('Elite',      'Enterprise-grade for large facilities',     9800,  'monthly', 30,  3000, 30,   'gym',          ARRAY['3,000 members', '500 GB storage', 'Multi-branch', 'Dedicated CSM']),
+  ('Custom',     'Negotiated terms for enterprise clients',   NULL,  'monthly', 30,  6000, NULL, 'gym',          ARRAY['Negotiated cap', 'SSO + API access', 'SLA 99.95%']),
+  ('Coach Solo', 'For independent online coaches',            1200,  'monthly', 30,  50,   NULL, 'online_coach', ARRAY['50 clients', 'Workout builder', 'Nutrition plans']),
+  ('Coach Pro',  'Scaling online coaching business',          2400,  'monthly', 30,  200,  NULL, 'online_coach', ARRAY['200 clients', 'All Solo features', 'Analytics', 'Priority support'])
+ON CONFLICT DO NOTHING;
 
 -- ------------------------------------------------------------
 -- 3. Update platform_subscriptions — add plan_id FK column
@@ -77,7 +72,7 @@ ALTER TABLE platform_subscriptions
 UPDATE platform_subscriptions ps
 SET plan_id = sp.id
 FROM subscription_plans sp
-WHERE ps.plan_name = sp.slug
+WHERE ps.plan_name = sp.name
   AND ps.plan_id IS NULL;
 
 -- ------------------------------------------------------------
@@ -88,9 +83,6 @@ CREATE INDEX IF NOT EXISTS idx_subscription_plans_type
 
 CREATE INDEX IF NOT EXISTS idx_subscription_plans_is_active
   ON subscription_plans (is_active);
-
-CREATE INDEX IF NOT EXISTS idx_subscription_plans_slug
-  ON subscription_plans (slug);
 
 CREATE INDEX IF NOT EXISTS idx_platform_subscriptions_plan_id
   ON platform_subscriptions (plan_id);
