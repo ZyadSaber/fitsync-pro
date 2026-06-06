@@ -358,6 +358,87 @@
           "created": "تم إنشاء الخطة",
           "updated": "تم تحديث الخطة"
         }
+      },
+      "assignDialog": {
+        "trigger": "تخصيص خطة",
+        "title": "تخصيص خطة",
+        "sections": {
+          "subscription": "الاشتراك",
+          "negotiatedTerms": "الشروط المتفق عليها",
+          "paymentSchedule": "جدول الدفع",
+          "notes": "ملاحظات (اختياري)"
+        },
+        "fields": {
+          "tenantType": "نوع المستأجر",
+          "gym": "الجيم",
+          "onlineCoach": "مدرب أونلاين",
+          "plan": "الخطة",
+          "qty": "الكمية",
+          "billingCycle": "دورة الفوترة",
+          "startDate": "تاريخ البدء",
+          "price": "السعر (جنيه)",
+          "duration": "المدة (أيام)",
+          "memberLimit": "حد الأعضاء",
+          "coachLimit": "حد المدربين",
+          "features": "المميزات",
+          "notesPlaceholder": "مثال: صفقة 3 أشهر، تُدفع على قسطين متساويين"
+        },
+        "placeholders": {
+          "searchGyms": "ابحث عن الأندية…",
+          "searchCoaches": "ابحث عن المدربين…",
+          "price": "مثال: 12000",
+          "duration": "مثال: 30",
+          "unlimitedHint": "اتركه فارغًا = غير محدود",
+          "feature": "أضف ميزة واضغط Enter"
+        },
+        "tenantType": {
+          "gym": "نادٍ",
+          "online_coach": "مدرب أونلاين"
+        },
+        "billing": {
+          "monthly": "شهري",
+          "yearly": "سنوي"
+        },
+        "featuresActions": {
+          "add": "إضافة"
+        },
+        "customNoteGym": "ينشئ خطة {plan} خاصة لهذا النادي بهذه الشروط.",
+        "customNoteCoach": "ينشئ خطة {plan} خاصة لهذا المدرب بهذه الشروط.",
+        "coverage": {
+          "label": "التغطية:",
+          "days": "= {days} يوم",
+          "listPrice": "السعر المعلن",
+          "enterPriceHint": "أدخل السعر المتفق عليه أعلاه",
+          "customPricing": "تسعير مخصص"
+        },
+        "schedule": {
+          "splitInto": "قسّم إلى",
+          "equalPayments": "دفعات متساوية",
+          "generate": "إنشاء",
+          "colNumber": "#",
+          "colDueDate": "تاريخ الاستحقاق",
+          "colLabel": "التسمية (اختياري)",
+          "colAmount": "المبلغ (جنيه)",
+          "labelPlaceholder": "مثال: دفعة مقدمة",
+          "payment": "دفعة",
+          "payments": "دفعات",
+          "addInstallment": "إضافة قسط",
+          "balanced": "الدفعات تطابق إجمالي الخطة",
+          "unscheduled": "{amount} جنيه غير مجدول بعد",
+          "overPlan": "{amount} جنيه تتجاوز إجمالي الخطة",
+          "installmentLabel": "قسط {n}",
+          "fullPayment": "دفعة كاملة"
+        },
+        "actions": {
+          "cancel": "إلغاء",
+          "submit": "تخصيص وإنشاء الفواتير",
+          "saving": "جارٍ الحفظ…"
+        },
+        "toast": {
+          "needPrice": "أدخل سعرًا متفقًا عليه لهذه الخطة المخصصة",
+          "needRows": "كل قسط يحتاج تاريخًا ومبلغًا صحيحًا",
+          "success": "تم تخصيص الخطة — تم إنشاء جدول الفوترة"
+        }
       }
     },
     "coaches": {

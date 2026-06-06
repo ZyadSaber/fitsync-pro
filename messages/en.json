@@ -358,6 +358,87 @@
           "created": "Plan created",
           "updated": "Plan updated"
         }
+      },
+      "assignDialog": {
+        "trigger": "Assign Plan",
+        "title": "Assign Plan",
+        "sections": {
+          "subscription": "Subscription",
+          "negotiatedTerms": "Negotiated terms",
+          "paymentSchedule": "Payment schedule",
+          "notes": "Notes (optional)"
+        },
+        "fields": {
+          "tenantType": "Tenant type",
+          "gym": "Gym",
+          "onlineCoach": "Online Coach",
+          "plan": "Plan",
+          "qty": "Qty",
+          "billingCycle": "Billing cycle",
+          "startDate": "Start date",
+          "price": "Price (EGP)",
+          "duration": "Duration (days)",
+          "memberLimit": "Member limit",
+          "coachLimit": "Coach limit",
+          "features": "Features",
+          "notesPlaceholder": "e.g. 3-month bulk deal, paid in 2 equal installments"
+        },
+        "placeholders": {
+          "searchGyms": "Search gyms…",
+          "searchCoaches": "Search coaches…",
+          "price": "e.g. 12000",
+          "duration": "e.g. 30",
+          "unlimitedHint": "Empty = unlimited",
+          "feature": "Add a feature and press Enter"
+        },
+        "tenantType": {
+          "gym": "Gym",
+          "online_coach": "Online Coach"
+        },
+        "billing": {
+          "monthly": "Monthly",
+          "yearly": "Yearly"
+        },
+        "featuresActions": {
+          "add": "Add"
+        },
+        "customNoteGym": "Creates a private {plan} plan for this gym with these terms.",
+        "customNoteCoach": "Creates a private {plan} plan for this coach with these terms.",
+        "coverage": {
+          "label": "Coverage:",
+          "days": "= {days} days",
+          "listPrice": "list price",
+          "enterPriceHint": "Enter a negotiated price above",
+          "customPricing": "Custom pricing"
+        },
+        "schedule": {
+          "splitInto": "Split into",
+          "equalPayments": "equal payments",
+          "generate": "Generate",
+          "colNumber": "#",
+          "colDueDate": "Due date",
+          "colLabel": "Label (optional)",
+          "colAmount": "Amount (EGP)",
+          "labelPlaceholder": "e.g. Down payment",
+          "payment": "payment",
+          "payments": "payments",
+          "addInstallment": "Add installment",
+          "balanced": "Payments match the plan total",
+          "unscheduled": "{amount} EGP still unscheduled",
+          "overPlan": "{amount} EGP over the plan total",
+          "installmentLabel": "Installment {n}",
+          "fullPayment": "Full payment"
+        },
+        "actions": {
+          "cancel": "Cancel",
+          "submit": "Assign & Create Invoices",
+          "saving": "Saving…"
+        },
+        "toast": {
+          "needPrice": "Enter a negotiated price for this custom plan",
+          "needRows": "Every installment needs a valid date and amount",
+          "success": "Plan assigned — billing schedule created"
+        }
       }
     },
     "coaches": {

@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef } from "react";
 import { format, addMonths, addYears } from "date-fns";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -20,16 +21,6 @@ import type { SelectOptions } from "@/types/ui";
 import type { SubscriptionPlanStats, AssignPlanForm } from "@/types/subscriptions";
 import type { InstallmentRow } from "@/validations/subscriptionSchema";
 import { toast } from "sonner";
-
-const TENANT_TYPE_OPTIONS: SelectOptions[] = [
-  { key: "gym",          label: "Gym" },
-  { key: "online_coach", label: "Online Coach" },
-];
-
-const BILLING_OPTIONS: SelectOptions[] = [
-  { key: "monthly", label: "Monthly" },
-  { key: "yearly",  label: "Yearly"  },
-];
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -62,12 +53,23 @@ interface Props {
 }
 
 export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
+  const t = useTranslations("management.subscriptions.assignDialog");
   const { visible: open, handleOpen, handleClose, handleStateChange } = useVisibility();
 
   const [installments, setInstallments] = useState<InstallmentRow[]>([emptyRow()]);
   const [splitCount, setSplitCount] = useState("2");
   const [newFeature, setNewFeature] = useState("");
   const featureInputRef = useRef<HTMLInputElement>(null);
+
+  const TENANT_TYPE_OPTIONS: SelectOptions[] = [
+    { key: "gym",          label: t("tenantType.gym") },
+    { key: "online_coach", label: t("tenantType.online_coach") },
+  ];
+
+  const BILLING_OPTIONS: SelectOptions[] = [
+    { key: "monthly", label: t("billing.monthly") },
+    { key: "yearly",  label: t("billing.yearly")  },
+  ];
 
   const {
     formData: form,
@@ -84,7 +86,7 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
     onSubmit: async (data, resetFormFn) => {
       const plan = plans.find((p) => p.id === data.plan_id);
       if (plan && plan.price_egp === null && !(parseFloat(data.custom_price) > 0)) {
-        toast.error("Enter a negotiated price for this custom plan");
+        toast.error(t("toast.needPrice"));
         return;
       }
 
@@ -92,14 +94,14 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
         (r) => !r.due_date || !r.amount || parseFloat(r.amount) <= 0
       );
       if (invalid) {
-        toast.error("Every installment needs a valid date and amount");
+        toast.error(t("toast.needRows"));
         return;
       }
 
       const res = await assignPlanToTenant(data, installments);
       if (!res.success) { toast.error(res.error); return; }
 
-      toast.success("Plan assigned — billing schedule created");
+      toast.success(t("toast.success"));
       resetFormFn();
       setInstallments([emptyRow()]);
       setSplitCount("2");
@@ -232,7 +234,7 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
       return {
         due_date: format(due, "yyyy-MM-dd"),
         amount:   each,
-        label:    n > 1 ? `Installment ${i + 1}` : "Full payment",
+        label:    n > 1 ? t("schedule.installmentLabel", { n: i + 1 }) : t("schedule.fullPayment"),
       };
     });
 
@@ -245,12 +247,12 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose_(); else handleStateChange(v); }}>
       <Button variant="outline" onClick={handleOpen}>
         <Icon name="tag" size={13} />
-        Assign Plan
+        {t("trigger")}
       </Button>
 
       <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Assign Plan</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-col gap-3 mt-1">
@@ -258,13 +260,13 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
           {/* ── Subscription details ──────────────────────────────────────── */}
           <div className="flex flex-col gap-1">
             <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)]">
-              Subscription
+              {t("sections.subscription")}
             </span>
 
             <div className="grid grid-cols-2 gap-2">
               <SelectField
                 name="tenant_type"
-                label="Tenant type"
+                label={t("fields.tenantType")}
                 options={TENANT_TYPE_OPTIONS}
                 value={form.tenant_type}
                 onValueChange={(v) =>
@@ -277,25 +279,25 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
               {isGym ? (
                 <SelectField
                   name="gym_id"
-                  label="Gym"
+                  label={t("fields.gym")}
                   options={gyms}
                   value={form.gym_id}
                   onValueChange={(v) => handleFieldChange({ name: "gym_id", value: v })}
                   error={errors.gym_id}
                   showSearch
-                  searchPlaceholder="Search gyms…"
+                  searchPlaceholder={t("placeholders.searchGyms")}
                   containerClassName="w-full"
                 />
               ) : (
                 <SelectField
                   name="coach_id"
-                  label="Online Coach"
+                  label={t("fields.onlineCoach")}
                   options={coaches}
                   value={form.coach_id}
                   onValueChange={(v) => handleFieldChange({ name: "coach_id", value: v })}
                   error={errors.coach_id}
                   showSearch
-                  searchPlaceholder="Search coaches…"
+                  searchPlaceholder={t("placeholders.searchCoaches")}
                   containerClassName="w-full"
                 />
               )}
@@ -304,7 +306,7 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
             <div className="grid grid-cols-[1fr_80px_120px_120px] gap-2">
               <SelectField
                 name="plan_id"
-                label="Plan"
+                label={t("fields.plan")}
                 options={planOptions}
                 value={form.plan_id}
                 onValueChange={handlePlanChange}
@@ -315,7 +317,7 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
               {/* Quantity */}
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] px-0.5">
-                  Qty
+                  {t("fields.qty")}
                 </label>
                 <input
                   type="number"
@@ -329,7 +331,7 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
 
               <SelectField
                 name="billing_cycle"
-                label="Billing cycle"
+                label={t("fields.billingCycle")}
                 options={BILLING_OPTIONS}
                 value={form.billing_cycle}
                 onValueChange={(v) => handleFieldChange({ name: "billing_cycle", value: v })}
@@ -340,7 +342,7 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
               {/* Start date */}
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] px-0.5">
-                  Start date
+                  {t("fields.startDate")}
                 </label>
                 <input
                   type="date"
@@ -359,7 +361,7 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
                 <div className="flex items-center gap-1.5">
                   <Sparkles size={12} className="text-[var(--accent)]" />
                   <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--accent)]">
-                    Negotiated terms
+                    {t("sections.negotiatedTerms")}
                   </span>
                 </div>
 
@@ -367,14 +369,14 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
                   {/* Price */}
                   <div className="flex flex-col gap-1">
                     <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] px-0.5">
-                      Price (EGP)
+                      {t("fields.price")}
                     </label>
                     <input
                       type="number"
                       min="0"
                       step="0.01"
                       name="custom_price"
-                      placeholder="e.g. 12000"
+                      placeholder={t("placeholders.price")}
                       value={form.custom_price}
                       onChange={(e) => handleFieldChange({ name: "custom_price", value: e.target.value })}
                       className="fs-input h-9"
@@ -384,13 +386,13 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
                   {/* Duration */}
                   <div className="flex flex-col gap-1">
                     <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] px-0.5">
-                      Duration (days)
+                      {t("fields.duration")}
                     </label>
                     <input
                       type="number"
                       min="1"
                       name="custom_duration_days"
-                      placeholder="e.g. 30"
+                      placeholder={t("placeholders.duration")}
                       value={form.custom_duration_days}
                       onChange={(e) => handleFieldChange({ name: "custom_duration_days", value: e.target.value })}
                       className="fs-input h-9"
@@ -400,13 +402,13 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
                   {/* Member limit */}
                   <div className="flex flex-col gap-1">
                     <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] px-0.5">
-                      Member limit
+                      {t("fields.memberLimit")}
                     </label>
                     <input
                       type="number"
                       min="0"
                       name="custom_member_limit"
-                      placeholder="Empty = unlimited"
+                      placeholder={t("placeholders.unlimitedHint")}
                       value={form.custom_member_limit}
                       onChange={(e) => handleFieldChange({ name: "custom_member_limit", value: e.target.value })}
                       className="fs-input h-9"
@@ -417,13 +419,13 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
                   {isGym && (
                     <div className="flex flex-col gap-1">
                       <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] px-0.5">
-                        Coach limit
+                        {t("fields.coachLimit")}
                       </label>
                       <input
                         type="number"
                         min="0"
                         name="custom_coach_limit"
-                        placeholder="Empty = unlimited"
+                        placeholder={t("placeholders.unlimitedHint")}
                         value={form.custom_coach_limit}
                         onChange={(e) => handleFieldChange({ name: "custom_coach_limit", value: e.target.value })}
                         className="fs-input h-9"
@@ -435,7 +437,7 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
                 {/* Features */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] px-0.5">
-                    Features
+                    {t("fields.features")}
                   </label>
                   <div className="flex gap-2 items-center rounded-md border border-dashed border-[var(--hairline)] bg-white px-2.5 h-9">
                     <Plus size={14} className="text-[var(--accent)] shrink-0" />
@@ -445,7 +447,7 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
                       value={newFeature}
                       onChange={(e) => setNewFeature(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addFeature())}
-                      placeholder="Add a feature and press Enter"
+                      placeholder={t("placeholders.feature")}
                       className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-[var(--muted2)]"
                     />
                     <button
@@ -454,7 +456,7 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
                       disabled={!newFeature.trim()}
                       className="text-[11px] font-semibold text-[var(--accent)] disabled:text-[var(--muted2)] disabled:cursor-not-allowed hover:underline"
                     >
-                      Add
+                      {t("featuresActions.add")}
                     </button>
                   </div>
                   {features.length > 0 && (
@@ -498,7 +500,9 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
                 </div>
 
                 <span className="text-[11px] text-[var(--muted)]">
-                  Creates a private <span className="font-semibold">{selectedPlan.name}</span> plan for this {isGym ? "gym" : "coach"} with these terms.
+                  {isGym
+                    ? t("customNoteGym", { plan: selectedPlan.name })
+                    : t("customNoteCoach", { plan: selectedPlan.name })}
                 </span>
               </div>
             )}
@@ -507,13 +511,13 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
             {selectedPlan && (
               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                 <span className="text-[11px] text-[var(--muted)]">
-                  Coverage:
+                  {t("coverage.label")}
                 </span>
                 <span className="fs-badge active text-[10px]">
                   {qty} × {selectedPlan.name}
                 </span>
                 <span className="text-[11px] text-[var(--muted)]">
-                  = {coverageDays} days
+                  {t("coverage.days", { days: coverageDays })}
                 </span>
                 {planTotal !== null && (
                   <>
@@ -522,13 +526,13 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
                       {planTotal.toLocaleString()} EGP
                     </span>
                     <span className="text-[11px] text-[var(--muted)]">
-                      list price
+                      {t("coverage.listPrice")}
                     </span>
                   </>
                 )}
                 {unitPrice === null && (
                   <span className="text-[11px] text-[var(--amber)] italic">
-                    {isContactPlan ? "Enter a negotiated price above" : "Custom pricing"}
+                    {isContactPlan ? t("coverage.enterPriceHint") : t("coverage.customPricing")}
                   </span>
                 )}
               </div>
@@ -539,13 +543,13 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)]">
-                Payment schedule
+                {t("sections.paymentSchedule")}
               </span>
 
               {/* Quick generate */}
               <div className="flex items-center gap-1.5">
                 <Sparkles size={12} className="text-[var(--accent)]" />
-                <span className="text-[11px] text-[var(--muted)]">Split into</span>
+                <span className="text-[11px] text-[var(--muted)]">{t("schedule.splitInto")}</span>
                 <input
                   type="number"
                   min="1"
@@ -554,13 +558,13 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
                   onChange={(e) => setSplitCount(e.target.value)}
                   className="w-12 h-7 rounded-md border border-[var(--hairline)] bg-white text-center text-[12px] font-semibold outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] transition-[border-color,box-shadow]"
                 />
-                <span className="text-[11px] text-[var(--muted)]">equal payments</span>
+                <span className="text-[11px] text-[var(--muted)]">{t("schedule.equalPayments")}</span>
                 <button
                   type="button"
                   onClick={handleGenerate}
                   className="h-7 px-2.5 rounded-md text-[11px] font-semibold text-[var(--accent)] border border-[var(--accent-soft)] bg-[var(--accent-soft)] hover:bg-blue-100 transition-colors"
                 >
-                  Generate
+                  {t("schedule.generate")}
                 </button>
               </div>
             </div>
@@ -570,10 +574,10 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
 
               {/* Header */}
               <div className="grid grid-cols-[28px_130px_1fr_130px_32px] gap-2 items-center px-3 py-2 bg-[#FBFBFA] border-b border-[var(--hairline)]">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">#</span>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Due date</span>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Label (optional)</span>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] text-end">Amount (EGP)</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{t("schedule.colNumber")}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{t("schedule.colDueDate")}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{t("schedule.colLabel")}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] text-end">{t("schedule.colAmount")}</span>
                 <span />
               </div>
 
@@ -595,7 +599,7 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
 
                     <input
                       type="text"
-                      placeholder="e.g. Down payment"
+                      placeholder={t("schedule.labelPlaceholder")}
                       value={row.label}
                       onChange={(e) => updateRow(i, "label", e.target.value)}
                       className="h-8 w-full rounded-md border border-[var(--hairline)] bg-white px-2.5 text-[12px] placeholder:text-[var(--muted2)] outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] transition-[border-color,box-shadow]"
@@ -631,7 +635,7 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
                   className="flex items-center gap-1.5 text-[12px] font-medium text-[var(--accent)] hover:underline"
                 >
                   <Plus size={13} />
-                  Add installment
+                  {t("schedule.addInstallment")}
                 </button>
               </div>
 
@@ -639,7 +643,7 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
               <div className="grid grid-cols-[28px_130px_1fr_130px_32px] gap-2 items-center px-3 py-2.5 bg-[#FBFBFA] border-t border-[var(--hairline)]">
                 <span />
                 <span className="text-[11px] font-semibold text-[var(--muted)] col-span-2">
-                  {installments.length} {installments.length === 1 ? "payment" : "payments"}
+                  {installments.length} {installments.length === 1 ? t("schedule.payment") : t("schedule.payments")}
                 </span>
                 <span className="text-end">
                   <span className="text-[14px] font-bold fs-num">
@@ -656,10 +660,10 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
                 <div className={`size-1.5 rounded-full ${isBalanced ? "bg-[var(--green)]" : "bg-[var(--amber)]"}`} />
                 <span className="text-[11px] font-medium">
                   {isBalanced
-                    ? "Payments match the plan total"
+                    ? t("schedule.balanced")
                     : remaining! > 0
-                      ? `${remaining!.toLocaleString()} EGP still unscheduled`
-                      : `${Math.abs(remaining!).toLocaleString()} EGP over the plan total`
+                      ? t("schedule.unscheduled", { amount: remaining!.toLocaleString() })
+                      : t("schedule.overPlan", { amount: Math.abs(remaining!).toLocaleString() })
                   }
                 </span>
               </div>
@@ -669,12 +673,12 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
           {/* ── Notes ─────────────────────────────────────────────────────── */}
           <div className="flex flex-col gap-1">
             <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] px-0.5">
-              Notes (optional)
+              {t("sections.notes")}
             </label>
             <textarea
               rows={2}
               name="notes"
-              placeholder="e.g. 3-month bulk deal, paid in 2 equal installments"
+              placeholder={t("fields.notesPlaceholder")}
               value={form.notes}
               onChange={handleChange}
               className="fs-input resize-none py-2 text-[13px]"
@@ -684,10 +688,10 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
           {/* ── Actions ───────────────────────────────────────────────────── */}
           <div className="flex gap-2 justify-end">
             <Button type="button" variant="outline" onClick={handleClose_} isLoading={isPending}>
-              Cancel
+              {t("actions.cancel")}
             </Button>
             <Button variant="accent" type="submit" isLoading={isPending} onClick={handleSubmit}>
-              {isPending ? "Saving…" : "Assign & Create Invoices"}
+              {isPending ? t("actions.saving") : t("actions.submit")}
             </Button>
           </div>
 

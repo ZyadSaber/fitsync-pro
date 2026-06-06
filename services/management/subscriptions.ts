@@ -389,17 +389,12 @@ export async function assignPlanToTenant(
   const ended = new Date(started);
   ended.setDate(ended.getDate() + totalDays);
 
-  // Sort installments by due date for next_billing_at
-  const sorted = [...installments].sort((a, b) => a.due_date.localeCompare(b.due_date));
-  const lastDue = sorted[sorted.length - 1]?.due_date ?? null;
-
   // Track partial writes so we can roll them back on any later failure.
   let createdPrivatePlanId: string | null = null;
   let createdSubId: string | null = null;
 
   try {
     let planId = plan.id;
-    let planName = plan.name;
 
     if (isContactPlan) {
       const { data: priv, error: privError } = await supabase
@@ -419,14 +414,13 @@ export async function assignPlanToTenant(
           owner_gym_id:   ownerGymId,
           owner_coach_id: ownerCoachId,
         })
-        .select("id, name")
+        .select("id")
         .single();
 
       if (privError || !priv) throw privError ?? new Error("Failed to create private plan");
 
       createdPrivatePlanId = priv.id;
       planId = priv.id;
-      planName = priv.name;
     }
 
     const { data: sub, error: subError } = await supabase
@@ -435,12 +429,9 @@ export async function assignPlanToTenant(
         gym_id:         ownerGymId,
         coach_id:       ownerCoachId,
         plan_id:        planId,
-        plan_name:      planName,
         price_egp:      unitPrice,
-        billing_cycle:  parsed.data.billing_cycle,
         status:         "active",
         started_at:     parsed.data.started_at,
-        next_billing_at: lastDue,
         notes:          parsed.data.notes || "",
       })
       .select("id")
