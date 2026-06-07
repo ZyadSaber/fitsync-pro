@@ -2,7 +2,7 @@
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import extractMessage from "@/lib/extractMessage";
-import type { SubscriptionPlanStats, BillingRecordListItem } from "@/types/subscriptions";
+import type { SubscriptionPlanStats, BillingRecordListItem, TenantType } from "@/types/subscriptions";
 import type { SelectOptions } from "@/types/ui";
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/types/common";
@@ -139,7 +139,7 @@ export async function getPlatformBillingRecords(filter?: {
   try {
     let query = supabase
       .from("platform_billing_records")
-      .select("id, subscription_id, gym_id, amount_egp, billing_cycle, period_start, period_end, next_billing_at, status, paid_at, notes, created_at, gyms(name)")
+      .select("id, subscription_id, gym_id, coach_id, amount_egp, billing_cycle, period_start, period_end, next_billing_at, status, paid_at, notes, created_at, gyms(name), coaches(profiles(full_name))")
       .order("created_at", { ascending: false })
       .limit(100);
 
@@ -164,10 +164,21 @@ export async function getPlatformBillingRecords(filter?: {
     if (error) throw error;
 
     return {
-      data: (data ?? []).map((row) => ({
-        ...row,
-        gym_name: row.gyms?.name ?? "Unknown",
-      })) as BillingRecordListItem[],
+      data: (data ?? []).map((row) => {
+        // Embedded relations can be inferred as either an object or a
+        // single-element array depending on PostgREST; normalise both.
+        const first = <T,>(rel: T | T[] | null): T | null =>
+          Array.isArray(rel) ? rel[0] ?? null : rel ?? null;
+        const gym = first(row.gyms);
+        const profile = first(first(row.coaches)?.profiles ?? null);
+        // Exactly one of (gym_id, coach_id) is set, so resolve the tenant name
+        // from whichever owner the record carries.
+        return {
+          ...row,
+          tenant_name: gym?.name ?? profile?.full_name ?? "Unknown",
+          tenant_type: row.gym_id ? "gym" : "online_coach",
+        };
+      }) as BillingRecordListItem[],
       error: null,
     };
   } catch (err) {
@@ -323,6 +334,56 @@ export async function deleteBillingRecord(recordId: string): Promise<ActionResul
 }
 
 // ---------------------------------------------------------------------------
+// Tenant assignability check (active subscription / open invoices)
+// ---------------------------------------------------------------------------
+// Before assigning a new plan we surface whether the chosen gym/coach already
+// has a live subscription (status = active) or any unpaid invoices
+// (status = pending | failed). Either blocks a fresh assignment.
+
+export type TenantAssignmentState = {
+  hasActiveSubscription: boolean;
+  openInvoiceCount: number;
+};
+
+export async function getTenantAssignmentState(
+  tenantType: TenantType,
+  tenantId: string,
+): Promise<{ data: TenantAssignmentState | null; error: null | string }> {
+  if (!tenantId) return { data: null, error: null };
+
+  const supabase = await createServerSupabaseClient();
+  const ownerColumn = tenantType === "gym" ? "gym_id" : "coach_id";
+
+  try {
+    const [activeSub, openInvoices] = await Promise.all([
+      supabase
+        .from("platform_subscriptions")
+        .select("id", { count: "exact", head: true })
+        .eq(ownerColumn, tenantId)
+        .eq("status", "active"),
+      supabase
+        .from("platform_billing_records")
+        .select("id", { count: "exact", head: true })
+        .eq(ownerColumn, tenantId)
+        .in("status", ["pending", "failed"]),
+    ]);
+
+    if (activeSub.error) throw activeSub.error;
+    if (openInvoices.error) throw openInvoices.error;
+
+    return {
+      data: {
+        hasActiveSubscription: (activeSub.count ?? 0) > 0,
+        openInvoiceCount: openInvoices.count ?? 0,
+      },
+      error: null,
+    };
+  } catch (err) {
+    return { data: null, error: extractMessage(err, "[getTenantAssignmentState]") };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Assign a plan to a gym or online coach
 // ---------------------------------------------------------------------------
 
@@ -352,6 +413,17 @@ export async function assignPlanToTenant(
   const isGym = parsed.data.tenant_type === "gym";
   const ownerGymId = isGym ? parsed.data.gym_id || null : null;
   const ownerCoachId = !isGym ? parsed.data.coach_id || null : null;
+
+  // Re-check on the server: a tenant with a live subscription or unpaid invoices
+  // can't be assigned a fresh plan (the client UI blocks this, but guard races).
+  const tenantId = (isGym ? ownerGymId : ownerCoachId) ?? "";
+  const tenantState = await getTenantAssignmentState(parsed.data.tenant_type, tenantId);
+  if (tenantState.data && (tenantState.data.hasActiveSubscription || tenantState.data.openInvoiceCount > 0)) {
+    return {
+      success: false,
+      error: "This tenant already has an active subscription or unpaid invoices",
+    };
+  }
 
   // A contact-pricing template (price_egp = null) must be turned into a
   // private, tenant-specific plan carrying the fully negotiated terms.

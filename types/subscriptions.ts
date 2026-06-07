@@ -1,3 +1,5 @@
+import type { InstallmentRow } from "@/validations/subscriptionSchema";
+
 export type BillingCycle = "monthly" | "yearly";
 export type TenantType = "gym" | "online_coach";
 
@@ -17,6 +19,10 @@ export interface AssignPlanForm {
   custom_coach_limit:   string;   // gym plans only — "" = unlimited
   custom_duration_days: string;
   custom_features:      string[];
+  // Payment schedule + transient UI helpers (split count, feature draft input).
+  installments: InstallmentRow[];
+  splitCount:   string;
+  newFeature:   string;
 }
 
 export type BillingStatus = "paid" | "pending" | "failed" | "refunded";
@@ -43,8 +49,10 @@ export interface SubscriptionPlanStats {
 
 export interface BillingRecordListItem {
   id: string;
-  gym_id: string;
-  gym_name: string;
+  gym_id: string | null;
+  coach_id: string | null;
+  tenant_name: string;
+  tenant_type: TenantType;
   subscription_id: string;
   amount_egp: number;
   billing_cycle: BillingCycle;

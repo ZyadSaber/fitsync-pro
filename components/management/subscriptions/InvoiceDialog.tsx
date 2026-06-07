@@ -64,7 +64,7 @@ export default function InvoiceDialog({ gyms, record }: Props) {
 
   const initialData: InvoiceFormData = record
     ? {
-        gym_id:          record.gym_id,
+        gym_id:          record.gym_id ?? "",
         subscription_id: record.subscription_id,
         amount_egp:      String(record.amount_egp),
         billing_cycle:   record.billing_cycle,

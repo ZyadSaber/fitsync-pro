@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useMemo, useRef } from "react";
 import { format, addMonths, addYears } from "date-fns";
 import { useTranslations } from "next-intl";
+import { useQuery } from "@tanstack/react-query";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,19 +12,27 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import Textarea from "@/components/ui/textarea";
 import { SelectField } from "@/components/ui/select";
 import Icon from "@/components/ui/Icon";
 import { Trash2, Plus, Sparkles, ChevronUp, ChevronDown, GripVertical } from "lucide-react";
 import useVisibility from "@/hook/useVisibility";
 import useFormManager from "@/hook/useFormManager";
 import { assignPlanSchema } from "@/validations/subscriptionSchema";
-import { assignPlanToTenant } from "@/services/management/subscriptions";
+import { assignPlanToTenant, getTenantAssignmentState } from "@/services/management/subscriptions";
 import type { SelectOptions } from "@/types/ui";
 import type { SubscriptionPlanStats, AssignPlanForm } from "@/types/subscriptions";
 import type { InstallmentRow } from "@/validations/subscriptionSchema";
 import { toast } from "sonner";
 
-const today = new Date().toISOString().slice(0, 10);
+const today = format(new Date(), "yyyy-MM-dd");
+
+const emptyRow = (due_date = today): InstallmentRow => ({
+  due_date,
+  amount: "",
+  label: "",
+});
 
 const EMPTY_FORM: AssignPlanForm = {
   tenant_type:   "gym",
@@ -38,13 +48,10 @@ const EMPTY_FORM: AssignPlanForm = {
   custom_coach_limit:   "",
   custom_duration_days: "",
   custom_features:      [],
+  installments:  [emptyRow()],
+  splitCount:    "2",
+  newFeature:    "",
 };
-
-const emptyRow = (due_date = today): InstallmentRow => ({
-  due_date,
-  amount: "",
-  label: "",
-});
 
 interface Props {
   gyms:    SelectOptions[];
@@ -56,9 +63,6 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
   const t = useTranslations("management.subscriptions.assignDialog");
   const { visible: open, handleOpen, handleClose, handleStateChange } = useVisibility();
 
-  const [installments, setInstallments] = useState<InstallmentRow[]>([emptyRow()]);
-  const [splitCount, setSplitCount] = useState("2");
-  const [newFeature, setNewFeature] = useState("");
   const featureInputRef = useRef<HTMLInputElement>(null);
 
   const TENANT_TYPE_OPTIONS: SelectOptions[] = [
@@ -84,30 +88,41 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
     initialData: EMPTY_FORM,
     schema: assignPlanSchema,
     onSubmit: async (data, resetFormFn) => {
+      const tenantId = data.tenant_type === "gym" ? data.gym_id : data.coach_id;
+      const state = await getTenantAssignmentState(data.tenant_type, tenantId);
+      if (state.data && (state.data.hasActiveSubscription || state.data.openInvoiceCount > 0)) {
+        toast.error(t("toast.tenantBlocked")); return;
+      }
+
       const plan = plans.find((p) => p.id === data.plan_id);
-      if (plan && plan.price_egp === null && !(parseFloat(data.custom_price) > 0)) {
-        toast.error(t("toast.needPrice"));
-        return;
+      if (plan?.price_egp === null && !(parseFloat(data.custom_price) > 0)) {
+        toast.error(t("toast.needPrice")); return;
+      }
+      if (data.installments.some((r) => !r.due_date || !(parseFloat(r.amount) > 0))) {
+        toast.error(t("toast.needRows")); return;
       }
 
-      const invalid = installments.some(
-        (r) => !r.due_date || !r.amount || parseFloat(r.amount) <= 0
-      );
-      if (invalid) {
-        toast.error(t("toast.needRows"));
-        return;
-      }
-
-      const res = await assignPlanToTenant(data, installments);
+      const res = await assignPlanToTenant(data, data.installments);
       if (!res.success) { toast.error(res.error); return; }
 
       toast.success(t("toast.success"));
       resetFormFn();
-      setInstallments([emptyRow()]);
-      setSplitCount("2");
       handleClose();
     },
   });
+
+  // Thin setters over the form manager so the schedule + UI-helper fields live
+  // in the same form state as everything else.
+  const setInstallments = (next: InstallmentRow[]) =>
+    handleFieldChange({ name: "installments", value: next });
+  const setSplitCount = (value: string) =>
+    handleFieldChange({ name: "splitCount", value });
+  const setNewFeature = (value: string) =>
+    handleFieldChange({ name: "newFeature", value });
+
+  const installments = form.installments;
+  const splitCount   = form.splitCount;
+  const newFeature   = form.newFeature;
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
@@ -119,21 +134,44 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
   );
 
   const selectedPlan = useMemo(
-    () => plans.find((p) => p.id === form.plan_id) ?? null,
+    () => plans.find((p) => p.id === form.plan_id),
     [plans, form.plan_id]
   );
 
-  const qty           = Math.max(1, parseInt(form.quantity) || 1);
+  const isGym         = form.tenant_type === "gym";
   const isContactPlan = selectedPlan?.price_egp === null;
+
+  // ── Existing-subscription guard ──────────────────────────────────────────────
+  // A tenant that already has a live subscription or unpaid invoices can't be
+  // assigned a fresh plan — resolve those first to avoid double-billing.
+  const selectedTenantId = isGym ? form.gym_id : form.coach_id;
+
+  const { data: tenantState, isFetching: checkingTenant } = useQuery({
+    queryKey: ["tenant-assignment-state", form.tenant_type, selectedTenantId],
+    queryFn: async () => {
+      const res = await getTenantAssignmentState(form.tenant_type, selectedTenantId);
+      if (res.error) throw new Error(res.error);
+      return res.data;
+    },
+    enabled: open && !!selectedTenantId,
+  });
+
+  const isTenantBlocked =
+    !!tenantState &&
+    (tenantState.hasActiveSubscription || tenantState.openInvoiceCount > 0);
+  const qty           = Math.max(1, parseInt(form.quantity) || 1);
   const customPrice   = parseFloat(form.custom_price) || 0;
-  const unitPrice     = selectedPlan
-    ? (isContactPlan ? (customPrice > 0 ? customPrice : null) : selectedPlan.price_egp)
-    : null;
-  const planTotal    = unitPrice !== null ? unitPrice * qty : null;
-  const billed       = installments.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
-  const remaining    = planTotal !== null ? planTotal - billed : null;
-  const isBalanced   = planTotal !== null && Math.abs(remaining ?? 0) < 0.01;
-  const isGym        = form.tenant_type === "gym";
+
+  // Unit price is null when it isn't known yet — no plan picked, or a contact
+  // plan whose negotiated price hasn't been entered. That's distinct from 0.
+  const unitPrice = isContactPlan
+    ? (customPrice > 0 ? customPrice : null)
+    : (selectedPlan?.price_egp ?? null);
+
+  const billed     = installments.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+  const planTotal  = unitPrice === null ? null : unitPrice * qty;
+  const remaining  = planTotal === null ? null : planTotal - billed;
+  const isBalanced = planTotal !== null && Math.abs(planTotal - billed) < 0.01;
 
   const cycleDays    = form.billing_cycle === "yearly" ? 365 : 30;
   const effectiveDuration = isContactPlan
@@ -143,14 +181,7 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
-  const resetAll = () => {
-    resetForm();
-    setInstallments([emptyRow()]);
-    setSplitCount("2");
-    setNewFeature("");
-  };
-
-  const handleClose_ = () => { resetAll(); handleClose(); };
+  const handleClose_ = () => { resetForm(); handleClose(); };
 
   // ── Plan selection ──────────────────────────────────────────────────────────
   // Picking a contact-pricing plan seeds the negotiable terms from the template
@@ -206,19 +237,19 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
   // ── Installment mutations ───────────────────────────────────────────────────
 
   const updateRow = (i: number, key: keyof InstallmentRow, value: string) =>
-    setInstallments((prev) => prev.map((r, idx) => idx === i ? { ...r, [key]: value } : r));
+    setInstallments(installments.map((r, idx) => idx === i ? { ...r, [key]: value } : r));
 
-  const addRow = () =>
-    setInstallments((prev) => {
-      const last = prev[prev.length - 1];
-      const nextDate = last?.due_date
-        ? format(addMonths(new Date(last.due_date), 1), "yyyy-MM-dd")
-        : today;
-      return [...prev, emptyRow(nextDate)];
-    });
+  const addRow = () => {
+    const last = installments[installments.length - 1];
+    const nextDate = last?.due_date
+      ? format(addMonths(new Date(last.due_date), 1), "yyyy-MM-dd")
+      : today;
+    setInstallments([...installments, emptyRow(nextDate)]);
+  };
 
-  const removeRow = (i: number) =>
-    setInstallments((prev) => prev.length > 1 ? prev.filter((_, idx) => idx !== i) : prev);
+  const removeRow = (i: number) => {
+    if (installments.length > 1) setInstallments(installments.filter((_, idx) => idx !== i));
+  };
 
   // ── Auto-generate equal installments ───────────────────────────────────────
 
@@ -303,6 +334,30 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
               )}
             </div>
 
+            {/* Existing-subscription guard */}
+            {selectedTenantId && checkingTenant && (
+              <div className="flex items-center gap-1.5 text-[11px] text-[var(--muted)] px-0.5">
+                <Loader2 size={12} className="animate-spin" />
+                {t("guard.checking")}
+              </div>
+            )}
+            {isTenantBlocked && (
+              <div className="flex items-start gap-2 rounded-lg border border-[var(--amber)]/30 bg-amber-50 p-2.5">
+                <AlertTriangle size={14} className="text-[var(--amber)] shrink-0 mt-0.5" />
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[11px] font-semibold text-[var(--amber)]">
+                    {t("guard.title")}
+                  </span>
+                  <span className="text-[11px] text-[var(--muted)]">
+                    {tenantState?.hasActiveSubscription && t("guard.activeSubscription")}
+                    {tenantState?.hasActiveSubscription && tenantState.openInvoiceCount > 0 && " "}
+                    {!!tenantState && tenantState.openInvoiceCount > 0 &&
+                      t("guard.openInvoices", { count: tenantState.openInvoiceCount })}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-[1fr_80px_120px_120px] gap-2">
               <SelectField
                 name="plan_id"
@@ -314,20 +369,15 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
                 containerClassName="w-full"
               />
 
-              {/* Quantity */}
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] px-0.5">
-                  {t("fields.qty")}
-                </label>
-                <input
-                  type="number"
-                  name="quantity"
-                  min="1"
-                  value={form.quantity}
-                  onChange={(e) => handleFieldChange({ name: "quantity", value: e.target.value })}
-                  className="fs-input h-9 text-center"
-                />
-              </div>
+              <Input
+                name="quantity"
+                label={t("fields.qty")}
+                type="text"
+                inputMode="numeric"
+                value={form.quantity}
+                onChange={handleChange}
+                className="text-center"
+              />
 
               <SelectField
                 name="billing_cycle"
@@ -339,19 +389,14 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
                 containerClassName="w-full"
               />
 
-              {/* Start date */}
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] px-0.5">
-                  {t("fields.startDate")}
-                </label>
-                <input
-                  type="date"
-                  name="started_at"
-                  value={form.started_at}
-                  onChange={handleChange}
-                  className={`fs-input h-9 ${errors.started_at ? "border-[var(--red)]" : ""}`}
-                />
-              </div>
+              <Input
+                name="started_at"
+                label={t("fields.startDate")}
+                type="date"
+                value={form.started_at}
+                onChange={handleChange}
+                error={errors.started_at}
+              />
             </div>
 
             {/* Negotiated terms — only for contact-pricing ("Custom") plans.
@@ -366,71 +411,47 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
-                  {/* Price */}
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] px-0.5">
-                      {t("fields.price")}
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      name="custom_price"
-                      placeholder={t("placeholders.price")}
-                      value={form.custom_price}
-                      onChange={(e) => handleFieldChange({ name: "custom_price", value: e.target.value })}
-                      className="fs-input h-9"
-                    />
-                  </div>
+                  <Input
+                    name="custom_price"
+                    label={t("fields.price")}
+                    type="text"
+                    inputMode="decimal"
+                    placeholder={t("placeholders.price")}
+                    value={form.custom_price}
+                    onChange={handleChange}
+                  />
 
-                  {/* Duration */}
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] px-0.5">
-                      {t("fields.duration")}
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      name="custom_duration_days"
-                      placeholder={t("placeholders.duration")}
-                      value={form.custom_duration_days}
-                      onChange={(e) => handleFieldChange({ name: "custom_duration_days", value: e.target.value })}
-                      className="fs-input h-9"
-                    />
-                  </div>
+                  <Input
+                    name="custom_duration_days"
+                    label={t("fields.duration")}
+                    type="text"
+                    inputMode="numeric"
+                    placeholder={t("placeholders.duration")}
+                    value={form.custom_duration_days}
+                    onChange={handleChange}
+                  />
 
-                  {/* Member limit */}
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] px-0.5">
-                      {t("fields.memberLimit")}
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      name="custom_member_limit"
-                      placeholder={t("placeholders.unlimitedHint")}
-                      value={form.custom_member_limit}
-                      onChange={(e) => handleFieldChange({ name: "custom_member_limit", value: e.target.value })}
-                      className="fs-input h-9"
-                    />
-                  </div>
+                  <Input
+                    name="custom_member_limit"
+                    label={t("fields.memberLimit")}
+                    type="text"
+                    inputMode="numeric"
+                    placeholder={t("placeholders.unlimitedHint")}
+                    value={form.custom_member_limit}
+                    onChange={handleChange}
+                  />
 
                   {/* Coach limit — gym plans only */}
                   {isGym && (
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] px-0.5">
-                        {t("fields.coachLimit")}
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        name="custom_coach_limit"
-                        placeholder={t("placeholders.unlimitedHint")}
-                        value={form.custom_coach_limit}
-                        onChange={(e) => handleFieldChange({ name: "custom_coach_limit", value: e.target.value })}
-                        className="fs-input h-9"
-                      />
-                    </div>
+                    <Input
+                      name="custom_coach_limit"
+                      label={t("fields.coachLimit")}
+                      type="text"
+                      inputMode="numeric"
+                      placeholder={t("placeholders.unlimitedHint")}
+                      value={form.custom_coach_limit}
+                      onChange={handleChange}
+                    />
                   )}
                 </div>
 
@@ -671,26 +692,28 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
           </div>
 
           {/* ── Notes ─────────────────────────────────────────────────────── */}
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)] px-0.5">
-              {t("sections.notes")}
-            </label>
-            <textarea
-              rows={2}
-              name="notes"
-              placeholder={t("fields.notesPlaceholder")}
-              value={form.notes}
-              onChange={handleChange}
-              className="fs-input resize-none py-2 text-[13px]"
-            />
-          </div>
+          <Textarea
+            name="notes"
+            label={t("sections.notes")}
+            rows={2}
+            placeholder={t("fields.notesPlaceholder")}
+            value={form.notes}
+            onChange={handleChange}
+            className="resize-none"
+          />
 
           {/* ── Actions ───────────────────────────────────────────────────── */}
           <div className="flex gap-2 justify-end">
             <Button type="button" variant="outline" onClick={handleClose_} isLoading={isPending}>
               {t("actions.cancel")}
             </Button>
-            <Button variant="accent" type="submit" isLoading={isPending} onClick={handleSubmit}>
+            <Button
+              variant="accent"
+              type="submit"
+              isLoading={isPending}
+              disabled={isTenantBlocked || checkingTenant}
+              onClick={handleSubmit}
+            >
               {isPending ? t("actions.saving") : t("actions.submit")}
             </Button>
           </div>

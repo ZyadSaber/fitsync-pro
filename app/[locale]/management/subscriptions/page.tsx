@@ -10,7 +10,6 @@ import { getGyms } from "@/services/management/gyms";
 import SubscriptionsFilters from "@/components/management/subscriptions/SubscriptionsFilters";
 import BillingRowActions from "@/components/management/subscriptions/BillingRowActions";
 import PlanDialog from "@/components/management/subscriptions/PlanDialog";
-import InvoiceDialog from "@/components/management/subscriptions/InvoiceDialog";
 import PlanCard from "@/components/management/subscriptions/PlanCard";
 import PlanTypeTabs from "@/components/management/subscriptions/PlanTypeTabs";
 import AssignPlanDialog from "@/components/management/subscriptions/AssignPlanDialog";
@@ -83,11 +82,6 @@ export default async function SubscriptionsPage({
               <Download size={13} />
               {t("actions.downloadInvoices")}
             </Button>
-            <AssignPlanDialog
-              gyms={gymOptions}
-              coaches={coachOptions}
-              plans={plansResult.data}
-            />
             <PlanDialog />
           </>
         }
@@ -143,7 +137,11 @@ export default async function SubscriptionsPage({
               {pendingCount > 0 && (
                 <span className="fs-badge frozen">{t("invoices.open")} · {pendingCount}</span>
               )}
-              <InvoiceDialog gyms={gymOptions} />
+              <AssignPlanDialog
+                gyms={gymOptions}
+                coaches={coachOptions}
+                plans={plansResult.data}
+              />
             </div>
           </div>
 
@@ -174,7 +172,12 @@ export default async function SubscriptionsPage({
                       {invoiceId(inv.id, inv.created_at)}
                     </TableCell>
                     <TableCell>
-                      <span className="font-semibold">{inv.gym_name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">{inv.tenant_name}</span>
+                        <span className={`fs-badge ${inv.tenant_type === "gym" ? "gym" : "active"}`}>
+                          {t(`invoices.tenantType.${inv.tenant_type}` as "invoices.tenantType.gym" | "invoices.tenantType.online_coach")}
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell className="fs-num font-semibold">
                       {inv.amount_egp.toLocaleString()}{" "}

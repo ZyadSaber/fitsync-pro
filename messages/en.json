@@ -292,6 +292,10 @@
         "subtitle": "{cycle} billing cycle · {shown} of {total} shown",
         "invoice": "Invoice",
         "tenant": "Tenant",
+        "tenantType": {
+          "gym": "Gym",
+          "online_coach": "Coach"
+        },
         "amount": "Amount",
         "status": "Status",
         "due": "Due",
@@ -434,9 +438,16 @@
           "submit": "Assign & Create Invoices",
           "saving": "Saving…"
         },
+        "guard": {
+          "checking": "Checking for existing subscriptions…",
+          "title": "Can't assign a new plan yet",
+          "activeSubscription": "This tenant already has an active subscription.",
+          "openInvoices": "{count, plural, one {There is # unpaid invoice} other {There are # unpaid invoices}} to resolve first."
+        },
         "toast": {
           "needPrice": "Enter a negotiated price for this custom plan",
           "needRows": "Every installment needs a valid date and amount",
+          "tenantBlocked": "This tenant has an active subscription or unpaid invoices — resolve those before assigning a new plan",
           "success": "Plan assigned — billing schedule created"
         }
       }

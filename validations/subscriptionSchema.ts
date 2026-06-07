@@ -39,21 +39,40 @@ export type InstallmentRow = z.infer<typeof installmentRowSchema>;
 
 export const assignPlanSchema = z.object({
   tenant_type:   z.enum(["gym", "online_coach"]),
-  gym_id:        z.string().optional().or(z.literal("")),
-  coach_id:      z.string().optional().or(z.literal("")),
+  // Empty-string defaults, not optional: every field is a controlled form input
+  // that always carries a string, so the inferred type stays `string` (no
+  // `| undefined`) and matches AssignPlanForm.
+  gym_id:        z.string(),
+  coach_id:      z.string(),
   plan_id:       z.string().min(1, "Select a plan"),
   billing_cycle: z.enum(["monthly", "yearly"]),
   started_at:    z.string().min(1, "Start date required"),
   quantity:      z.string().min(1),
-  notes:         z.string().optional().or(z.literal("")),
-  custom_price:  z.string().optional().or(z.literal("")),
-  custom_member_limit:  z.string().optional().or(z.literal("")),
-  custom_coach_limit:   z.string().optional().or(z.literal("")),
-  custom_duration_days: z.string().optional().or(z.literal("")),
+  notes:         z.string(),
+  custom_price:  z.string(),
+  custom_member_limit:  z.string(),
+  custom_coach_limit:   z.string(),
+  custom_duration_days: z.string(),
   custom_features:      z.array(z.string()).default([]),
-}).refine(
-  (d) => d.tenant_type === "gym" ? !!d.gym_id : !!d.coach_id,
-  (d) => ({ message: d.tenant_type === "gym" ? "Select a gym" : "Select a coach", path: [d.tenant_type === "gym" ? "gym_id" : "coach_id"] })
-);
+  // Payment schedule + transient UI helpers. Rows are validated strictly in the
+  // service via installmentRowSchema; here they stay loose so the form's
+  // own onSubmit handler can surface friendlier toasts on empty/zero amounts.
+  installments: z.array(z.object({
+    due_date: z.string(),
+    amount:   z.string(),
+    label:    z.string().optional().or(z.literal("")),
+  })).default([]),
+  splitCount: z.string().default("2"),
+  newFeature: z.string().default(""),
+}).superRefine((d, ctx) => {
+  const isGym = d.tenant_type === "gym";
+  if (isGym ? !d.gym_id : !d.coach_id) {
+    ctx.addIssue({
+      code: "custom",
+      message: isGym ? "Select a gym" : "Select a coach",
+      path: [isGym ? "gym_id" : "coach_id"],
+    });
+  }
+});
 
 export type AssignPlanFormData = z.infer<typeof assignPlanSchema>;
