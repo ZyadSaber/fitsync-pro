@@ -55,10 +55,8 @@ export interface BillingRecordListItem {
   tenant_type: TenantType;
   subscription_id: string;
   amount_egp: number;
-  billing_cycle: BillingCycle;
   period_start: string;
   period_end: string;
-  next_billing_at: string | null;
   status: BillingStatus;
   paid_at: string | null;
   notes: string | null;

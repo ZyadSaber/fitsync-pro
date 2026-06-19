@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { PlatformBillingRecord } from "@/types/gyms";
 
 interface Props {
-  gymId: string;
+  coachId: string;
 }
 
 const billingBadge: Record<string, string> = {
@@ -20,27 +20,27 @@ const billingBadge: Record<string, string> = {
 const fmt = (iso: string | null | undefined) =>
   iso ? format(new Date(iso), "d MMM yyyy") : "—";
 
-async function fetchBilling(gymId: string): Promise<PlatformBillingRecord[]> {
+async function fetchBilling(coachId: string): Promise<PlatformBillingRecord[]> {
   const { data } = await createClient()
     .from("platform_billing_records")
     .select("*")
-    .eq("gym_id", gymId)
+    .eq("coach_id", coachId)
     .order("period_start", { ascending: false });
   return data ?? [];
 }
 
-export default function GymBillingTab({ gymId }: Props) {
-  const t = useTranslations("management.gyms.dialog");
-  const tGyms = useTranslations("management.gyms");
+export default function CoachBillingTab({ coachId }: Props) {
+  const t = useTranslations("management.coaches.dialog");
+  const tCoaches = useTranslations("management.coaches");
 
   const { data: records = [], isFetching } = useQuery({
-    queryKey: ["gym-billing", gymId],
-    queryFn: () => fetchBilling(gymId),
+    queryKey: ["coach-billing", coachId],
+    queryFn: () => fetchBilling(coachId),
     staleTime: 30_000,
   });
 
   const fmtMoney = (n: number) =>
-    `${Number(n).toLocaleString("en-EG")} ${tGyms("currency")}`;
+    `${Number(n).toLocaleString("en-EG")} ${tCoaches("currency")}`;
 
   if (isFetching) return <p className="py-10 text-center text-sm text-[var(--muted)]">{t("loading")}</p>;
   if (records.length === 0) return <p className="py-10 text-center text-sm text-[var(--muted)]">{t("billing.noRecords")}</p>;

@@ -25,6 +25,8 @@ export interface CoachListItem {
   billing_status: "active" | "suspended" | "cancelled" | null;
   is_billing_active: boolean;
   last_billing_at: string | null;
+  price_egp: number | null;
+  last_activity_at: string | null;
 
   // plan
   plan_name: string | null;

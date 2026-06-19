@@ -4,6 +4,7 @@ import { Link } from "@/i18n/navigation";
 import Icon from "@/components/ui/Icon";
 
 type Role = "admin" | "coach" | "superadmin";
+type IconName = Parameters<typeof Icon>[0]["name"];
 
 interface SidebarProps {
   active?: string;
@@ -15,50 +16,67 @@ interface SidebarProps {
   onClose?: () => void;
 }
 
-const SUPERADMIN_ITEMS: [string, string, string][] = [
-  ["/management",               "Overview",        "home"],
-  ["/management/gyms",          "Gyms",            "users"],
-  ["/management/coaches",       "Online coaches",  "user"],
-  ["/management/subscriptions", "Subscriptions",   "card"],
-  ["/management/quotas",        "Quotas & usage",  "chart"],
-  ["/management/revenue",       "Revenue",         "tag"],
-  ["/management/audit",         "Audit log",       "filter"],
-  ["/management/settings",      "Settings",        "dumbbell"],
-];
+// A localized string: a single value (same in both languages) or [en, ar].
+type Bilingual = string | [en: string, ar: string];
+const pick = (value: Bilingual, isRtl: boolean) =>
+  Array.isArray(value) ? (isRtl ? value[1] : value[0]) : value;
 
-const ADMIN_ITEMS: [string, string, string][] = [
-  ["/admin",          "Dashboard",      "home"],
-  ["/admin/members",  "Members",        "users"],
-  ["/admin/plans",    "Plans",          "card"],
-  ["/admin/offers",   "Offers",         "tag"],
-  ["/admin/checkins", "Live check-ins", "qr"],
-  ["/admin/staff",    "Staff",          "user"],
-];
+interface NavItem {
+  href: string;
+  icon: IconName;
+  label: Bilingual;
+}
 
-const COACH_ITEMS: [string, string, string][] = [
-  ["/coach",           "Dashboard",       "home"],
-  ["/coach/clients",   "Clients",         "users"],
-  ["/coach/exercises", "Exercise library","dumbbell"],
-  ["/coach/workouts",  "Workouts",        "chart"],
-  ["/coach/nutrition", "Nutrition",       "flame"],
-];
+interface RoleConfig {
+  items: NavItem[];
+  brand: Bilingual;
+  subtitle: Bilingual;
+  profile: Bilingual;
+  profileRole: Bilingual;
+}
 
-const ADMIN_ITEMS_AR: [string, string, string][] = [
-  ["/admin",          "لوحة التحكم",   "home"],
-  ["/admin/members",  "الأعضاء",        "users"],
-  ["/admin/plans",    "الباقات",         "card"],
-  ["/admin/offers",   "العروض",          "tag"],
-  ["/admin/checkins", "تسجيل الدخول",   "qr"],
-  ["/admin/staff",    "الفريق",          "user"],
-];
-
-const COACH_ITEMS_AR: [string, string, string][] = [
-  ["/coach",           "لوحة التحكم",    "home"],
-  ["/coach/clients",   "العملاء",         "users"],
-  ["/coach/exercises", "مكتبة التمارين",  "dumbbell"],
-  ["/coach/workouts",  "التمارين",        "chart"],
-  ["/coach/nutrition", "التغذية",         "flame"],
-];
+const CONFIG: Record<Role, RoleConfig> = {
+  superadmin: {
+    items: [
+      { href: "/management", icon: "home", label: "Overview" },
+      { href: "/management/gyms", icon: "users", label: "Gyms" },
+      { href: "/management/coaches", icon: "user", label: "Online coaches" },
+      { href: "/management/subscriptions", icon: "card", label: "Subscriptions" },
+      { href: "/management/activity", icon: "chart", label: "Activity" },
+    ],
+    brand: "FitSync HQ",
+    subtitle: "platform · super admin",
+    profile: "Yara Sherif",
+    profileRole: "Platform owner",
+  },
+  admin: {
+    items: [
+      { href: "/admin", icon: "home", label: ["Dashboard", "لوحة التحكم"] },
+      { href: "/admin/members", icon: "users", label: ["Members", "الأعضاء"] },
+      { href: "/admin/plans", icon: "card", label: ["Plans", "الباقات"] },
+      { href: "/admin/offers", icon: "tag", label: ["Offers", "العروض"] },
+      { href: "/admin/checkins", icon: "qr", label: ["Live check-ins", "تسجيل الدخول"] },
+      { href: "/admin/staff", icon: "user", label: ["Staff", "الفريق"] },
+    ],
+    brand: ["FitSync Pro", "فِت‑سِنك برو"],
+    subtitle: ["Cairo Fit · Zamalek", "نادي القاهرة الرياضي"],
+    profile: ["Mona Khaled", "منى خالد"],
+    profileRole: ["Gym admin", "مديرة النادي"],
+  },
+  coach: {
+    items: [
+      { href: "/coach", icon: "home", label: ["Dashboard", "لوحة التحكم"] },
+      { href: "/coach/clients", icon: "users", label: ["Clients", "العملاء"] },
+      { href: "/coach/exercises", icon: "dumbbell", label: ["Exercise library", "مكتبة التمارين"] },
+      { href: "/coach/workouts", icon: "chart", label: ["Workouts", "التمارين"] },
+      { href: "/coach/nutrition", icon: "flame", label: ["Nutrition", "التغذية"] },
+    ],
+    brand: ["FitSync Pro", "فِت‑سِنك برو"],
+    subtitle: ["Cairo Fit · Zamalek", "نادي القاهرة الرياضي"],
+    profile: ["Ahmed Coach", "أحمد المدرّب"],
+    profileRole: ["Coach", "المدرّب"],
+  },
+};
 
 export default function Sidebar({
   active = "dashboard",
@@ -69,22 +87,9 @@ export default function Sidebar({
   onClose,
 }: SidebarProps) {
   const isRtl = locale ? locale === "ar" : dir === "rtl";
-  const items = role === "superadmin"
-    ? SUPERADMIN_ITEMS
-    : role === "admin"
-    ? (isRtl ? ADMIN_ITEMS_AR : ADMIN_ITEMS)
-    : (isRtl ? COACH_ITEMS_AR : COACH_ITEMS);
-
-  const brand       = role === "superadmin" ? "FitSync HQ"              : isRtl ? "فِت‑سِنك برو"         : "FitSync Pro";
-  const gym         = role === "superadmin" ? "platform · super admin"  : isRtl ? "نادي القاهرة الرياضي" : "Cairo Fit · Zamalek";
-  const profile     = role === "superadmin" ? "Yara Sherif"
-    : role === "admin"
-    ? (isRtl ? "منى خالد"      : "Mona Khaled")
-    : (isRtl ? "أحمد المدرّب" : "Ahmed Coach");
-  const profileRole = role === "superadmin" ? "Platform owner"
-    : role === "admin"
-    ? (isRtl ? "مديرة النادي" : "Gym admin")
-    : (isRtl ? "المدرّب"      : "Coach");
+  const isSuper = role === "superadmin";
+  const cfg = CONFIG[role];
+  const profile = pick(cfg.profile, isRtl);
 
   return (
     <aside
@@ -107,13 +112,13 @@ export default function Sidebar({
       <div className="flex items-center gap-2.5 px-2 py-1">
         <div
           className="w-7 h-7 rounded-[6px] flex items-center justify-center shrink-0"
-          style={{ background: role === "superadmin" ? "#fff" : "var(--accent)" }}
+          style={{ background: isSuper ? "#fff" : "var(--accent)" }}
         >
-          <Icon name="logo" size={18} color={role === "superadmin" ? "var(--ink)" : "#fff"} />
+          <Icon name="logo" size={18} color={isSuper ? "var(--ink)" : "#fff"} />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-[13px] font-bold text-white tracking-[-0.01em]">{brand}</div>
-          <div className="text-[10px] text-[#9AA1AE]">{gym}</div>
+          <div className="text-[13px] font-bold text-white tracking-[-0.01em]">{pick(cfg.brand, isRtl)}</div>
+          <div className="text-[10px] text-[#9AA1AE]">{pick(cfg.subtitle, isRtl)}</div>
         </div>
         {/* Close button — mobile/tablet only */}
         {onClose && (
@@ -130,15 +135,15 @@ export default function Sidebar({
 
       {/* Nav items */}
       <div className="flex flex-col gap-0.5">
-        {items.map(([href, label, ico]) => (
+        {cfg.items.map(({ href, icon, label }) => (
           <Link
             key={href}
             href={href}
             onClick={onClose}
             className={`fs-nav ${active === href ? "active" : ""}`}
           >
-            <Icon name={ico as Parameters<typeof Icon>[0]["name"]} size={15} />
-            <span>{label}</span>
+            <Icon name={icon} size={15} />
+            <span>{pick(label, isRtl)}</span>
           </Link>
         ))}
       </div>
@@ -150,7 +155,7 @@ export default function Sidebar({
         </div>
         <div className="min-w-0 flex-1">
           <div className="text-xs font-semibold text-white">{profile}</div>
-          <div className="text-[10px] text-[#9AA1AE]">{profileRole}</div>
+          <div className="text-[10px] text-[#9AA1AE]">{pick(cfg.profileRole, isRtl)}</div>
         </div>
         <Icon name="more" size={14} color="#9AA1AE" />
       </div>

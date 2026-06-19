@@ -2,13 +2,15 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import HeaderContent from "@/components/layout/Topbar";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
-import { getCoaches, getActiveCoachPlanOptions, getNonCoachUsers } from "@/services/management/coaches";
+import { getCoachesPageData, getActiveCoachPlanOptions, getNonCoachUsers } from "@/services/management/coaches";
 import CoachesFilters from "@/components/management/coaches/CoachesFilters";
 import CoachPromoteDialog from "@/components/management/coaches/CoachPromoteDialog";
 import CoachRowActions from "@/components/management/coaches/CoachRowActions";
 import getInitials from "@/lib/getInitials";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import UsageBar from "@/components/superadmin/UsageBar";
 
 const BILLING_BADGE: Record<string, string> = {
   active: "active",
@@ -21,49 +23,32 @@ export default async function CoachesPage({
 }: {
   searchParams: Promise<{ search?: string; plan?: string; active?: string }>;
 }) {
-  const [t, { search: sq, plan: spPlan, active: spActive }, planOptions, platformUsersResult] = await Promise.all([
+  const [t, filters, planOptions, platformUsersResult] = await Promise.all([
     getTranslations("management.coaches"),
     searchParams,
     getActiveCoachPlanOptions(),
     getNonCoachUsers(),
   ]);
 
-  const result = await getCoaches();
+  const { data, error } = await getCoachesPageData(filters);
 
-  if (result.error) {
+  if (error || !data) {
     return (
       <div className="p-7">
         <p className="text-sm font-mono text-red-600 bg-red-50 border border-red-200 rounded-lg p-4 whitespace-pre-wrap">
-          {result.error}
+          {error}
         </p>
       </div>
     );
   }
 
-  const coaches = result.data;
-  const rows = coaches
-    .filter((c) => {
-      if (!sq) return true;
-      const q = sq.toLowerCase();
-      return (
-        (c.full_name ?? "").toLowerCase().includes(q) ||
-        (c.phone ?? "").toLowerCase().includes(q)
-      );
-    })
-    .filter((c) => !spPlan || c.plan_name === spPlan)
-    .filter((c) => {
-      if (!spActive || spActive === "all") return true;
-      return spActive === "true" ? c.is_billing_active : !c.is_billing_active;
-    });
-
-  const totalClients = coaches.reduce((s, c) => s + c.client_count, 0);
-  const activeBilling = coaches.filter((c) => c.is_billing_active).length;
+  const { rows, totalCoaches, activeBilling, totalClients } = data;
 
   return (
     <>
       <HeaderContent
         title={t("title")}
-        subtitle={t("subtitle", { count: coaches.length, clients: totalClients })}
+        subtitle={t("subtitle", { count: totalCoaches, clients: totalClients })}
         actions={
           <>
             <Button variant="ghost">
@@ -80,9 +65,9 @@ export default async function CoachesPage({
         {/* KPI row */}
         <div className="grid grid-cols-3 gap-3.5">
           {[
-            { label: t("kpis.total"),        value: String(coaches.length),        sub: t("kpis.totalSub")         },
-            { label: t("kpis.activeBilling"), value: String(activeBilling),         sub: t("kpis.activeBillingSub") },
-            { label: t("kpis.clients"),       value: totalClients.toLocaleString(), sub: t("kpis.clientsSub")       },
+            { label: t("kpis.total"), value: String(totalCoaches), sub: t("kpis.totalSub") },
+            { label: t("kpis.activeBilling"), value: String(activeBilling), sub: t("kpis.activeBillingSub") },
+            { label: t("kpis.clients"), value: totalClients.toLocaleString(), sub: t("kpis.clientsSub") },
           ].map((card) => (
             <div key={card.label} className="fs-card pad flex flex-col justify-between min-h-[88px]">
               <div className="fs-eyebrow">{card.label}</div>
@@ -108,15 +93,17 @@ export default async function CoachesPage({
               <TableRow>
                 <TableHead>{t("table.coach")}</TableHead>
                 <TableHead>{t("table.plan")}</TableHead>
+                <TableHead>{t("table.price")}</TableHead>
                 <TableHead>{t("table.clients")}</TableHead>
                 <TableHead>{t("table.joined")}</TableHead>
+                <TableHead>{t("table.lastActivity")}</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted py-8">
+                  <TableCell colSpan={7} className="text-center text-muted py-8">
                     {t("empty")}
                   </TableCell>
                 </TableRow>
@@ -164,12 +151,19 @@ export default async function CoachesPage({
                     )}
                   </TableCell>
 
+                  {/* Price */}
+                  <TableCell className="tabular-nums font-semibold">
+                    {coach.price_egp != null
+                      ? `${Number(coach.price_egp).toLocaleString()} ${t("currency")}`
+                      : "—"}
+                  </TableCell>
+
                   {/* Clients / limit */}
                   <TableCell>
-                    <span className="fs-num font-semibold">{coach.client_count}</span>
-                    {coach.member_limit !== null && (
-                      <span className="text-[11px] text-muted"> / {coach.member_limit}</span>
-                    )}
+                    {coach.member_limit != null
+                      ? <UsageBar used={coach.client_count} limit={+coach.member_limit} />
+                      : <span className="text-xs text-muted-foreground">—</span>
+                    }
                   </TableCell>
 
                   {/* Joined */}
@@ -179,6 +173,13 @@ export default async function CoachesPage({
                       month: "short",
                       year: "numeric",
                     })}
+                  </TableCell>
+
+                  {/* Last activity */}
+                  <TableCell className="text-muted text-xs" suppressHydrationWarning>
+                    {coach.last_activity_at
+                      ? formatDistanceToNow(coach.last_activity_at, { addSuffix: true })
+                      : "—"}
                   </TableCell>
 
                   <TableCell>

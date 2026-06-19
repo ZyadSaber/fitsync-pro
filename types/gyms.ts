@@ -1,5 +1,9 @@
 export type GymStatus = "active" | "suspended" | "cancelled";
 
+// Display-only status for the gym list. "expired" is derived in the service:
+// a subscription is active but its latest fee period has lapsed.
+export type GymDisplayStatus = GymStatus | "expired";
+
 export type SubscriptionPlanType = "gym" | "online_coach";
 export type BillingCycle = "monthly" | "yearly";
 
@@ -28,11 +32,12 @@ export interface GymListItem {
   joinedAt: string;
   plan: string;
   planPriceEgp: number | "";
-  status: GymStatus | "";
+  status: GymDisplayStatus | "";
   memberCount: number;
   lastActivityAt: string | "";
   member_limit: number | "";
   plan_id: string | "";
+  owner_id: string | "";
 }
 
 export type BillingRecordStatus = "paid" | "pending" | "failed" | "refunded";
@@ -40,13 +45,11 @@ export type BillingRecordStatus = "paid" | "pending" | "failed" | "refunded";
 export interface PlatformBillingRecord {
   id: string;
   subscription_id: string;
-  gym_id: string;
-  plan_id: string | null;
+  gym_id: string | null;
+  coach_id: string | null;
   amount_egp: number;
-  billing_cycle: BillingCycle;
   period_start: string;
   period_end: string;
-  next_billing_at: string | null;
   status: BillingRecordStatus;
   paid_at: string | null;
   notes: string | null;
@@ -55,7 +58,8 @@ export interface PlatformBillingRecord {
 
 export interface PlatformSubscriptionDetails {
   id: string;
-  gym_id: string;
+  gym_id: string | null;
+  coach_id: string | null;
   plan_id: string | null;
   price_egp: number;
   status: GymStatus;
@@ -73,7 +77,6 @@ export interface PlatformSubscriptionDetails {
   latest_billing_record_id: string | null;
   current_period_start: string | null;
   current_period_end: string | null;
-  next_billing_at: string | null;
   billing_status: BillingRecordStatus | null;
   billed_amount_egp: number | null;
   paid_at: string | null;

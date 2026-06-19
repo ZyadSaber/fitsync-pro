@@ -9,6 +9,7 @@ export const gymSchema = z.object({
     .optional()
     .or(z.literal("")),
   logo_url: z.string().optional(),
+  owner_id: z.string().optional(),
 });
 
 export type GymFormData = z.infer<typeof gymSchema>;

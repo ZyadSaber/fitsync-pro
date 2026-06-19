@@ -211,6 +211,7 @@
         "active": "Active",
         "suspended": "Suspended",
         "cancelled": "Cancelled",
+        "expired": "Expired",
         "unknown": "Unknown"
       },
       "currency": "EGP",
@@ -221,12 +222,15 @@
           "name": "Gym name",
           "address": "Address",
           "phone": "Phone",
-          "logo": "Gym logo"
+          "logo": "Gym logo",
+          "owner": "Owner"
         },
         "placeholders": {
           "name": "Cairo Fit · Zamalek",
           "address": "123 Tahrir St, Cairo",
-          "phone": "+20 10 0000 0000"
+          "phone": "+20 10 0000 0000",
+          "owner": "Select an owner",
+          "ownerSearch": "Search users…"
         },
         "cancel": "Cancel",
         "saving": "Saving…",
@@ -248,7 +252,7 @@
           "unlimited": "Unlimited",
           "startedAt": "Started",
           "currentPeriod": "Current period",
-          "nextBilling": "Next billing",
+          "billingStatus": "Billing status",
           "features": "Features",
           "noSubscription": "No active subscription."
         },
@@ -461,11 +465,14 @@
         "delete": "Delete",
         "addCoach": "Add coach"
       },
+      "currency": "EGP",
       "table": {
         "coach": "Coach",
         "plan": "Plan",
+        "price": "Price",
         "clients": "Clients",
-        "joined": "Joined"
+        "joined": "Joined",
+        "lastActivity": "Last activity"
       },
       "billing": {
         "active": "Active",
@@ -518,9 +525,29 @@
           "promoted": "User promoted to online coach"
         },
         "titleAdd": "Add coach",
+        "loading": "Loading…",
         "tabs": {
           "existing": "Existing users",
-          "new": "New user"
+          "new": "New user",
+          "info": "Info",
+          "subscription": "Subscription",
+          "billing": "Billing"
+        },
+        "subscription": {
+          "plan": "Plan",
+          "price": "Price",
+          "billingCycle": "Billing cycle",
+          "memberLimit": "Client limit",
+          "unlimited": "Unlimited",
+          "startedAt": "Started",
+          "currentPeriod": "Current period",
+          "billingStatus": "Billing status",
+          "features": "Features",
+          "noSubscription": "No active subscription."
+        },
+        "billing": {
+          "paidAt": "Paid",
+          "noRecords": "No billing records yet."
         },
         "noUsersFound": "No users match your search",
         "noUsersAvailable": "All platform users are already coaches"
@@ -534,6 +561,52 @@
       "userType": {
         "member": "Member",
         "gym": "Gym member"
+      }
+    },
+    "activity": {
+      "title": "Activity log",
+      "subtitle": "Platform-wide audit trail — who did what, at which gym",
+      "loadError": "Failed to load the activity log.",
+      "empty": "No activity matches these filters",
+      "system": "System",
+      "kpis": {
+        "total": "Total events",
+        "totalSub": "all time",
+        "logins": "Logins",
+        "loginsSub": "sign-ins",
+        "members": "Members added",
+        "membersSub": "across all gyms",
+        "checkins": "Check-ins",
+        "checkinsSub": "QR door scans"
+      },
+      "filters": {
+        "gym": "Gym",
+        "coach": "Online coach",
+        "event": "Event type",
+        "from": "From",
+        "to": "To",
+        "searchGyms": "Search gyms…",
+        "searchCoaches": "Search coaches…"
+      },
+      "table": {
+        "event": "Event",
+        "actor": "Actor",
+        "tenant": "Context",
+        "details": "Details",
+        "when": "When"
+      },
+      "tenant": {
+        "gym": "Gym",
+        "online_coach": "Online coach",
+        "platform": "Platform"
+      },
+      "events": {
+        "gym_created": "Gym created",
+        "login": "Login",
+        "member_add": "Member added",
+        "member_status_change": "Member status",
+        "plan_change": "Plan change",
+        "checkin": "Check-in"
       }
     }
   },

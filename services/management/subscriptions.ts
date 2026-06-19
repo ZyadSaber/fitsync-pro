@@ -139,7 +139,7 @@ export async function getPlatformBillingRecords(filter?: {
   try {
     let query = supabase
       .from("platform_billing_records")
-      .select("id, subscription_id, gym_id, coach_id, amount_egp, billing_cycle, period_start, period_end, next_billing_at, status, paid_at, notes, created_at, gyms(name), coaches(profiles(full_name))")
+      .select("id, subscription_id, gym_id, coach_id, amount_egp, period_start, period_end, status, paid_at, notes, created_at, gyms(name), coaches(profiles(full_name))")
       .order("created_at", { ascending: false })
       .limit(100);
 
@@ -239,10 +239,8 @@ export async function createCustomBillingRecord(data: InvoiceFormData): Promise<
         subscription_id: parsed.data.subscription_id,
         gym_id: parsed.data.gym_id,
         amount_egp: parseFloat(parsed.data.amount_egp),
-        billing_cycle: parsed.data.billing_cycle,
         period_start: parsed.data.period_start,
         period_end: parsed.data.period_end,
-        next_billing_at: parsed.data.next_billing_at || null,
         status: parsed.data.status,
         paid_at: parsed.data.paid_at || null,
         notes: parsed.data.notes || null,
@@ -270,10 +268,8 @@ export async function updateBillingRecord(id: string, data: InvoiceFormData): Pr
       .from("platform_billing_records")
       .update({
         amount_egp: parseFloat(parsed.data.amount_egp),
-        billing_cycle: parsed.data.billing_cycle,
         period_start: parsed.data.period_start,
         period_end: parsed.data.period_end,
-        next_billing_at: parsed.data.next_billing_at || null,
         status: parsed.data.status,
         paid_at: parsed.data.paid_at || null,
         notes: parsed.data.notes || null,
@@ -517,10 +513,8 @@ export async function assignPlanToTenant(
       gym_id:          ownerGymId,
       coach_id:        ownerCoachId,
       amount_egp:      parseFloat(inst.amount),
-      billing_cycle:   parsed.data.billing_cycle,
       period_start:    parsed.data.started_at,
       period_end:      ended.toISOString().slice(0, 10),
-      next_billing_at: inst.due_date,
       status:          "pending" as const,
       notes:           inst.label || null,
     }));

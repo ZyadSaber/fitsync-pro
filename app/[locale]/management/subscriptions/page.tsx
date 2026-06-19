@@ -150,67 +150,63 @@ export default async function SubscriptionsPage({
               {t("invoices.loadError")}
             </p>
           ) : (
-          <div className="max-h-[388px] overflow-y-auto">
-          <Table>
-            <TableHeader className="sticky top-0 z-10">
-              <TableRow>
-                <TableHead>{t("invoices.invoice")}</TableHead>
-                <TableHead>{t("invoices.tenant")}</TableHead>
-                <TableHead>{t("invoices.amount")}</TableHead>
-                <TableHead>{t("invoices.status")}</TableHead>
-                <TableHead>{t("invoices.due")}</TableHead>
-                <TableHead>{t("invoices.paid")}</TableHead>
-                <TableHead className="w-12" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((inv) => {
-                const badgeClass = BILLING_BADGE[inv.status] ?? "pending";
-                return (
-                  <TableRow key={inv.id}>
-                    <TableCell className="fs-mono text-xs">
-                      {invoiceId(inv.id, inv.created_at)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">{inv.tenant_name}</span>
-                        <span className={`fs-badge ${inv.tenant_type === "gym" ? "gym" : "active"}`}>
-                          {t(`invoices.tenantType.${inv.tenant_type}` as "invoices.tenantType.gym" | "invoices.tenantType.online_coach")}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="fs-num font-semibold">
-                      {inv.amount_egp.toLocaleString()}{" "}
-                      <span className="text-muted text-[10px] font-normal">{t("currency")}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className={`fs-badge ${badgeClass}`}>
-                        <span className="dot" />
-                        {t(`status.${inv.status}` as "status.paid" | "status.pending" | "status.failed" | "status.refunded")}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-muted text-xs">
-                      {fmt(inv.next_billing_at)}
-                    </TableCell>
-                    <TableCell className="text-muted text-xs">
-                      {fmt(inv.paid_at)}
-                    </TableCell>
-                    <TableCell>
-                      <BillingRowActions record={inv} gyms={gymOptions} />
-                    </TableCell>
+            <div className="max-h-[388px] overflow-y-auto">
+              <Table>
+                <TableHeader className="sticky top-0 z-10">
+                  <TableRow>
+                    <TableHead>{t("invoices.invoice")}</TableHead>
+                    <TableHead>{t("invoices.tenant")}</TableHead>
+                    <TableHead>{t("invoices.amount")}</TableHead>
+                    <TableHead>{t("invoices.status")}</TableHead>
+                    <TableHead>{t("invoices.paid")}</TableHead>
+                    <TableHead className="w-12" />
                   </TableRow>
-                );
-              })}
-              {rows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-10 text-sm text-muted">
-                    {t("invoices.noResults")}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((inv) => {
+                    const badgeClass = BILLING_BADGE[inv.status] ?? "pending";
+                    return (
+                      <TableRow key={inv.id}>
+                        <TableCell className="fs-mono text-xs">
+                          {invoiceId(inv.id, inv.created_at)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">{inv.tenant_name}</span>
+                            <span className={`fs-badge ${inv.tenant_type === "gym" ? "gym" : "active"}`}>
+                              {t(`invoices.tenantType.${inv.tenant_type}` as "invoices.tenantType.gym" | "invoices.tenantType.online_coach")}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="fs-num font-semibold">
+                          {inv.amount_egp.toLocaleString()}{" "}
+                          <span className="text-muted text-[10px] font-normal">{t("currency")}</span>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`fs-badge ${badgeClass}`}>
+                            <span className="dot" />
+                            {t(`status.${inv.status}` as "status.paid" | "status.pending" | "status.failed" | "status.refunded")}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-muted text-xs">
+                          {fmt(inv.paid_at)}
+                        </TableCell>
+                        <TableCell>
+                          <BillingRowActions record={inv} gyms={gymOptions} />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {rows.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-10 text-sm text-muted">
+                        {t("invoices.noResults")}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </div>
       </div>

@@ -117,10 +117,10 @@ FROM coaches c
 JOIN  profiles p  ON p.id = c.profile_id
 LEFT JOIN coach_clients cc ON cc.coach_id = c.id
 LEFT JOIN LATERAL (
-  SELECT status, started_at, plan_id
-  FROM platform_subscriptions
-  WHERE coach_id = c.id
-  ORDER BY created_at DESC
+  SELECT ps.status, ps.started_at, ps.plan_id
+  FROM platform_subscriptions ps
+  WHERE ps.coach_id = c.id
+  ORDER BY ps.created_at DESC
   LIMIT 1
 ) sub ON true
 LEFT JOIN subscription_plans sp ON sp.id = sub.plan_id

@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { PlatformSubscriptionDetails } from "@/types/gyms";
 
 interface Props {
-  gymId: string;
+  coachId: string;
 }
 
 const subBadge: Record<string, string> = {
@@ -26,29 +26,29 @@ const billingBadge: Record<string, string> = {
 const fmt = (iso: string | null | undefined) =>
   iso ? format(new Date(iso), "d MMM yyyy") : "—";
 
-async function fetchSubscription(gymId: string): Promise<PlatformSubscriptionDetails | null> {
+async function fetchSubscription(coachId: string): Promise<PlatformSubscriptionDetails | null> {
   const { data } = await createClient()
     .from("platform_subscription_details")
     .select("*")
-    .eq("gym_id", gymId)
+    .eq("coach_id", coachId)
     .order("started_at", { ascending: false })
     .limit(1)
     .maybeSingle();
   return data ?? null;
 }
 
-export default function GymSubscriptionTab({ gymId }: Props) {
-  const t = useTranslations("management.gyms.dialog");
-  const tGyms = useTranslations("management.gyms");
+export default function CoachSubscriptionTab({ coachId }: Props) {
+  const t = useTranslations("management.coaches.dialog");
+  const tCoaches = useTranslations("management.coaches");
 
   const { data: sub, isFetching } = useQuery({
-    queryKey: ["gym-subscription", gymId],
-    queryFn: () => fetchSubscription(gymId),
+    queryKey: ["coach-subscription", coachId],
+    queryFn: () => fetchSubscription(coachId),
     staleTime: 30_000,
   });
 
   const fmtMoney = (n: number | null | undefined) =>
-    n != null ? `${Number(n).toLocaleString("en-EG")} ${tGyms("currency")}` : "—";
+    n != null ? `${Number(n).toLocaleString("en-EG")} ${tCoaches("currency")}` : "—";
 
   if (isFetching) return <p className="py-10 text-center text-sm text-[var(--muted)]">{t("loading")}</p>;
   if (!sub) return <p className="py-10 text-center text-sm text-[var(--muted)]">{t("subscription.noSubscription")}</p>;
@@ -69,7 +69,7 @@ export default function GymSubscriptionTab({ gymId }: Props) {
           <span className="font-semibold text-sm">{sub.plan_name ?? "—"}</span>
         </div>
         <span className={`fs-badge ${subBadge[sub.status] ?? ""}`}>
-          {tGyms(`status.${sub.status}`)}
+          {tCoaches(`billing.${sub.status}`)}
         </span>
       </div>
 

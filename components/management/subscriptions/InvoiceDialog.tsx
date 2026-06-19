@@ -23,11 +23,6 @@ import type { SelectOptions } from "@/types/ui";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
-const BILLING_OPTIONS: SelectOptions[] = [
-  { key: "monthly", label: "Monthly" },
-  { key: "yearly",  label: "Yearly" },
-];
-
 const STATUS_OPTIONS: SelectOptions[] = [
   { key: "paid",     label: "Paid" },
   { key: "pending",  label: "Open / Pending" },
@@ -42,10 +37,8 @@ const EMPTY: InvoiceFormData = {
   gym_id:          "",
   subscription_id: "",
   amount_egp:      "",
-  billing_cycle:   "monthly",
   period_start:    "",
   period_end:      "",
-  next_billing_at: "",
   status:          "pending",
   paid_at:         "",
   notes:           "",
@@ -67,10 +60,8 @@ export default function InvoiceDialog({ gyms, record }: Props) {
         gym_id:          record.gym_id ?? "",
         subscription_id: record.subscription_id,
         amount_egp:      String(record.amount_egp),
-        billing_cycle:   record.billing_cycle,
         period_start:    toDateInput(record.period_start),
         period_end:      toDateInput(record.period_end),
-        next_billing_at: toDateInput(record.next_billing_at),
         status:          record.status,
         paid_at:         toDateInput(record.paid_at),
         notes:           record.notes ?? "",
@@ -168,28 +159,16 @@ export default function InvoiceDialog({ gyms, record }: Props) {
             </div>
           )}
 
-          <div className="flex gap-2">
-            <Input
-              name="amount_egp"
-              label="Amount (EGP)"
-              placeholder="4500"
-              value={formData.amount_egp}
-              onChange={handleChange}
-              error={errors.amount_egp}
-              type="text"
-              inputMode="numeric"
-              containerClassName="flex-1"
-            />
-            <SelectField
-              name="billing_cycle"
-              label="Billing cycle"
-              options={BILLING_OPTIONS}
-              value={formData.billing_cycle}
-              onValueChange={handleToggle("billing_cycle")}
-              hideClear
-              containerClassName="flex-1"
-            />
-          </div>
+          <Input
+            name="amount_egp"
+            label="Amount (EGP)"
+            placeholder="4500"
+            value={formData.amount_egp}
+            onChange={handleChange}
+            error={errors.amount_egp}
+            type="text"
+            inputMode="numeric"
+          />
 
           <div className="flex gap-2">
             <Input
@@ -211,14 +190,6 @@ export default function InvoiceDialog({ gyms, record }: Props) {
               containerClassName="flex-1"
             />
           </div>
-
-          <Input
-            name="next_billing_at"
-            label="Next billing date (optional)"
-            value={formData.next_billing_at ?? ""}
-            onChange={handleChange}
-            type="date"
-          />
 
           <SelectField
             name="status"

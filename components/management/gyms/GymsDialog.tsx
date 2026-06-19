@@ -12,7 +12,8 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Camera } from "lucide-react";
+import { SelectField, type SelectOptions } from "@/components/ui/select";
+import { Camera, User } from "lucide-react";
 import useFormManager from "@/hook/useFormManager";
 import useVisibility from "@/hook/useVisibility";
 import { gymSchema, type GymFormData } from "@/validations/gymSchema";
@@ -25,9 +26,10 @@ import GymBillingTab from "@/components/management/gyms/GymBillingTab";
 
 interface GymsDialogProps {
   gym?: GymListItem;
+  ownerOptions?: SelectOptions[];
 }
 
-const GymsDialog = ({ gym }: GymsDialogProps) => {
+const GymsDialog = ({ gym, ownerOptions = [] }: GymsDialogProps) => {
   const t = useTranslations("management.gyms.dialog");
   const tGyms = useTranslations("management.gyms");
   const isEdit = !!gym;
@@ -43,6 +45,7 @@ const GymsDialog = ({ gym }: GymsDialogProps) => {
         address: gym?.address ?? "",
         phone: gym?.phone ?? "",
         logo_url: gym?.logo_url ?? "",
+        owner_id: gym?.owner_id ?? "",
       },
       schema: gymSchema as z.ZodSchema<GymFormData>,
       onSubmit: async (data, reset) => {
@@ -90,6 +93,20 @@ const GymsDialog = ({ gym }: GymsDialogProps) => {
       <Input name="name" label={t("fields.name")} placeholder={t("placeholders.name")} value={formData.name} onChange={handleChange} error={errors.name} required />
       <Input name="address" label={t("fields.address")} placeholder={t("placeholders.address")} value={formData.address ?? ""} onChange={handleChange} error={errors.address} />
       <Input name="phone" label={t("fields.phone")} placeholder={t("placeholders.phone")} value={formData.phone ?? ""} onChange={handleChange} error={errors.phone} type="tel" />
+
+      <SelectField
+        name="owner_id"
+        label={t("fields.owner")}
+        placeholder={t("placeholders.owner")}
+        icon={User}
+        options={ownerOptions}
+        value={formData.owner_id ?? ""}
+        onValueChange={(value) => handleFieldChange({ name: "owner_id", value })}
+        error={errors.owner_id}
+        showSearch
+        searchPlaceholder={t("placeholders.ownerSearch")}
+        containerClassName="mt-1"
+      />
 
       <div className="flex gap-2 justify-end mt-4">
         <Button type="button" variant="outline" isLoading={loading || isUploading} onClick={handleClose}>

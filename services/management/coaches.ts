@@ -113,6 +113,50 @@ export async function getCoaches(): Promise<CoachesResult> {
 }
 
 // ---------------------------------------------------------------------------
+// Coaches page payload: filtered rows + KPI totals (KPIs are over ALL coaches,
+// independent of the active filters).
+// ---------------------------------------------------------------------------
+
+export type CoachesPageFilters = { search?: string; plan?: string; active?: string };
+
+export type CoachesPageData = {
+  rows: CoachListItem[];
+  totalCoaches: number;
+  activeBilling: number;
+  totalClients: number;
+};
+
+export async function getCoachesPageData(
+  filters: CoachesPageFilters
+): Promise<{ data: CoachesPageData | null; error: null | string }> {
+  const { data: coaches, error } = await getCoaches();
+  if (error) return { data: null, error };
+
+  const q = filters.search?.toLowerCase().trim();
+
+  const rows = coaches.filter((c) => {
+    if (q && !(c.full_name ?? "").toLowerCase().includes(q) && !(c.phone ?? "").toLowerCase().includes(q)) {
+      return false;
+    }
+    if (filters.plan && c.plan_name !== filters.plan) return false;
+    if (filters.active && filters.active !== "all") {
+      if ((filters.active === "true") !== c.is_billing_active) return false;
+    }
+    return true;
+  });
+
+  return {
+    data: {
+      rows,
+      totalCoaches: coaches.length,
+      activeBilling: coaches.filter((c) => c.is_billing_active).length,
+      totalClients: coaches.reduce((sum, c) => sum + c.client_count, 0),
+    },
+    error: null,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Coach mutations (Server Actions)
 // ---------------------------------------------------------------------------
 

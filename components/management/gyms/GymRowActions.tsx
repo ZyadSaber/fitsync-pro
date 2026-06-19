@@ -14,12 +14,14 @@ import DeleteDialog from "@/components/shared/delete-dialog";
 import { deleteGym } from "@/services/management/gyms";
 import { useTranslations } from "next-intl";
 import type { GymListItem } from "@/types/gyms";
+import type { SelectOptions } from "@/types/ui";
 
 interface GymRowActionsProps {
   gym: GymListItem;
+  ownerOptions?: SelectOptions[];
 }
 
-export default function GymRowActions({ gym }: GymRowActionsProps) {
+export default function GymRowActions({ gym, ownerOptions }: GymRowActionsProps) {
   const t = useTranslations("management.gyms");
 
   return (
@@ -35,7 +37,7 @@ export default function GymRowActions({ gym }: GymRowActionsProps) {
           className="focus:bg-hairline2 focus:text-ink cursor-pointer"
           onSelect={(e) => e.preventDefault()}
         >
-          <GymsDialog gym={gym} />
+          <GymsDialog gym={gym} ownerOptions={ownerOptions} />
         </DropdownMenuItem>
         <DropdownMenuSeparator className="bg-[var(--hairline)]" />
         <DropdownMenuItem

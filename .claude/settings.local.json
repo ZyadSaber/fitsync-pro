@@ -60,7 +60,19 @@
       "Bash(git stash *)",
       "Bash(npx eslint *)",
       "Bash(echo \"=== exit $? ===\")",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "PowerShell(bunx tsc --noEmit 2>&1 | Select-Object -First 40)",
+      "Bash(cp /tmp/diag.mjs ./diag.mjs)",
+      "Bash(rm -f ./diag.mjs)",
+      "mcp__ide__getDiagnostics",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(./node_modules/.bin/tsc --noEmit -p tsconfig.json)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(ls hooks *)",
+      "Bash(ls hook *)",
+      "Bash(ls node_modules/react-day-picker)",
+      "Bash(cat hooks.ts)",
+      "Bash(cat hooks/index.ts)"
     ]
   }
 }

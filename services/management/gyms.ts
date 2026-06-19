@@ -34,6 +34,28 @@ export async function getActiveSubscriptionPlanOptions(): Promise<SelectOptions[
 }
 
 // ---------------------------------------------------------------------------
+// Users that can be linked as a gym owner
+// ---------------------------------------------------------------------------
+
+export async function getGymOwnerOptions(): Promise<SelectOptions[]> {
+  const supabase = await createServerSupabaseClient();
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, full_name, phone")
+    .in("user_type", ["gym", "member"])
+    .in("is_super_admin", [false])
+    .order("full_name", { ascending: true });
+
+  if (error || !isArrayHasData(data)) return [];
+
+  return data.map((u) => ({
+    key: u.id,
+    label: u.full_name?.trim() || u.phone || u.id,
+  }));
+}
+
+// ---------------------------------------------------------------------------
 // Gym list (super admin overview)
 // ---------------------------------------------------------------------------
 
@@ -45,26 +67,43 @@ export async function getGyms(): Promise<GymsResult> {
   try {
     const { data, error } = await supabase
       .from("gym_list")
-      .select("id, name, address, phone, logo_url, created_at, plan_name, price_egp, subscription_status, member_count, last_activity_at, member_limit, plan_id");
+      .select("id, name, address, phone, logo_url, owner_id, created_at, plan_name, price_egp, subscription_status, current_period_end, member_count, last_activity_at, member_limit, plan_id");
 
     if (error) throw error;
 
+    const now = Date.now();
+
     const computedData = !isArrayHasData(data) ? [] :
-      data.map(item => ({
-        id: item.id,
-        name: item.name,
-        address: item.address ?? "",
-        phone: item.phone ?? "",
-        logo_url: item.logo_url ?? "",
-        joinedAt: item.created_at,
-        plan: item.plan_name ?? "",
-        plan_id: item.plan_id ?? "",
-        planPriceEgp: item.price_egp != null ? Number(item.price_egp) : ("" as ""),
-        status: item.subscription_status ?? "unknown",
-        memberCount: Number(item.member_count ?? 0),
-        lastActivityAt: item.last_activity_at ?? "",
-        member_limit: Number(item.member_limit ?? 0),
-      }));
+      data.map(item => {
+        // A gym counts as active only when it has an active plan AND its
+        // latest fee period is still current. An active plan whose billing
+        // period has lapsed (or that was never billed) is shown as expired.
+        const hasActivePlan = item.subscription_status === "active";
+        const hasActiveFeePeriod =
+          item.current_period_end != null &&
+          new Date(item.current_period_end).getTime() >= now;
+        const status =
+          hasActivePlan && !hasActiveFeePeriod
+            ? "expired"
+            : item.subscription_status ?? "unknown";
+
+        return {
+          id: item.id,
+          name: item.name,
+          address: item.address ?? "",
+          phone: item.phone ?? "",
+          logo_url: item.logo_url ?? "",
+          joinedAt: item.created_at,
+          plan: item.plan_name ?? "",
+          plan_id: item.plan_id ?? "",
+          planPriceEgp: item.price_egp != null ? Number(item.price_egp) : ("" as ""),
+          status,
+          memberCount: Number(item.member_count ?? 0),
+          lastActivityAt: item.last_activity_at ?? "",
+          member_limit: Number(item.member_limit ?? 0),
+          owner_id: item.owner_id ?? "",
+        };
+      });
 
     return { data: computedData, error: null };
   } catch (err) {
@@ -87,6 +126,8 @@ export async function createGym(data: GymFormData): Promise<ActionResult> {
 
   if (!user) return { success: false, error: "Unauthenticated" };
 
+  const ownerId = parsed.data.owner_id || user.id;
+
   const { data: gym, error } = await supabase
     .from("gyms")
     .insert({
@@ -94,12 +135,18 @@ export async function createGym(data: GymFormData): Promise<ActionResult> {
       address: parsed.data.address || null,
       phone: parsed.data.phone || null,
       logo_url: parsed.data.logo_url || null,
-      owner_id: user.id,
+      owner_id: ownerId,
     })
     .select("id")
     .single();
 
   if (error) return { success: false, error: error.message };
+
+  // Promote the assigned owner to the gym role and link them to the new gym.
+  if (parsed.data.owner_id) {
+    const { error: promoteError } = await promoteOwnerToGym(supabase, ownerId, gym.id);
+    if (promoteError) return { success: false, error: promoteError };
+  }
 
   revalidatePath("/[locale]/management/gyms", "page");
   return { success: true, id: gym.id };
@@ -120,13 +167,46 @@ export async function updateGym(id: string, data: GymFormData): Promise<ActionRe
       address: parsed.data.address || null,
       phone: parsed.data.phone || null,
       logo_url: parsed.data.logo_url || null,
+      ...(parsed.data.owner_id ? { owner_id: parsed.data.owner_id } : {}),
     })
     .eq("id", id);
 
   if (error) return { success: false, error: error.message };
 
+  // Promote the assigned owner to the gym role and link them to this gym.
+  if (parsed.data.owner_id) {
+    const { error: promoteError } = await promoteOwnerToGym(supabase, parsed.data.owner_id, id);
+    if (promoteError) return { success: false, error: promoteError };
+  }
+
   revalidatePath("/[locale]/management/gyms", "page");
   return { success: true, id };
+}
+
+// Promote the assigned owner's profile to the gym role and link them to their
+// gym. The owner is always one of the non-super-admin users offered in the
+// picker, so updating by id is safe. We select the affected row back: a 0-row
+// result means RLS silently filtered the update out (the super-admin profiles
+// write policy is missing) rather than a real DB error.
+async function promoteOwnerToGym(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  profileId: string,
+  gymId: string
+): Promise<{ error: null | string }> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ user_type: "gym", gym_id: gymId })
+    .eq("id", profileId)
+    .select("id");
+
+  if (error) return { error: extractMessage(error, "[promoteOwnerToGym]") };
+  if (!isArrayHasData(data)) {
+    return {
+      error:
+        "Owner role was not updated (no rows affected). Apply the super-admin profiles write policy migration (db/migrations/super_admin_profiles_write.sql).",
+    };
+  }
+  return { error: null };
 }
 
 export async function deleteGym(id: string): Promise<ActionResult> {

@@ -211,6 +211,7 @@
         "active": "نشط",
         "suspended": "موقوف",
         "cancelled": "ملغي",
+        "expired": "منتهي",
         "unknown": "غير معروف"
       },
       "currency": "ج.م",
@@ -221,12 +222,15 @@
           "name": "اسم النادي",
           "address": "العنوان",
           "phone": "الهاتف",
-          "logo": "شعار النادي"
+          "logo": "شعار النادي",
+          "owner": "المالك"
         },
         "placeholders": {
           "name": "كايرو فيت · الزمالك",
           "address": "123 شارع التحرير، القاهرة",
-          "phone": "+20 10 0000 0000"
+          "phone": "+20 10 0000 0000",
+          "owner": "اختر المالك",
+          "ownerSearch": "ابحث عن المستخدمين…"
         },
         "cancel": "إلغاء",
         "saving": "جارٍ الحفظ…",
@@ -248,7 +252,7 @@
           "unlimited": "غير محدود",
           "startedAt": "تاريخ البدء",
           "currentPeriod": "الفترة الحالية",
-          "nextBilling": "الفاتورة القادمة",
+          "billingStatus": "حالة الفوترة",
           "features": "المميزات",
           "noSubscription": "لا يوجد اشتراك نشط."
         },
@@ -461,11 +465,14 @@
         "delete": "حذف",
         "addCoach": "إضافة مدرب"
       },
+      "currency": "ج.م",
       "table": {
         "coach": "المدرب",
         "plan": "الخطة",
+        "price": "السعر",
         "clients": "العملاء",
-        "joined": "تاريخ الانضمام"
+        "joined": "تاريخ الانضمام",
+        "lastActivity": "آخر نشاط"
       },
       "billing": {
         "active": "نشط",
@@ -518,9 +525,29 @@
           "promoted": "تمت ترقية المستخدم إلى مدرب أونلاين"
         },
         "titleAdd": "إضافة مدرب",
+        "loading": "جارٍ التحميل…",
         "tabs": {
           "existing": "المستخدمون الحاليون",
-          "new": "مستخدم جديد"
+          "new": "مستخدم جديد",
+          "info": "المعلومات",
+          "subscription": "الاشتراك",
+          "billing": "الفوترة"
+        },
+        "subscription": {
+          "plan": "الباقة",
+          "price": "السعر",
+          "billingCycle": "دورة الفوترة",
+          "memberLimit": "حد العملاء",
+          "unlimited": "غير محدود",
+          "startedAt": "بدأ في",
+          "currentPeriod": "الفترة الحالية",
+          "billingStatus": "حالة الفوترة",
+          "features": "المميزات",
+          "noSubscription": "لا يوجد اشتراك نشط."
+        },
+        "billing": {
+          "paidAt": "تم الدفع",
+          "noRecords": "لا توجد سجلات فوترة بعد."
         },
         "noUsersFound": "لا يوجد مستخدمون مطابقون للبحث",
         "noUsersAvailable": "جميع مستخدمي المنصة مدربون بالفعل"
@@ -534,6 +561,52 @@
       "userType": {
         "member": "عضو",
         "gym": "عضو جيم"
+      }
+    },
+    "activity": {
+      "title": "سجل النشاط",
+      "subtitle": "سجل تدقيق على مستوى المنصة — من فعل ماذا، وفي أي نادٍ",
+      "loadError": "تعذّر تحميل سجل النشاط.",
+      "empty": "لا يوجد نشاط مطابق لهذه الفلاتر",
+      "system": "النظام",
+      "kpis": {
+        "total": "إجمالي الأحداث",
+        "totalSub": "كل الوقت",
+        "logins": "تسجيلات الدخول",
+        "loginsSub": "مرات الدخول",
+        "members": "أعضاء مُضافون",
+        "membersSub": "في كل الأندية",
+        "checkins": "تسجيلات الحضور",
+        "checkinsSub": "مسح أكواد QR"
+      },
+      "filters": {
+        "gym": "النادي",
+        "coach": "مدرّب أونلاين",
+        "event": "نوع الحدث",
+        "from": "من",
+        "to": "إلى",
+        "searchGyms": "ابحث عن نادٍ…",
+        "searchCoaches": "ابحث عن مدرّب…"
+      },
+      "table": {
+        "event": "الحدث",
+        "actor": "الفاعل",
+        "tenant": "السياق",
+        "details": "التفاصيل",
+        "when": "الوقت"
+      },
+      "tenant": {
+        "gym": "نادٍ",
+        "online_coach": "مدرّب أونلاين",
+        "platform": "المنصة"
+      },
+      "events": {
+        "gym_created": "إنشاء نادٍ",
+        "login": "تسجيل دخول",
+        "member_add": "إضافة عضو",
+        "member_status_change": "حالة العضو",
+        "plan_change": "تغيير الباقة",
+        "checkin": "تسجيل حضور"
       }
     }
   },

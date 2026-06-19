@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import HeaderContent from "@/components/layout/Topbar";
 import UsageBar from "@/components/superadmin/UsageBar";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
-import { getGyms, getActiveSubscriptionPlanOptions } from "@/services/management/gyms";
+import { getGyms, getActiveSubscriptionPlanOptions, getGymOwnerOptions } from "@/services/management/gyms";
 import { formatDistanceToNow } from "date-fns";
 import GymsFilters from "@/components/management/gyms/GymsFilters";
 import GymsDialog from "@/components/management/gyms/GymsDialog";
@@ -16,6 +16,7 @@ const STATUS_BADGE: Record<string, string> = {
   active: "active",
   suspended: "frozen",
   cancelled: "expired",
+  expired: "expired",
 };
 
 export default async function GymsPage({
@@ -23,10 +24,11 @@ export default async function GymsPage({
 }: {
   searchParams: Promise<{ status?: string; search?: string; plan?: string }>;
 }) {
-  const [t, { status: sf, search: sq, plan: spPlan }, planOptions] = await Promise.all([
+  const [t, { status: sf, search: sq, plan: spPlan }, planOptions, ownerOptions] = await Promise.all([
     getTranslations("management.gyms"),
     searchParams,
     getActiveSubscriptionPlanOptions(),
+    getGymOwnerOptions(),
   ]);
 
   const result = await getGyms();
@@ -62,7 +64,7 @@ export default async function GymsPage({
               <Download size={13} />
               {t("actions.exportCsv")}
             </Button>
-            <GymsDialog />
+            <GymsDialog ownerOptions={ownerOptions} />
           </>
         }
       />
@@ -94,7 +96,7 @@ export default async function GymsPage({
               {
                 rows.map((g) => {
                   const badge = STATUS_BADGE[g.status ?? ""] ?? "pending";
-                  const statusLabel = t(`status.${g.status ?? "unknown"}` as "status.active" | "status.suspended" | "status.cancelled" | "status.unknown");
+                  const statusLabel = t(`status.${g.status || "unknown"}` as "status.active" | "status.suspended" | "status.cancelled" | "status.expired" | "status.unknown");
                   return (
                     <TableRow key={g.id}>
                       <TableCell>
@@ -137,7 +139,7 @@ export default async function GymsPage({
                       </TableCell>
                       <TableCell className="text-muted-foreground text-xs" suppressHydrationWarning>{g.lastActivityAt ? formatDistanceToNow(g.lastActivityAt, { addSuffix: true }) : "-"}</TableCell>
                       <TableCell>
-                        <GymRowActions gym={g} />
+                        <GymRowActions gym={g} ownerOptions={ownerOptions} />
                       </TableCell>
                     </TableRow>
                   );
