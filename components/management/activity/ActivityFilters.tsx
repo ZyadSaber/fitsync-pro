@@ -2,9 +2,9 @@
 
 import { SelectField } from "@/components/ui/select";
 import type { SelectOptions } from "@/types/ui";
-import { useTranslations } from "next-intl";
+import { useTranslation } from "react-i18next";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import useFormManager from "@/hook/useFormManager";
+import useFormManager from "@/hooks/useFormManager";
 
 interface Props {
   gymOptions: SelectOptions[];
@@ -16,7 +16,7 @@ const fieldLabel =
   "px-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)]";
 
 const ActivityFilters = ({ gymOptions, coachOptions, eventOptions }: Props) => {
-  const t = useTranslations("management.activity");
+  const { t } = useTranslation(undefined, { keyPrefix: "management.activity" });
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();

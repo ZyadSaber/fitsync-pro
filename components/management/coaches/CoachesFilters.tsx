@@ -3,15 +3,15 @@
 import { SelectField } from "@/components/ui/select";
 import { RadioGroupField } from "@/components/ui/radio-group";
 import type { SelectOptions } from "@/types/ui";
-import { useTranslations } from "next-intl";
-import useFormManager from "@/hook/useFormManager";
+import { useTranslation } from "react-i18next";
+import useFormManager from "@/hooks/useFormManager";
 
 interface Props {
   planOptions: SelectOptions[];
 }
 
 const CoachesFilters = ({ planOptions }: Props) => {
-  const t = useTranslations("management.coaches");
+  const { t } = useTranslation(undefined, { keyPrefix: "management.coaches" });
 
   const { handleToggle, formData } = useFormManager({
     initialData: { active: "", plan: "" },

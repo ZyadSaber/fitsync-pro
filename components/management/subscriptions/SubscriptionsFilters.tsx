@@ -2,16 +2,16 @@
 
 import { SelectField } from "@/components/ui/select";
 import type { SelectOptions } from "@/types/ui";
-import { useTranslations } from "next-intl";
+import { useTranslation } from "react-i18next";
 import { useMemo } from "react";
-import useFormManager from "@/hook/useFormManager";
+import useFormManager from "@/hooks/useFormManager";
 
 interface Props {
   statusOptions: SelectOptions[];
 }
 
 const SubscriptionsFilters = ({ statusOptions }: Props) => {
-  const t = useTranslations("management.subscriptions");
+  const { t } = useTranslation(undefined, { keyPrefix: "management.subscriptions" });
 
   const { handleToggle, formData } = useFormManager({
     initialData: { status: "" },

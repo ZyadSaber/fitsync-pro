@@ -2,8 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { useTranslations } from "next-intl";
-import { createClient } from "@/lib/supabase/client";
+import { useTranslation } from "react-i18next";
+import { api } from "@/apps/dashboard/src/lib/api";
 import type { PlatformSubscriptionDetails } from "@/types/gyms";
 
 interface Props {
@@ -27,19 +27,12 @@ const fmt = (iso: string | null | undefined) =>
   iso ? format(new Date(iso), "d MMM yyyy") : "—";
 
 async function fetchSubscription(coachId: string): Promise<PlatformSubscriptionDetails | null> {
-  const { data } = await createClient()
-    .from("platform_subscription_details")
-    .select("*")
-    .eq("coach_id", coachId)
-    .order("started_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  return data ?? null;
+  return api.get<PlatformSubscriptionDetails | null>(`/coaches/${coachId}/subscription`);
 }
 
 export default function CoachSubscriptionTab({ coachId }: Props) {
-  const t = useTranslations("management.coaches.dialog");
-  const tCoaches = useTranslations("management.coaches");
+  const { t } = useTranslation(undefined, { keyPrefix: "management.coaches.dialog" });
+  const { t: tCoaches } = useTranslation(undefined, { keyPrefix: "management.coaches" });
 
   const { data: sub, isFetching } = useQuery({
     queryKey: ["coach-subscription", coachId],

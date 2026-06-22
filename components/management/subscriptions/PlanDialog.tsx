@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { useState, useRef } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -16,8 +16,8 @@ import { SelectField } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import Icon from "@/components/ui/Icon";
 import { Plus, Trash2, ChevronUp, ChevronDown, GripVertical } from "lucide-react";
-import useFormManager from "@/hook/useFormManager";
-import useVisibility from "@/hook/useVisibility";
+import useFormManager from "@/hooks/useFormManager";
+import useVisibility from "@/hooks/useVisibility";
 import { planFormSchema, type PlanFormData } from "@/validations/subscriptionSchema";
 import { createSubscriptionPlan, updateSubscriptionPlan } from "@/services/management/subscriptions";
 import type { SubscriptionPlanStats } from "@/types/subscriptions";
@@ -28,7 +28,7 @@ interface Props {
 }
 
 export default function PlanDialog({ plan }: Props) {
-  const t = useTranslations("management.subscriptions.dialog");
+  const { t } = useTranslation(undefined, { keyPrefix: "management.subscriptions.dialog" });
   const isEdit = !!plan;
   const { visible: open, handleOpen, handleClose, handleStateChange } = useVisibility();
   const [newFeature, setNewFeature] = useState("");

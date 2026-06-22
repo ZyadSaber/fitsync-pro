@@ -1,25 +1,22 @@
 "use client"
 
 import { useCallback } from "react";
-import { useRouter } from "@/i18n/navigation";
+import { useTranslation } from "react-i18next";
 import { Button } from "./ui/button";
-import { useLocale, useTranslations } from "next-intl";
 
 const LanguageChange = () => {
-    const router = useRouter();
-    const locale = useLocale();
-    const otherLocale = locale === "ar" ? "en" : "ar";
-    const t = useTranslations("common")
+    const { t, i18n } = useTranslation(undefined, { keyPrefix: "common" });
+    const otherLocale = i18n.language === "ar" ? "en" : "ar";
 
-    const handleChngeLanguage = useCallback(() => {
-        router.replace("/", { locale: otherLocale })
-    }, [])
+    const handleChangeLanguage = useCallback(() => {
+        void i18n.changeLanguage(otherLocale);
+    }, [i18n, otherLocale])
 
     return (
         <Button
-            onClick={handleChngeLanguage}
+            onClick={handleChangeLanguage}
             size="xs"
-            variant="secondary"
+            variant="link"
         >
             {t("langToggle")}
         </Button>

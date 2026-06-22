@@ -11,8 +11,8 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Loader2, Trash2 } from "lucide-react";
-import useVisibility from "@/hook/useVisibility";
-import { useTranslations } from "next-intl";
+import useVisibility from "@/hooks/useVisibility";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { ActionResult } from "@/types/common"
 import { toast } from "sonner";
@@ -30,7 +30,7 @@ const DeleteDialog = ({
 }: DeleteDialogProps) => {
     const { visible, handleClose, handleStateChange } = useVisibility()
     const [isPending, startTransition] = useTransition()
-    const t = useTranslations("common")
+    const { t } = useTranslation(undefined, { keyPrefix: "common" })
 
     const submitDelete = () => {
         startTransition(async () => {

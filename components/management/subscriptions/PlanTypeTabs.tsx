@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useTranslation } from "react-i18next";
 import type { SubscriptionPlanType } from "@/types/subscriptions";
 
 type Tab = "all" | SubscriptionPlanType;
@@ -10,7 +10,7 @@ type Tab = "all" | SubscriptionPlanType;
 const TABS: Tab[] = ["all", "gym", "online_coach"];
 
 export default function PlanTypeTabs() {
-  const t = useTranslations("management.subscriptions");
+  const { t } = useTranslation(undefined, { keyPrefix: "management.subscriptions" });
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();

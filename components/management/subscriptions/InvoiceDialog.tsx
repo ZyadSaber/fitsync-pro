@@ -14,19 +14,27 @@ import { Input } from "@/components/ui/input";
 import Textarea from "@/components/ui/textarea";
 import { SelectField } from "@/components/ui/select";
 import Icon from "@/components/ui/Icon";
-import useFormManager from "@/hook/useFormManager";
-import useVisibility from "@/hook/useVisibility";
+import useFormManager from "@/hooks/useFormManager";
+import useVisibility from "@/hooks/useVisibility";
 import { invoiceFormSchema, type InvoiceFormData } from "@/validations/subscriptionSchema";
-import { createCustomBillingRecord, updateBillingRecord } from "@/services/management/subscriptions";
+import {
+  createCustomBillingRecord,
+  updateBillingRecord,
+  getActiveSubscriptionIdForGym,
+} from "@/services/management/subscriptions";
 import type { BillingRecordListItem } from "@/types/subscriptions";
 import type { SelectOptions } from "@/types/ui";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
+const BILLING_OPTIONS: SelectOptions[] = [
+  { key: "monthly", label: "Monthly" },
+  { key: "yearly", label: "Yearly" },
+];
+
 const STATUS_OPTIONS: SelectOptions[] = [
-  { key: "paid",     label: "Paid" },
-  { key: "pending",  label: "Open / Pending" },
-  { key: "failed",   label: "Past due / Failed" },
+  { key: "paid", label: "Paid" },
+  { key: "pending", label: "Open / Pending" },
+  { key: "failed", label: "Past due / Failed" },
   { key: "refunded", label: "Refunded" },
 ];
 
@@ -34,14 +42,16 @@ const toDateInput = (iso: string | null) =>
   iso ? format(new Date(iso), "yyyy-MM-dd") : "";
 
 const EMPTY: InvoiceFormData = {
-  gym_id:          "",
+  gym_id: "",
   subscription_id: "",
-  amount_egp:      "",
-  period_start:    "",
-  period_end:      "",
-  status:          "pending",
-  paid_at:         "",
-  notes:           "",
+  amount_egp: "",
+  billing_cycle: "monthly",
+  period_start: "",
+  period_end: "",
+  next_billing_at: "",
+  status: "pending",
+  paid_at: "",
+  notes: "",
 };
 
 interface Props {
@@ -57,15 +67,17 @@ export default function InvoiceDialog({ gyms, record }: Props) {
 
   const initialData: InvoiceFormData = record
     ? {
-        gym_id:          record.gym_id ?? "",
-        subscription_id: record.subscription_id,
-        amount_egp:      String(record.amount_egp),
-        period_start:    toDateInput(record.period_start),
-        period_end:      toDateInput(record.period_end),
-        status:          record.status,
-        paid_at:         toDateInput(record.paid_at),
-        notes:           record.notes ?? "",
-      }
+      gym_id: record.gym_id ?? "",
+      subscription_id: record.subscription_id,
+      amount_egp: String(record.amount_egp),
+      billing_cycle: record.billing_cycle,
+      period_start: toDateInput(record.period_start),
+      period_end: toDateInput(record.period_end),
+      next_billing_at: toDateInput(record.next_billing_at),
+      status: record.status,
+      paid_at: toDateInput(record.paid_at),
+      notes: record.notes ?? "",
+    }
     : EMPTY;
 
   const { formData, handleChange, handleFieldChange, handleToggle, errors, handleSubmit, loading } =
@@ -91,20 +103,16 @@ export default function InvoiceDialog({ gyms, record }: Props) {
     handleFieldChange({ name: "subscription_id", value: "" });
 
     startSubFetch(async () => {
-      const { data } = await createClient()
-        .from("platform_subscriptions")
-        .select("id")
-        .eq("gym_id", formData.gym_id)
-        .eq("status", "active")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (data?.id) {
-        handleFieldChange({ name: "subscription_id", value: data.id });
-        setSubError(null);
-      } else {
-        setSubError("No active subscription found for this gym. Create one first.");
+      try {
+        const id = await getActiveSubscriptionIdForGym(formData.gym_id);
+        if (id) {
+          handleFieldChange({ name: "subscription_id", value: id });
+          setSubError(null);
+        } else {
+          setSubError("No active subscription found for this gym. Create one first.");
+        }
+      } catch {
+        setSubError("Could not look up the subscription for this gym.");
       }
     });
   }, [formData.gym_id, isEdit]);

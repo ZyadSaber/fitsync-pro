@@ -1,0 +1,61 @@
+import { Navigate, Route, Routes } from "react-router";
+import SignIn from "./pages/SignIn";
+import DashboardShell from "./layout/DashboardShell";
+import GymsPage from "./pages/management/gyms";
+import CoachesPage from "./pages/management/CoachesPage";
+import SubscriptionsPage from "./pages/management/SubscriptionsPage";
+import ActivityPage from "./pages/management/ActivityPage";
+import ManagementOverviewPage from "./pages/management/ManagementOverviewPage";
+import Placeholder from "./pages/Placeholder";
+
+export default function App() {
+  return (
+    <Routes>
+      <Route index element={<SignIn />} />
+      <Route path="sign-in" element={<SignIn />} />
+
+      {/* Platform admin (super admin only — roles=[] means isSuperAdmin gate) */}
+      <Route
+        path="management"
+        element={
+          <DashboardShell section="management" />
+        }
+      >
+        <Route index element={<ManagementOverviewPage />} />
+        <Route path="gyms" element={<GymsPage />} />
+        <Route path="coaches" element={<CoachesPage />} />
+        <Route path="subscriptions" element={<SubscriptionsPage />} />
+        <Route path="activity" element={<ActivityPage />} />
+        <Route path="quotas" element={<Placeholder title="Quotas" />} />
+      </Route>
+
+      {/* Role homes — ported incrementally */}
+      <Route
+        path="admin/*"
+        element={
+          <DashboardShell section="admin" />
+        }
+      />
+      <Route
+        path="coach/*"
+        element={
+          <DashboardShell section="coach" />
+        }
+      />
+      <Route
+        path="member/*"
+        element={
+          <DashboardShell section="management" />
+        }
+      />
+      <Route
+        path="client/*"
+        element={
+          <DashboardShell section="management" />
+        }
+      />
+
+      <Route path="*" element={<Navigate to="/sign-in" replace />} />
+    </Routes>
+  );
+}

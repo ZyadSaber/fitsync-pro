@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserCheck } from "lucide-react";
-import useVisibility from "@/hook/useVisibility";
+import useVisibility from "@/hooks/useVisibility";
 import { promoteToCoach } from "@/services/management/coaches";
 import type { PlatformUser } from "@/types/coaches";
 import { toast } from "sonner";
@@ -16,8 +16,8 @@ import isArrayHasData from "@/lib/isArrayHasData";
 const BADGE: Record<string, string> = { member: "pending", gym: "gym" };
 
 export default function CoachPromoteDialog({ platformUsers = [] }: { platformUsers?: PlatformUser[] }) {
-  const t = useTranslations("management.coaches.dialog");
-  const tCoaches = useTranslations("management.coaches");
+  const { t } = useTranslation(undefined, { keyPrefix: "management.coaches.dialog" });
+  const { t: tCoaches } = useTranslation(undefined, { keyPrefix: "management.coaches" });
   const { visible: open, handleOpen, handleClose, handleStateChange } = useVisibility();
   const [search, setSearch] = useState("");
   const [promotingId, setPromotingId] = useState<string | null>(null);

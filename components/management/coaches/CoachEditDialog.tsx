@@ -2,15 +2,15 @@
 
 import { z } from "zod";
 import { useState, useRef } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Textarea from "@/components/ui/textarea";
 import { Plus, Trash2 } from "lucide-react";
-import useFormManager from "@/hook/useFormManager";
-import useVisibility from "@/hook/useVisibility";
+import useFormManager from "@/hooks/useFormManager";
+import useVisibility from "@/hooks/useVisibility";
 import { coachFormSchema, type CoachFormData } from "@/validations/coachSchema";
 import { updateCoach } from "@/services/management/coaches";
 import type { CoachListItem } from "@/types/coaches";
@@ -19,8 +19,8 @@ import CoachSubscriptionTab from "@/components/management/coaches/CoachSubscript
 import CoachBillingTab from "@/components/management/coaches/CoachBillingTab";
 
 export default function CoachEditDialog({ coach }: { coach: CoachListItem }) {
-  const t = useTranslations("management.coaches.dialog");
-  const tCoaches = useTranslations("management.coaches");
+  const { t } = useTranslation(undefined, { keyPrefix: "management.coaches.dialog" });
+  const { t: tCoaches } = useTranslation(undefined, { keyPrefix: "management.coaches" });
   const { visible: open, handleOpen, handleClose, handleStateChange } = useVisibility();
   const [newSpecialty, setNewSpecialty] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);

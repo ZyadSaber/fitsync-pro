@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import CoachEditDialog from "@/components/management/coaches/CoachEditDialog";
 import DeleteDialog from "@/components/shared/delete-dialog";
 import { deleteCoach } from "@/services/management/coaches";
-import { useTranslations } from "next-intl";
+import { useTranslation } from "react-i18next";
 import type { CoachListItem } from "@/types/coaches";
 
 interface CoachRowActionsProps {
@@ -20,7 +20,7 @@ interface CoachRowActionsProps {
 }
 
 export default function CoachRowActions({ coach }: CoachRowActionsProps) {
-  const t = useTranslations("management.coaches");
+  const { t } = useTranslation(undefined, { keyPrefix: "management.coaches" });
 
   return (
     <DropdownMenu>

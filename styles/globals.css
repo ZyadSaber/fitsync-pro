@@ -1,0 +1,191 @@
+@import "tailwindcss";
+
+/* The dashboard SPA imports components from the repo-root `components/` dir, which
+   lives outside the Vite root (`apps/dashboard`) that Tailwind v4 auto-scans. Without
+   this, arbitrary utilities used only there (e.g. the Button `accent` variant's
+   `bg-[var(--accent)]`) are never generated, so they render with no background. */
+@source "../components";
+
+/* ── Design tokens ─────────────────────────────────────────────────────── */
+:root {
+  --ink:        #0B0F1A;
+  --ink2:       #161B26;
+  --paper:      #FAFAF7;
+  --surface:    #FFFFFF;
+  --hairline:   #E5E7EB;
+  --hairline2:  #EEF0F4;
+  --muted:      #6B7280;
+  --muted2:     #9AA1AE;
+  --text:       #0B0F1A;
+  --accent:     #2D5BFF;
+  --accent-ink: #FFFFFF;
+  --accent-soft:#EAF0FF;
+  --green:      #16A34A;
+  --green-soft: #E8F6EE;
+  --amber:      #D97706;
+  --amber-soft: #FBF1E0;
+  --red-app:        #DC2626;
+  --red-soft:   #FCEAEA;
+  --slate:      #475569;
+  --slate-soft: #EEF1F4;
+  --whatsapp:   #25D366;
+}
+
+/* ── Tailwind theme tokens ─────────────────────────────────────────────── */
+@theme {
+  --color-ink:         var(--ink);
+  --color-ink2:        var(--ink2);
+  --color-paper:       var(--paper);
+  --color-surface:     var(--surface);
+  --color-hairline:    var(--hairline);
+  --color-hairline2:   var(--hairline2);
+  --color-muted:       var(--muted);
+  --color-muted2:      var(--muted2);
+  --color-accent:      var(--accent);
+  --color-accent-ink:  var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-green:       var(--green);
+  --color-green-soft:  var(--green-soft);
+  --color-amber:       var(--amber);
+  --color-amber-soft:  var(--amber-soft);
+  --color-red:         var(--red);
+  --color-red-soft:    var(--red-soft);
+  --color-slate:       var(--slate);
+  --color-slate-soft:  var(--slate-soft);
+  --color-whatsapp:    var(--whatsapp);
+}
+
+/* ── Base ──────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background: var(--paper);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01","cv11";
+}
+[dir="rtl"] { font-family: 'Cairo', 'Tajawal', 'Inter', system-ui, sans-serif; }
+
+/* ── Typography ────────────────────────────────────────────────────────── */
+.fs-num    { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.fs-mono   { font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace; }
+.fs-eyebrow{
+  font-size: 10px; font-weight: 600; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted);
+}
+
+/* ── StatusBadge ───────────────────────────────────────────────────────── */
+.fs-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 22px; padding: 0 8px; border-radius: 4px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.02em;
+  line-height: 1; white-space: nowrap;
+}
+.fs-badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+.fs-badge.active  { background: var(--green-soft); color: var(--green); }
+.fs-badge.active  .dot { background: var(--green); }
+.fs-badge.frozen  { background: var(--slate-soft); color: var(--slate); }
+.fs-badge.frozen  .dot { background: var(--slate); }
+.fs-badge.expired { background: var(--red-soft);   color: var(--red); }
+.fs-badge.expired .dot { background: var(--red); }
+.fs-badge.pending { background: var(--amber-soft); color: var(--amber); }
+.fs-badge.pending .dot { background: var(--amber); }
+.fs-badge.gym     { background: var(--accent-soft);color: var(--accent); }
+.fs-badge.gym     .dot { background: var(--accent); }
+
+/* ── MetricCard ────────────────────────────────────────────────────────── */
+.fs-metric {
+  background: var(--surface); border: 1px solid var(--hairline);
+  border-radius: 8px; padding: 18px 20px;
+  display: flex; flex-direction: column; gap: 8px; min-height: 108px;
+}
+.metric-label {
+  font-size: 11px; font-weight: 600; color: var(--muted);
+  letter-spacing: 0.08em; text-transform: uppercase;
+  display: flex; align-items: center; gap: 6px;
+}
+.metric-value {
+  font-size: 32px; font-weight: 700; letter-spacing: -0.02em;
+  color: var(--text); line-height: 1.05;
+}
+.metric-trend {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; font-weight: 600;
+}
+.metric-trend.up   { color: var(--green); }
+.metric-trend.down { color: var(--red); }
+.metric-trend.flat { color: var(--muted); }
+.metric-sub { font-size: 12px; color: var(--muted); }
+
+/* ── Buttons ───────────────────────────────────────────────────────────── */
+.fs-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px; height: 36px; padding: 0 14px; border-radius: 6px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  border: 1px solid transparent;
+  transition: background .12s, border-color .12s, color .12s;
+  white-space: nowrap; text-decoration: none;
+}
+.fs-btn.primary { background: var(--ink); color: #fff; }
+.fs-btn.primary:hover { background: #000; }
+.fs-btn.accent  { background: var(--accent); color: #fff; }
+.fs-btn.accent:hover  { background: #1F47E0; }
+.fs-btn.ghost   { background: transparent; border-color: var(--hairline); color: var(--text); }
+.fs-btn.ghost:hover   { background: var(--paper); }
+.fs-btn.sm { height: 30px; padding: 0 10px; font-size: 12px; }
+
+/* ── Input ─────────────────────────────────────────────────────────────── */
+.fs-input {
+  height: 36px; border: 1px solid var(--hairline); border-radius: 6px;
+  padding: 0 12px; font-size: 13px; background: #fff;
+  color: var(--text); outline: none;
+}
+.fs-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+/* ── Sidebar nav ───────────────────────────────────────────────────────── */
+.fs-nav {
+  display: flex; align-items: center; gap: 10px; height: 34px;
+  padding: 0 12px; border-radius: 6px; font-size: 13px; font-weight: 500;
+  color: #C7CDD9; cursor: pointer; text-decoration: none;
+}
+.fs-nav:hover  { background: rgba(255,255,255,0.04); color: #fff; }
+.fs-nav.active { background: rgba(255,255,255,0.08); color: #fff; }
+
+/* ── Table ─────────────────────────────────────────────────────────────── */
+.fs-th {
+  font-size: 11px; font-weight: 600; color: var(--muted);
+  letter-spacing: 0.06em; text-transform: uppercase; text-align: left;
+  padding: 10px 16px; border-bottom: 1px solid var(--hairline);
+  background: #FBFBFA;
+}
+.fs-td {
+  padding: 14px 16px; font-size: 13px; color: var(--text);
+  border-bottom: 1px solid var(--hairline2); vertical-align: middle;
+}
+.fs-tr:hover .fs-td { background: #FBFBFA; }
+
+/* ── Avatar ────────────────────────────────────────────────────────────── */
+.fs-av {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--ink); color: #fff; font-weight: 600;
+  font-size: 12px; letter-spacing: 0.02em; flex-shrink: 0; position: relative;
+}
+.fs-av.lg { width: 44px; height: 44px; font-size: 14px; }
+.fs-av.xl { width: 64px; height: 64px; font-size: 18px; }
+.fs-av .role {
+  position: absolute; bottom: -2px; right: -2px;
+  width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff;
+}
+
+/* ── Card ──────────────────────────────────────────────────────────────── */
+.fs-card { background: var(--surface); border: 1px solid var(--hairline); border-radius: 8px; }
+.fs-card.pad { padding: 20px; }
+
+/* ── Animations ────────────────────────────────────────────────────────── */
+@keyframes fs-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+.fs-blink { animation: fs-blink 1.6s ease-in-out infinite; }

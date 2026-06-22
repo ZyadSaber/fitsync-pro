@@ -1,263 +1,65 @@
-"use server";
-
-import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { createClient } from "@supabase/supabase-js";
-import extractMessage from "@/lib/extractMessage";
-import isArrayHasData from "@/lib/isArrayHasData";
-import type { CoachListItem, PlatformUser } from "@/types/coaches";
-import { revalidatePath } from "next/cache";
+/**
+ * Client-side data-access for Management → Coaches.
+ *
+ * Post-migration these are thin wrappers over the Express REST API (see
+ * server/src/routes/coaches.ts) rather than Supabase/Server Actions. The
+ * mutating helpers keep the legacy `ActionResult` shape so the existing dialog
+ * components keep working unchanged, and they invalidate the relevant React
+ * Query caches (the SPA replacement for Next.js `revalidatePath`).
+ */
+import { api, ApiError } from "@/apps/dashboard/src/lib/api";
+import { queryClient } from "@/apps/dashboard/src/lib/queryClient";
 import type { ActionResult } from "@/types/common";
-import { coachFormSchema, createCoachSchema, type CoachFormData, type CreateCoachFormData } from "@/validations/coachSchema";
-import type { SelectOptions } from "@/types/ui";
+import type { CoachFormData, CreateCoachFormData } from "@/validations/coachSchema";
 
-// Anon client used only for auth.signUp — does NOT carry the admin session.
-const anonClient = () =>
-  createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
+const errorOf = (err: unknown): string =>
+  err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Request failed";
 
-const REVALIDATE = () => revalidatePath("/[locale]/management/coaches", "page");
-
-// ---------------------------------------------------------------------------
-// Subscription plan options (reused from subscription_plans table)
-// ---------------------------------------------------------------------------
-
-export async function getActiveCoachPlanOptions(): Promise<SelectOptions[]> {
-  const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase
-    .from("subscription_plans")
-    .select("name")
-    .eq("is_active", true)
-    .order("name");
-  if (error || !isArrayHasData(data)) return [];
-  return data.map((plan) => ({ key: plan.name, label: plan.name }));
-}
-
-// ---------------------------------------------------------------------------
-// Platform users that can be promoted to online coach
-// ---------------------------------------------------------------------------
-
-export type PlatformUsersResult = { data: PlatformUser[]; error: null | string };
-
-export async function getNonCoachUsers(): Promise<PlatformUsersResult> {
-  const supabase = await createServerSupabaseClient();
-  try {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, full_name, phone, avatar_url, user_type, gym_id, created_at")
-      .eq("user_type", "member")
-      .order("full_name", { ascending: true });
-
-    if (error) throw error;
-    return {
-      data: isArrayHasData(data) ? (data as PlatformUser[]) : [],
-      error: null,
-    };
-  } catch (err) {
-    return { data: [], error: extractMessage(err, "[getNonCoachUsers]") };
-  }
-}
+const invalidateCoaches = () => queryClient.invalidateQueries({ queryKey: ["coaches"] });
 
 export async function promoteToCoach(profileId: string): Promise<ActionResult> {
-  const supabase = await createServerSupabaseClient();
   try {
-    const [{ error: profileError }, { error: coachError }] = await Promise.all([
-      supabase
-        .from("profiles")
-        .update({ user_type: "coach", gym_id: null })
-        .eq("id", profileId),
-      supabase.from("coaches").insert({
-        profile_id: profileId,
-        gym_id: null,
-        bio: null,
-        specialties: [],
-      }),
-    ]);
-
-    if (profileError) throw profileError;
-    if (coachError) throw coachError;
-
-    REVALIDATE();
-    return { success: true, id: profileId };
+    const { id } = await api.post<{ id: string }>(`/coaches/${profileId}/promote`);
+    await invalidateCoaches();
+    return { success: true, id };
   } catch (err) {
-    return { success: false, error: extractMessage(err, "[promoteToCoach]") };
+    return { success: false, error: errorOf(err) };
   }
 }
 
-// ---------------------------------------------------------------------------
-// Coach list (super admin overview)
-// ---------------------------------------------------------------------------
-
-export type CoachesResult = { data: CoachListItem[]; error: null | string };
-
-export async function getCoaches(): Promise<CoachesResult> {
-  const supabase = await createServerSupabaseClient();
-
+export async function createCoach(data: CreateCoachFormData): Promise<ActionResult> {
   try {
-    const { data, error } = await supabase
-      .from("online_coach_list")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    return {
-      data: isArrayHasData(data) ? (data as CoachListItem[]) : [],
-      error: null,
-    };
+    const { id } = await api.post<{ id: string }>("/coaches", data);
+    await invalidateCoaches();
+    return { success: true, id };
   } catch (err) {
-    return { data: [], error: extractMessage(err, "[getCoaches]") };
+    return { success: false, error: errorOf(err) };
   }
 }
-
-// ---------------------------------------------------------------------------
-// Coaches page payload: filtered rows + KPI totals (KPIs are over ALL coaches,
-// independent of the active filters).
-// ---------------------------------------------------------------------------
-
-export type CoachesPageFilters = { search?: string; plan?: string; active?: string };
-
-export type CoachesPageData = {
-  rows: CoachListItem[];
-  totalCoaches: number;
-  activeBilling: number;
-  totalClients: number;
-};
-
-export async function getCoachesPageData(
-  filters: CoachesPageFilters
-): Promise<{ data: CoachesPageData | null; error: null | string }> {
-  const { data: coaches, error } = await getCoaches();
-  if (error) return { data: null, error };
-
-  const q = filters.search?.toLowerCase().trim();
-
-  const rows = coaches.filter((c) => {
-    if (q && !(c.full_name ?? "").toLowerCase().includes(q) && !(c.phone ?? "").toLowerCase().includes(q)) {
-      return false;
-    }
-    if (filters.plan && c.plan_name !== filters.plan) return false;
-    if (filters.active && filters.active !== "all") {
-      if ((filters.active === "true") !== c.is_billing_active) return false;
-    }
-    return true;
-  });
-
-  return {
-    data: {
-      rows,
-      totalCoaches: coaches.length,
-      activeBilling: coaches.filter((c) => c.is_billing_active).length,
-      totalClients: coaches.reduce((sum, c) => sum + c.client_count, 0),
-    },
-    error: null,
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Coach mutations (Server Actions)
-// ---------------------------------------------------------------------------
 
 export async function updateCoach(
   coachId: string,
   profileId: string,
   data: CoachFormData
 ): Promise<ActionResult> {
-  const parsed = coachFormSchema.safeParse(data);
-  if (!parsed.success) return { success: false, error: parsed.error.issues[0].message };
-
-  const supabase = await createServerSupabaseClient();
-
   try {
-    const [{ error: profileError }, { error: coachError }] = await Promise.all([
-      supabase
-        .from("profiles")
-        .update({
-          full_name: parsed.data.full_name,
-          phone: parsed.data.phone || null,
-        })
-        .eq("id", profileId),
-      supabase
-        .from("coaches")
-        .update({
-          bio: parsed.data.bio || null,
-          specialties: parsed.data.specialties,
-        })
-        .eq("id", coachId),
-    ]);
-
-    if (profileError) throw profileError;
-    if (coachError) throw coachError;
-
-    REVALIDATE();
-    return { success: true, id: coachId };
+    const { id } = await api.put<{ id: string }>(`/coaches/${coachId}`, {
+      profile_id: profileId,
+      ...data,
+    });
+    await invalidateCoaches();
+    return { success: true, id };
   } catch (err) {
-    return { success: false, error: extractMessage(err, "[updateCoach]") };
-  }
-}
-
-export async function createCoach(data: CreateCoachFormData): Promise<ActionResult> {
-  const parsed = createCoachSchema.safeParse(data);
-  if (!parsed.success) return { success: false, error: parsed.error.issues[0].message };
-
-  // Step 1: sign up the new user with a random password.
-  // The trigger auto-creates their profiles row.
-  // They'll receive a confirmation email and can set a real password via "forgot password".
-  const { data: signUpData, error: signUpError } = await anonClient().auth.signUp({
-    email: parsed.data.email,
-    password: crypto.randomUUID(),
-  });
-  if (signUpError) return { success: false, error: signUpError.message };
-
-  const profileId = signUpData.user?.id;
-  if (!profileId) return { success: false, error: "Sign-up succeeded but no user ID returned." };
-
-  // Step 2: update the profile and create the coach record using the super admin's session.
-  const supabase = await createServerSupabaseClient();
-  try {
-    const [{ error: profileError }, { error: coachError }] = await Promise.all([
-      supabase
-        .from("profiles")
-        .update({
-          full_name: parsed.data.full_name,
-          phone: parsed.data.phone || null,
-          user_type: "coach",
-        })
-        .eq("id", profileId),
-      supabase.from("coaches").insert({
-        profile_id: profileId,
-        bio: parsed.data.bio || null,
-        specialties: parsed.data.specialties,
-        gym_id: null,
-      }),
-    ]);
-
-    if (profileError) throw profileError;
-    if (coachError) throw coachError;
-
-    REVALIDATE();
-    return { success: true, id: profileId };
-  } catch (err) {
-    return { success: false, error: extractMessage(err, "[createCoach]") };
+    return { success: false, error: errorOf(err) };
   }
 }
 
 export async function deleteCoach(coachId: string): Promise<ActionResult> {
-  const supabase = await createServerSupabaseClient();
-
   try {
-    const { error } = await supabase
-      .from("coaches")
-      .delete()
-      .eq("id", coachId);
-
-    if (error) throw error;
-
-    REVALIDATE();
-    return { success: true, id: coachId };
+    const { id } = await api.del<{ id: string }>(`/coaches/${coachId}`);
+    await invalidateCoaches();
+    return { success: true, id };
   } catch (err) {
-    return { success: false, error: extractMessage(err, "[deleteCoach]") };
+    return { success: false, error: errorOf(err) };
   }
 }

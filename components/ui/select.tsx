@@ -5,7 +5,7 @@ import * as SelectPrimitive from "@radix-ui/react-select"
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon, LucideIcon, X, Loader2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import useVisibility from "@/hook/useVisibility"
+import useVisibility from "@/hooks/useVisibility"
 import isArrayHasData from "@/lib/isArrayHasData"
 
 function Select({

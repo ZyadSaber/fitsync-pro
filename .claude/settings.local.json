@@ -72,7 +72,20 @@
       "Bash(ls hook *)",
       "Bash(ls node_modules/react-day-picker)",
       "Bash(cat hooks.ts)",
-      "Bash(cat hooks/index.ts)"
+      "Bash(cat hooks/index.ts)",
+      "PowerShell(bun run *)",
+      "PowerShell(bunx tsc -p server/tsconfig.json --noEmit; if \\($?\\) { \"TYPECHECK OK\" })",
+      "PowerShell(bunx tsc -p tsconfig.json --noEmit; if \\($?\\) { \"TYPECHECK OK\" })",
+      "PowerShell(node -e \"console.log\\(require\\('esbuild/package.json'\\).version\\)\")",
+      "PowerShell(bun install *)",
+      "Bash(curl -s -m 5 http://localhost:3000/api/health)",
+      "PowerShell(Get-NetTCPConnection *)",
+      "Bash(perl -0777 -pi -e ' *)",
+      "Bash(bunx @tailwindcss/cli -i styles/globals.css -o /tmp/out.css --content /tmp/probe.html)",
+      "Bash(timeout 300 bunx vite build apps/dashboard)",
+      "Bash(git mv *)",
+      "Bash(ls messages *)",
+      "Bash(git rm *)"
     ]
   }
 }

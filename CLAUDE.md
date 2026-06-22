@@ -9,16 +9,67 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 The project uses **bun** as the package manager (`bun.lock` is committed).
 
 ```bash
-bun run dev      # Start development server
-bun run build    # Production build
-bun run lint     # Run ESLint
+bun run dev            # Express API + marketing SSR (:3000) AND dashboard SPA (:5173)
+bun run dev:server     # Express only — REST API + marketing SSR via Vite middleware
+bun run dev:dashboard  # Dashboard SPA only (Vite dev, proxies /api → :3000)
+bun run build          # Build dashboard + marketing (client+SSR) + server
+bun run start          # Run the production server (serves everything on one port)
+bun run lint           # Run ESLint
+bun run db:migrate     # Apply db/migrations/custom_auth.sql to DATABASE_URL
+bun run db:seed        # Seed login accounts (all use password 'Passw0rd!')
 ```
 
-No test runner is configured. TypeScript checking runs as part of `build`.
+Server type-check: `bunx tsc -p server/tsconfig.json --noEmit`.
+Seeded accounts: `super@fitsync.test` (super admin), `gym@fitsync.test`, `coach@fitsync.test`.
 
 ## Architecture
 
-FitSync Pro is a multi-role fitness management platform built on **Next.js 16 (App Router)**, **React 19**, **Supabase** (Postgres + Auth + RLS), and **Tailwind CSS v4**.
+> **MIGRATION IN PROGRESS — Next.js 16 → Vite + Express.** The app is being
+> re-platformed off Next.js. The new stack is: a **Vite SSR marketing app**
+> (`apps/marketing`) for SEO, a **Vite SPA dashboard** (`apps/dashboard`) for the
+> authenticated product, and an **Express** server (`server/`) exposing a REST API
+> (raw SQL via `pg`) + custom JWT auth + hosting the SSR/SPA. Routing uses
+> `react-router-dom` v7; i18n uses `react-i18next`. The legacy Next.js source
+> (`app/`, `middleware.ts`, `services/`, `lib/supabase/`,
+> `i18n/routing.ts`) is **inert reference material** kept for porting the
+> remaining dashboard pages — Next is uninstalled and nothing runs it.
+> See "New architecture" and "Migration status" below.
+
+### New architecture (Vite + Express)
+
+```
+server/src/          Express: index.ts (bootstrap), ssr.ts (marketing SSR host),
+                     env.ts, db/{pool,migrate,seed}, db/repositories/* (raw SQL),
+                     auth/{jwt,middleware}, routes/* (REST), lib/apiResult.ts
+apps/marketing/      Vite SSR app — entry-server/entry-client, React 19 metadata
+apps/dashboard/      Vite SPA — main.tsx, App.tsx (react-router),
+                     auth/ (AuthProvider + guards), lib/api.ts, compat/ (shims),
+                     i18n.ts (locale persisted to localStorage + cookie), pages/*
+styles/globals.css   Shared Tailwind v4 stylesheet (imported by both apps)
+```
+
+- **Auth**: custom JWT. `POST /api/auth/sign-in` issues a short-lived access token
+  (Bearer) + an httpOnly refresh cookie; `lib/api.ts` refreshes once on a 401.
+  Authorization is enforced in Express (`requireAuth`/`requireRole`/
+  `requireSuperAdmin`) — RLS is no longer relied upon. Credentials live in the
+  `user_credentials` table (see `db/migrations/custom_auth.sql`); passwords are
+  bcrypt-hashed.
+- **DB access**: raw parameterized SQL via `pg` in `server/src/db/repositories/*`,
+  reusing the existing Postgres **views** (`gym_list`, `online_coach_list`,
+  `subscription_plan_stats`, `admin_dashboard_metrics`,
+  `platform_subscription_details`). Multi-step writes use `withTransaction`.
+- **i18n**: components use `react-i18next` directly (`useTranslation(undefined, {
+  keyPrefix })`); the locale lives in `i18n/index.ts` (SSR-safe — all
+  `window`/`document` access is guarded). next-intl has been fully removed.
+- **Compat shims**: `apps/dashboard/vite.config.ts` aliases
+  `next/navigation`, `next/link`, `next/cache`, `next/headers` to small modules in
+  `apps/dashboard/src/compat/`, and `@/i18n/navigation` is reimplemented
+  (`i18n/navigation.tsx`) on react-router. This lets the existing component tree be
+  reused with minimal edits.
+
+### Legacy context (Next.js — being replaced)
+
+FitSync Pro is a multi-role fitness management platform originally built on **Next.js 16 (App Router)**, **React 19**, **Supabase** (Postgres + Auth + RLS), and **Tailwind CSS v4**.
 
 ### Two independent product modules
 
@@ -92,11 +143,34 @@ The data flow is: **Page (Server Component) → service function → Supabase vi
 | `lib/` | Utility helpers, Supabase client factories |
 | `actions.ts` | Next.js Server Actions, co-located with the route that owns them |
 
-### Current state
+### Current state (live Vite SPA — `apps/dashboard/src/App.tsx`)
 
-The `/management/gyms` section is live with real Supabase queries (the first fully wired feature). Other dashboard areas (`/admin`, `/coach`) still use hardcoded demo data. The full schema is at `db/full_schema.sql`; incremental migrations live in `db/migrations/`.
+The dashboard SPA is mounted under the **`/application`** base on the shared
+origin (Vite `base: "/application/"` + react-router `basename="/application"`; the
+server serves its static assets and SPA shell under `/application`, marketing SSR
+owns everything else). react-router `<Link>`/`navigate`/`<Navigate>` apply the
+basename automatically; only full-page `window.location` redirects must add
+`/application` explicitly (handled in the compat `redirect()` helpers).
 
-Pages that exist today: `/admin` (dashboard), `/admin/members`, `/coach` (dashboard), `/coach/exercises`, `/management` (platform dashboard), `/management/gyms`. Routes listed in the roles table (`/member`, `/client`, admin sub-pages like `/admin/plans`, `/admin/offers`, etc.) are not yet implemented.
+**Locale is not in the URL.** The active language (`ar`/`en`, default `ar`) is
+persisted to `localStorage` + a `fs_locale` cookie and restored on boot in
+`i18n/index.ts`, which also reflects `lang`/`dir` (rtl/ltr) on
+`<html>` via a `languageChanged` listener. Switch via `i18n.changeLanguage(...)`
+(e.g. the `LanguageChange` component) — never by changing the path.
+
+The router is the source of truth for what's actually wired. Routes (no locale
+prefix) under `/application`:
+
+- `sign-in` — custom JWT login (`POST /api/auth/sign-in`).
+- `management/*` (super-admin gate, `RequireRole roles={[]}`) → `DashboardShell`:
+  `gyms` is fully wired end-to-end (REST + `pg`, the reference slice);
+  `coaches`, `subscriptions`, `quotas` render `<Placeholder>` pending port.
+- `admin/*`, `coach/*`, `member/*`, `client/*` — role-gated `<Placeholder>`s, not
+  yet ported.
+
+The legacy Next.js pages under `app/[locale]/**` are **inert reference** for porting
+the remaining slices — do not treat them as running code. The full schema is at
+`db/full_schema.sql`; the active migration is `db/migrations/custom_auth.sql`.
 
 ### Localization
 
@@ -110,11 +184,11 @@ import { Link, redirect, usePathname, useRouter } from "@/i18n/navigation";
 
 The locale-aware wrappers from `next-intl` handle prefixing automatically. Using Next.js built-ins directly will break locale routing.
 
-The root layout sets `dir="rtl"` and switches fonts when `locale === "ar"`. Cairo (Arabic) and Inter (Latin) are loaded via Google Fonts in `app/[locale]/layout.tsx`. Sidebar nav labels are hardcoded bilingual strings inside the component itself — they are **not** sourced from the `messages/` translation files.
+The root layout sets `dir="rtl"` and switches fonts when `locale === "ar"`. Cairo (Arabic) and Inter (Latin) are loaded via Google Fonts in `app/[locale]/layout.tsx`. Sidebar nav labels are hardcoded bilingual strings inside the component itself — they are **not** sourced from the `i18n/` translation files.
 
 ### CSS design system
 
-`app/globals.css` defines CSS custom properties and utility classes used throughout the app. Prefer these over arbitrary Tailwind values:
+`styles/globals.css` is the shared Tailwind v4 stylesheet imported by both apps (the legacy `app/globals.css` is inert). It defines CSS custom properties and utility classes used throughout the app. Prefer these over arbitrary Tailwind values:
 
 | Token | Value | Use |
 |---|---|---|
@@ -158,10 +232,40 @@ All dashboard pages start with a `Topbar` (`components/layout/Topbar.tsx`) that 
 Required in `.env.local`:
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+# Server (Express)
+DATABASE_URL=                      # Supabase Postgres connection string (sslmode=require)
+PGSSL=require
+JWT_SECRET=
+REFRESH_TOKEN_SECRET=
+ACCESS_TOKEN_TTL=15m
+REFRESH_TOKEN_TTL=30d
+PORT=3000
+
+# Client (Vite — exposed to the browser, must be VITE_-prefixed)
+VITE_SUPABASE_URL=
+VITE_SUPABASE_PUBLISHABLE_KEY=
+
+# Optional integrations
 TWILIO_ACCOUNT_SID=
 TWILIO_AUTH_TOKEN=
 TWILIO_WHATSAPP_FROM=
 ```
+
+`DATABASE_URL` is the only hard requirement to boot the server (use the Supabase
+**Database → Connection string (URI)**, pooler URI, keep `sslmode=require`).
+
+### Migration status (Next.js → Vite + Express)
+
+**Done & verified:** workspace/tooling; Express core (pg pool, JWT auth,
+middleware); full REST API (`/api/auth`, `/api/gyms`, `/api/coaches`,
+`/api/subscriptions`, `/api/admin/dashboard`) as raw-SQL repositories; marketing
+SSR app (renders with React 19 metadata); dashboard SPA foundation (react-router +
+react-i18next + auth guards + `lib/api`) with the **Management → Gyms** page wired
+end-to-end as the reference slice. Server typechecks; both apps build.
+
+**Remaining (mechanical, follow the Gyms slice pattern):** port the other dashboard
+pages from `app/[locale]/**` — admin dashboard, management coaches/subscriptions/
+quotas, members, coach/exercises, member/client — each becomes a react-router route
+using `useQuery`/`useMutation` against the REST endpoints and the (shimmed) existing
+components. Then delete the legacy Next files. Run `db:migrate` + `db:seed` against a
+real `DATABASE_URL` to exercise the auth + data flow.

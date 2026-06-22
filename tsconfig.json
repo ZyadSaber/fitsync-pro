@@ -1,37 +1,27 @@
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
     "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "react-jsx",
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "paths": {
-      "@/*": ["./*"]
-    }
+    "types": ["vite/client", "node"]
   },
   "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "apps/**/*.ts",
+    "apps/**/*.tsx",
+    "components/**/*.ts",
+    "components/**/*.tsx",
+    "lib/**/*.ts",
+    "lib/**/*.tsx",
+    "hook/**/*.ts",
+    "hooks/**/*.ts",
+    "types/**/*.ts",
+    "validations/**/*.ts",
+    "constants/**/*.ts",
+    "i18n/**/*.ts"
   ],
   "exclude": [
     "node_modules",
+    "server",
     "components/app-sidebar.tsx",
     "components/shared/SessionLockDialog.tsx",
     "components/ui/calendar.tsx",

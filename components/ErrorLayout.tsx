@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { ReactNode } from "react";
 import { RefreshCcw, Home } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslation } from "react-i18next";
 
 interface ErrorLayoutProps {
     icon: ReactNode;
@@ -18,7 +18,7 @@ interface ErrorLayoutProps {
 }
 
 export default function ErrorLayout({ icon, title, description, code, backText, reset, errorDetails }: ErrorLayoutProps) {
-    const t = useTranslations("Errors");
+    const { t } = useTranslation(undefined, { keyPrefix: "Errors" });
     return (
         <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
             {/* Background Decorative Animated Elements */}

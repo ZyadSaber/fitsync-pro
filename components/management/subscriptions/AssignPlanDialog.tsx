@@ -2,7 +2,7 @@
 
 import { useMemo, useRef } from "react";
 import { format, addMonths, addYears } from "date-fns";
-import { useTranslations } from "next-intl";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import {
@@ -17,8 +17,8 @@ import Textarea from "@/components/ui/textarea";
 import { SelectField } from "@/components/ui/select";
 import Icon from "@/components/ui/Icon";
 import { Trash2, Plus, Sparkles, ChevronUp, ChevronDown, GripVertical } from "lucide-react";
-import useVisibility from "@/hook/useVisibility";
-import useFormManager from "@/hook/useFormManager";
+import useVisibility from "@/hooks/useVisibility";
+import useFormManager from "@/hooks/useFormManager";
 import { assignPlanSchema } from "@/validations/subscriptionSchema";
 import { assignPlanToTenant, getTenantAssignmentState } from "@/services/management/subscriptions";
 import type { SelectOptions } from "@/types/ui";
@@ -35,44 +35,44 @@ const emptyRow = (due_date = today): InstallmentRow => ({
 });
 
 const EMPTY_FORM: AssignPlanForm = {
-  tenant_type:   "gym",
-  gym_id:        "",
-  coach_id:      "",
-  plan_id:       "",
+  tenant_type: "gym",
+  gym_id: "",
+  coach_id: "",
+  plan_id: "",
   billing_cycle: "monthly",
-  started_at:    today,
-  quantity:      "1",
-  notes:         "",
-  custom_price:         "",
-  custom_member_limit:  "",
-  custom_coach_limit:   "",
+  started_at: today,
+  quantity: "1",
+  notes: "",
+  custom_price: "",
+  custom_member_limit: "",
+  custom_coach_limit: "",
   custom_duration_days: "",
-  custom_features:      [],
-  installments:  [emptyRow()],
-  splitCount:    "2",
-  newFeature:    "",
+  custom_features: [],
+  installments: [emptyRow()],
+  splitCount: "2",
+  newFeature: "",
 };
 
 interface Props {
-  gyms:    SelectOptions[];
+  gyms: SelectOptions[];
   coaches: SelectOptions[];
-  plans:   SubscriptionPlanStats[];
+  plans: SubscriptionPlanStats[];
 }
 
 export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
-  const t = useTranslations("management.subscriptions.assignDialog");
+  const { t } = useTranslation(undefined, { keyPrefix: "management.subscriptions.assignDialog" });
   const { visible: open, handleOpen, handleClose, handleStateChange } = useVisibility();
 
   const featureInputRef = useRef<HTMLInputElement>(null);
 
   const TENANT_TYPE_OPTIONS: SelectOptions[] = [
-    { key: "gym",          label: t("tenantType.gym") },
+    { key: "gym", label: t("tenantType.gym") },
     { key: "online_coach", label: t("tenantType.online_coach") },
   ];
 
   const BILLING_OPTIONS: SelectOptions[] = [
     { key: "monthly", label: t("billing.monthly") },
-    { key: "yearly",  label: t("billing.yearly")  },
+    { key: "yearly", label: t("billing.yearly") },
   ];
 
   const {
@@ -121,8 +121,8 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
     handleFieldChange({ name: "newFeature", value });
 
   const installments = form.installments;
-  const splitCount   = form.splitCount;
-  const newFeature   = form.newFeature;
+  const splitCount = form.splitCount;
+  const newFeature = form.newFeature;
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
@@ -138,7 +138,7 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
     [plans, form.plan_id]
   );
 
-  const isGym         = form.tenant_type === "gym";
+  const isGym = form.tenant_type === "gym";
   const isContactPlan = selectedPlan?.price_egp === null;
 
   // ── Existing-subscription guard ──────────────────────────────────────────────
@@ -159,8 +159,8 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
   const isTenantBlocked =
     !!tenantState &&
     (tenantState.hasActiveSubscription || tenantState.openInvoiceCount > 0);
-  const qty           = Math.max(1, parseInt(form.quantity) || 1);
-  const customPrice   = parseFloat(form.custom_price) || 0;
+  const qty = Math.max(1, parseInt(form.quantity) || 1);
+  const customPrice = parseFloat(form.custom_price) || 0;
 
   // Unit price is null when it isn't known yet — no plan picked, or a contact
   // plan whose negotiated price hasn't been entered. That's distinct from 0.
@@ -168,12 +168,12 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
     ? (customPrice > 0 ? customPrice : null)
     : (selectedPlan?.price_egp ?? null);
 
-  const billed     = installments.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
-  const planTotal  = unitPrice === null ? null : unitPrice * qty;
-  const remaining  = planTotal === null ? null : planTotal - billed;
+  const billed = installments.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+  const planTotal = unitPrice === null ? null : unitPrice * qty;
+  const remaining = planTotal === null ? null : planTotal - billed;
   const isBalanced = planTotal !== null && Math.abs(planTotal - billed) < 0.01;
 
-  const cycleDays    = form.billing_cycle === "yearly" ? 365 : 30;
+  const cycleDays = form.billing_cycle === "yearly" ? 365 : 30;
   const effectiveDuration = isContactPlan
     ? (parseInt(form.custom_duration_days) || selectedPlan?.duration_days || cycleDays)
     : (selectedPlan?.duration_days ?? cycleDays);
@@ -191,20 +191,20 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
     const plan = plans.find((p) => p.id === v);
     if (plan && plan.price_egp === null) {
       handleChangeMultiInputs({
-        plan_id:              v,
-        custom_member_limit:  plan.member_limit === null ? "" : String(plan.member_limit),
-        custom_coach_limit:   plan.coach_limit === null ? "" : String(plan.coach_limit),
+        plan_id: v,
+        custom_member_limit: plan.member_limit === null ? "" : String(plan.member_limit),
+        custom_coach_limit: plan.coach_limit === null ? "" : String(plan.coach_limit),
         custom_duration_days: String(plan.duration_days),
-        custom_features:      [...plan.features],
+        custom_features: [...plan.features],
       });
     } else {
       handleChangeMultiInputs({
-        plan_id:              v,
-        custom_price:         "",
-        custom_member_limit:  "",
-        custom_coach_limit:   "",
+        plan_id: v,
+        custom_price: "",
+        custom_member_limit: "",
+        custom_coach_limit: "",
         custom_duration_days: "",
-        custom_features:      [],
+        custom_features: [],
       });
     }
   };
@@ -264,8 +264,8 @@ export default function AssignPlanDialog({ gyms, coaches, plans }: Props) {
         : addMonths(start, i);
       return {
         due_date: format(due, "yyyy-MM-dd"),
-        amount:   each,
-        label:    n > 1 ? t("schedule.installmentLabel", { n: i + 1 }) : t("schedule.fullPayment"),
+        amount: each,
+        label: n > 1 ? t("schedule.installmentLabel", { n: i + 1 }) : t("schedule.fullPayment"),
       };
     });
 
