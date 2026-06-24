@@ -8,14 +8,17 @@
  */
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { pool } from "./pool.js";
-import { env } from "../env.js";
 
-const MIGRATIONS = ["custom_auth.sql"];
+const here = path.dirname(fileURLToPath(import.meta.url));
+const MIGRATIONS_DIR = path.join(here, "SQL", "migrations");
+
+const MIGRATIONS = ["custom_auth.sql", "merge_profiles_into_credentials.sql"];
 
 async function main() {
   for (const file of MIGRATIONS) {
-    const full = path.join(env.repoRoot, "db", "migrations", file);
+    const full = path.join(MIGRATIONS_DIR, file);
     const sql = readFileSync(full, "utf8");
     console.log(`[migrate] applying ${file} ...`);
     await pool.query(sql);

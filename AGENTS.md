@@ -14,10 +14,13 @@ This project was migrated away from Next.js. Do **not** reintroduce Next.js APIs
 Key conventions:
 - Use `react-router` (v7) for all routing. Import `StaticRouter` from `react-router`
   (no `react-router-dom/server` subpath in v7).
-- The dashboard aliases `next/navigation` / `next/link` / etc. to compat shims in
-  `apps/dashboard/src/compat/` so legacy components keep working — prefer editing the
-  shim over touching every component. (i18n is **not** shimmed: components use
-  `react-i18next` directly — next-intl has been removed.)
+- Navigation primitives (`useRouter`, `usePathname`, `useSearchParams`, `redirect`,
+  `Link`) come from `@/i18n/navigation` (`i18n/navigation.tsx`), a thin react-router
+  wrapper — `next/navigation` has been removed entirely. The dashboard still aliases
+  `next/link` / `next/cache` / `next/headers` to compat shims in
+  `apps/dashboard/src/compat/` so the remaining legacy components keep working — prefer
+  editing the shim over touching every component. (i18n is **not** shimmed: components
+  use `react-i18next` directly — next-intl has been removed.)
 - New REST endpoints: add a repository in `server/src/db/repositories/`, a router in
   `server/src/routes/`, validate the body with a Zod schema from `validations/`, and
   return the `{ data }` / `{ error }` envelope via `lib/apiResult.ts`.

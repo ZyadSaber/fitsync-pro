@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter, usePathname } from "@/i18n/navigation";
-import { useSearchParams } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "@/i18n/navigation";
 import { useTranslation } from "react-i18next";
 import type { SubscriptionPlanType } from "@/types/subscriptions";
 

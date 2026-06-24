@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { format, formatDistanceToNow } from "date-fns";
 import { api } from "../../lib/api";
+import { API } from "@/constants/apiRoutes";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import Icon from "@/components/ui/Icon";
 import getInitials from "@/lib/getInitials";
@@ -67,16 +68,16 @@ export default function ActivityPage() {
 
   const { data, error } = useQuery({
     queryKey: ["activity", qsString],
-    queryFn: () => api.get<ActivityPageData>(`/activity${qsString ? `?${qsString}` : ""}`),
+    queryFn: () => api.get<ActivityPageData>(`${API.activity.root}${qsString ? `?${qsString}` : ""}`),
   });
 
   const { data: gyms = [] } = useQuery({
     queryKey: ["gyms"],
-    queryFn: () => api.get<GymListItem[]>("/gyms"),
+    queryFn: () => api.get<GymListItem[]>(API.gyms.list()),
   });
   const { data: coachOptions = [] } = useQuery({
     queryKey: ["coach-options"],
-    queryFn: () => api.get<SelectOptions[]>("/subscriptions/coach-options"),
+    queryFn: () => api.get<SelectOptions[]>(API.subscriptions.coachOptions),
   });
 
   const gymOptions: SelectOptions[] = gyms.map((g) => ({ key: g.id, label: g.name }));

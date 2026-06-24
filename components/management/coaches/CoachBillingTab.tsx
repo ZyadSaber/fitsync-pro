@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { api } from "@/apps/dashboard/src/lib/api";
+import { API } from "@/constants/apiRoutes";
 import type { PlatformBillingRecord } from "@/types/gyms";
 
 interface Props {
@@ -21,7 +22,7 @@ const fmt = (iso: string | null | undefined) =>
   iso ? format(new Date(iso), "d MMM yyyy") : "—";
 
 async function fetchBilling(coachId: string): Promise<PlatformBillingRecord[]> {
-  return api.get<PlatformBillingRecord[]>(`/coaches/${coachId}/billing`);
+  return api.get<PlatformBillingRecord[]>(API.coaches.billing(coachId));
 }
 
 export default function CoachBillingTab({ coachId }: Props) {

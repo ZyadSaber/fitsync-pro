@@ -6,7 +6,12 @@
  * accepted for source compatibility but ignored for routing.
  */
 import type { ComponentProps } from "react";
-import { Link as RouterLink, useLocation, useNavigate } from "react-router";
+import {
+  Link as RouterLink,
+  useLocation,
+  useNavigate,
+  useSearchParams as useRouterSearchParams,
+} from "react-router";
 
 // The SPA is mounted under this base (Vite `base` + router `basename`).
 // react-router applies it automatically; a full-page window.location
@@ -45,6 +50,11 @@ export function useRouter() {
 
 export function usePathname(): string {
   return useLocation().pathname;
+}
+
+export function useSearchParams(): URLSearchParams {
+  const [params] = useRouterSearchParams();
+  return params;
 }
 
 export function getPathname({ href }: { href: string; locale?: string }): string {

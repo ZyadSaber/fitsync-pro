@@ -2,6 +2,8 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { LoadingOverlay } from "./LoadingOverlay"
+import { Loader2 } from "lucide-react"
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
@@ -25,13 +27,30 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   )
 }
 
-function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
+function TableBody({
+  className,
+  loading,
+  children,
+  ...props
+}: React.ComponentProps<"tbody"> & { loading?: boolean }) {
   return (
     <tbody
       data-slot="table-body"
       className={cn("bg-white [&_tr:last-child]:border-0", className)}
       {...props}
-    />
+    >
+      {!loading ?
+        children
+        : <tr>
+          <td colSpan={9999} className="p-0">
+            <div className="relative flex w-full items-center justify-center py-10">
+              <Loader2 className="w-10 h-10 text-primary animate-spin" />
+              <div className="absolute inset-0 blur-xl bg-primary/20 animate-pulse" />
+            </div>
+          </td>
+        </tr>
+      }
+    </tbody>
   )
 }
 

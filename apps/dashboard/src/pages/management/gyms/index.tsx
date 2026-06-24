@@ -1,11 +1,11 @@
-import { Suspense, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../../../lib/api";
+import { api } from "@dashboard/lib/api";
+import { API } from "@/constants/apiRoutes";
 import type { GymListItem } from "@/types/gyms";
 import HeaderContent from "../../../layout/HeaderContent";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-// import GymsDialog from "@/components/management/gyms/GymsDialog";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import getInitials from "@/lib/getInitials";
 import UsageBar from "@/components/superadmin/UsageBar";
@@ -14,7 +14,7 @@ import { formatDistanceToNow } from "date-fns";
 import GymsDialog from "./partials/GymsDialog";
 import getTranslations from "@/i18n/lib/getTranslations";
 import useFormManager from "@/hooks/useFormManager";
-import { SelectField } from "@/components/ui/select";
+import { SelectField, SelectFieldApiData } from "@/components/ui/select";
 
 const STATUS_BADGE: Record<string, string> = {
     active: "active",
@@ -27,12 +27,17 @@ export default function GymsPage() {
     const t = getTranslations("management.gyms");
 
     const {
-        formData,
+        formData: {
+            plan,
+            status,
+            searchQuery
+        },
         handleToggle,
+        handleChange,
     } = useFormManager({
         initialData: {
             status: "",
-            plan: ""
+            plan: "",
         },
     });
 
@@ -42,9 +47,9 @@ export default function GymsPage() {
         { key: "cancelled", label: t("filters.cancelled") },
     ], []);
 
-    const { data, isLoading, error } = useQuery({
-        queryKey: ["gyms"],
-        queryFn: () => api.get<GymListItem[]>("/gyms"),
+    const { data, isLoading } = useQuery({
+        queryKey: ["gyms", searchQuery.search, plan, status],
+        queryFn: () => api.get<GymListItem[]>(API.gyms.list({ search: searchQuery.search, plan, status, })),
     });
 
     return (
@@ -52,17 +57,17 @@ export default function GymsPage() {
             <HeaderContent
                 title={t("title")}
                 subtitle={t("subtitle", { count: 2, members: 3 })}
+                onChange={handleChange}
+                value={searchQuery.value}
                 actions={
                     <>
                         <Button
                             variant="ghost"
+                            icon={Download}
                         >
-                            <Download size={13} />
                             {t("actions.exportCsv")}
                         </Button>
-                        <GymsDialog
-                            ownerOptions={[]}
-                        />
+                        <GymsDialog />
                     </>
                 }
             />
@@ -74,17 +79,17 @@ export default function GymsPage() {
                         name="status"
                         label={t("filters.status")}
                         options={statusOptions}
-                        value={formData.status}
+                        value={status}
                         onValueChange={handleToggle("status")}
                         hideClear={false}
                         containerClassName="w-[20%]"
                     />
 
-                    <SelectField
+                    <SelectFieldApiData
                         name="plan"
                         label={t("table.plan")}
-                        options={[]}
-                        value={formData.plan}
+                        queryApi={API.gyms.planOptions}
+                        value={plan}
                         onValueChange={handleToggle("plan")}
                         hideClear={false}
                         containerClassName="w-[20%]"
@@ -104,9 +109,9 @@ export default function GymsPage() {
                                 <TableHead className="w-12" />
                             </TableRow>
                         </TableHeader>
-                        <TableBody>
+                        <TableBody loading={isLoading}>
                             {
-                                data?.map((g) => {
+                                data?.map((g: GymListItem) => {
                                     const badge = STATUS_BADGE[g.status ?? ""] ?? "pending";
                                     const statusLabel = t(`status.${g.status || "unknown"}` as "status.active" | "status.suspended" | "status.cancelled" | "status.expired" | "status.unknown");
                                     return (

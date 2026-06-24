@@ -100,7 +100,7 @@ ON CONFLICT (id) DO NOTHING;   -- safe to re-run
 -- 0b. Helpers — disable RLS for seeding, re-enable after
 -- ----------------------------------------------------------------
 ALTER TABLE gyms             DISABLE ROW LEVEL SECURITY;
-ALTER TABLE profiles         DISABLE ROW LEVEL SECURITY;
+ALTER TABLE user_credentials DISABLE ROW LEVEL SECURITY;
 ALTER TABLE coaches          DISABLE ROW LEVEL SECURITY;
 ALTER TABLE clients          DISABLE ROW LEVEL SECURITY;
 ALTER TABLE coach_clients    DISABLE ROW LEVEL SECURITY;
@@ -133,9 +133,9 @@ INSERT INTO gyms (id, name, owner_id, address, phone) VALUES
 
 
 -- ================================================================
--- 2. PROFILES
+-- 2. USERS (user_credentials)
 -- ================================================================
-INSERT INTO profiles (id, gym_id, user_type, full_name, phone) VALUES
+INSERT INTO user_credentials (id, gym_id, user_type, full_name, phone) VALUES
   ('a0000000-0000-0000-0000-000000000010',
    'a0000000-0000-0000-0000-000000000001',
    'gym',    'Khaled Hassan', '+20 100 555 0010'),
@@ -1068,7 +1068,7 @@ INSERT INTO platform_activity_log (gym_id, event_type, actor_id, metadata, creat
 -- Re-enable RLS
 -- ================================================================
 ALTER TABLE gyms              ENABLE ROW LEVEL SECURITY;
-ALTER TABLE profiles          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_credentials  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE coaches           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE clients           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE coach_clients     ENABLE ROW LEVEL SECURITY;

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { ADMIN } from "@/constants/apiRoutes";
 import { requireAuth, requireRole } from "../auth/middleware.js";
 import { asyncHandler, ok } from "../lib/apiResult.js";
 import { getAdminDashboardData } from "../db/repositories/dashboard.js";
@@ -7,7 +8,7 @@ export const dashboardRouter = Router();
 
 // GET /api/admin/dashboard  (gym admins only)
 dashboardRouter.get(
-  "/dashboard",
+  ADMIN.dashboard,
   requireAuth,
   requireRole("gym"),
   asyncHandler(async (req, res) => {

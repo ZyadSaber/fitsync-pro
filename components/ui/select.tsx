@@ -221,8 +221,32 @@ function SelectScrollDownButton({
   )
 }
 
+import { useQuery } from "@tanstack/react-query"
+import { api } from "@/apps/dashboard/src/lib/api"
+
 import type { SelectOptions } from "@/types/ui"
 export type { SelectOptions }
+
+export type SelectFieldProps<T extends SelectOptions> = {
+  label: string
+  options: T[]
+  value?: string
+  onValueChange: (value: string) => void
+  name: string
+  disabled?: boolean
+  containerClassName?: string
+  error?: string
+  searchPlaceholder?: string
+  extraSearchParam?: string[]
+  showSearch?: boolean
+  preSelectFirstKey?: boolean
+  placeholder?: string
+  renderAddField?: (onSuccess: (newId: string) => void) => React.ReactNode
+  icon?: LucideIcon
+  hideClear?: boolean
+  className?: string
+  loading?: boolean
+}
 
 export function SelectField<T extends SelectOptions>({
   label,
@@ -243,26 +267,7 @@ export function SelectField<T extends SelectOptions>({
   hideClear,
   className,
   loading = false,
-}: {
-  label: string
-  options: T[]
-  value?: string
-  onValueChange: (value: string) => void
-  name: string
-  disabled?: boolean
-  containerClassName?: string
-  error?: string
-  searchPlaceholder?: string
-  extraSearchParam?: string[]
-  showSearch?: boolean
-  preSelectFirstKey?: boolean
-  placeholder?: string
-  renderAddField?: (onSuccess: (newId: string) => void) => React.ReactNode
-  icon?: LucideIcon
-  hideClear?: boolean
-  className?: string
-  loading?: boolean
-}) {
+}: SelectFieldProps<T>) {
   const [search, setSearch] = React.useState("")
   const { visible, handleClose, handleStateChange } = useVisibility()
 
@@ -387,6 +392,37 @@ export function SelectField<T extends SelectOptions>({
       )}
     </div>
   )
+}
+
+export type SelectFieldApiDataProps<T extends SelectOptions> = Omit<
+  SelectFieldProps<T>,
+  "options" | "loading"
+> & {
+  /** REST endpoint to fetch the options from (e.g. `API.subscriptions.coachOptions`). */
+  queryApi: string
+  /** Optional query-string params appended to `queryApi`. */
+  queryParams?: Record<string, string | number | boolean | null | undefined>
+}
+
+export function SelectFieldApiData<T extends SelectOptions = SelectOptions>({
+  queryApi,
+  queryParams,
+  ...selectFieldProps
+}: SelectFieldApiDataProps<T>) {
+  const qs = React.useMemo(() => {
+    if (!queryParams) return ""
+    const parts = Object.entries(queryParams)
+      .filter(([, val]) => val !== undefined && val !== null && val !== "")
+      .map(([key, val]) => `${key}=${val}`)
+    return parts.length ? `?${parts.join("&")}` : ""
+  }, [queryParams])
+
+  const { data = [], isLoading } = useQuery({
+    queryKey: ["select-field", queryApi, qs],
+    queryFn: () => api.get<T[]>(`${queryApi}${qs}`),
+  })
+
+  return <SelectField<T> {...selectFieldProps} options={data} loading={isLoading} />
 }
 
 export {

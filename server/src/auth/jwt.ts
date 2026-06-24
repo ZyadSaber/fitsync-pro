@@ -5,7 +5,7 @@ import { env } from "../env.js";
 export type UserRole = "super_admin" | "gym" | "coach" | "member" | "client";
 
 export interface AuthUser {
-  /** profiles.id */
+  /** user_credentials.id */
   id: string;
   role: UserRole;
   gymId: string | null;

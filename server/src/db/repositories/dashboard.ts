@@ -36,7 +36,7 @@ export async function getAdminDashboardData(gymId: string): Promise<DashboardDat
         `SELECT ch.checked_in_at, p.full_name, cl.membership_status
            FROM gym_checkins ch
            JOIN clients cl ON cl.id = ch.client_id
-           LEFT JOIN profiles p ON p.id = cl.profile_id
+           LEFT JOIN user_credentials p ON p.id = cl.profile_id
           WHERE ch.gym_id = $1
           ORDER BY ch.checked_in_at DESC LIMIT 5`,
         [gymId]
@@ -44,7 +44,7 @@ export async function getAdminDashboardData(gymId: string): Promise<DashboardDat
       query<{ end_date: string | null; membership_type: string | null; full_name: string | null }>(
         `SELECT cl.end_date, cl.membership_type, p.full_name
            FROM clients cl
-           LEFT JOIN profiles p ON p.id = cl.profile_id
+           LEFT JOIN user_credentials p ON p.id = cl.profile_id
           WHERE cl.gym_id = $1 AND cl.membership_status = 'active'
             AND cl.end_date >= $2 AND cl.end_date <= $3
           ORDER BY cl.end_date ASC LIMIT 4`,

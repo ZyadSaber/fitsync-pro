@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { formatDistanceToNow } from "date-fns";
 import { Download } from "lucide-react";
 import { api } from "../../lib/api";
+import { API } from "@/constants/apiRoutes";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import CoachesFilters from "@/components/management/coaches/CoachesFilters";
@@ -32,15 +33,15 @@ export default function CoachesPage() {
 
   const { data: coaches = [], isLoading, error } = useQuery({
     queryKey: ["coaches"],
-    queryFn: () => api.get<CoachListItem[]>("/coaches"),
+    queryFn: () => api.get<CoachListItem[]>(API.coaches.list),
   });
   const { data: planOptions = [] } = useQuery({
     queryKey: ["coach-plan-options"],
-    queryFn: () => api.get<SelectOptions[]>("/coaches/plan-options"),
+    queryFn: () => api.get<SelectOptions[]>(API.coaches.planOptions),
   });
   const { data: platformUsers = [] } = useQuery({
     queryKey: ["coach-non-coaches"],
-    queryFn: () => api.get<PlatformUser[]>("/coaches/non-coaches"),
+    queryFn: () => api.get<PlatformUser[]>(API.coaches.nonCoaches),
   });
 
   const rows = useMemo(() => {

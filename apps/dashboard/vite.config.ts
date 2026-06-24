@@ -16,11 +16,11 @@ export default defineConfig({
   resolve: {
     // Order matters: more specific Next.js subpaths before bare specifiers.
     alias: [
-      { find: "next/navigation", replacement: path.join(here, "src/compat/next-navigation.ts") },
       { find: "next/link", replacement: path.join(here, "src/compat/next-link.tsx") },
       { find: "next/cache", replacement: path.join(here, "src/compat/noop.ts") },
       { find: "next/headers", replacement: path.join(here, "src/compat/noop.ts") },
       { find: "@", replacement: repoRoot },
+      { find: "@dashboard", replacement: path.join(here, "src") },
     ],
   },
   server: {

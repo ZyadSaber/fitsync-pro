@@ -56,8 +56,8 @@ FROM
   platform_activity_log pal
   LEFT JOIN gyms g ON g.id = pal.gym_id
   LEFT JOIN coaches co ON co.id = pal.coach_id
-  LEFT JOIN profiles coach_p ON coach_p.id = co.profile_id
-  LEFT JOIN profiles actor ON actor.id = pal.actor_id
+  LEFT JOIN user_credentials coach_p ON coach_p.id = co.profile_id
+  LEFT JOIN user_credentials actor ON actor.id = pal.actor_id
 ORDER BY
   pal.created_at DESC;
 

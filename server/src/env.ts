@@ -31,7 +31,7 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET ?? "dev-access-secret-change-me",
   refreshSecret: process.env.REFRESH_TOKEN_SECRET ?? "dev-refresh-secret-change-me",
   accessTokenTtl: process.env.ACCESS_TOKEN_TTL ?? "15m",
-  refreshTokenTtl: process.env.REFRESH_TOKEN_TTL ?? "30d",
+  refreshTokenTtl: process.env.REFRESH_TOKEN_TTL ?? "5d",
 };
 
 export type Env = typeof env;

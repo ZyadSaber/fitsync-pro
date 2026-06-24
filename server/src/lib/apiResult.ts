@@ -37,6 +37,25 @@ export function asyncHandler(
 }
 
 /**
+ * Pull the named keys off `req.query`, returning each as a trimmed string.
+ * Empty, missing, or non-string (e.g. repeated/array) values become `undefined`,
+ * so endpoints get a clean `Partial<Record<K, string>>` to spread into filters.
+ *
+ *   const { search, plan, status } = queryParams(req, "search", "plan", "status");
+ */
+export function queryParams<const K extends string>(
+  req: Request,
+  ...keys: K[]
+): Partial<Record<K, string>> {
+  const out: Partial<Record<K, string>> = {};
+  for (const key of keys) {
+    const v = req.query[key];
+    if (typeof v === "string" && v.trim()) out[key] = v.trim();
+  }
+  return out;
+}
+
+/**
  * Validate `req.body` with a Zod schema, returning typed data or throwing a 400.
  */
 export function parseBody<T>(schema: ZodSchema<T>, body: unknown): T {

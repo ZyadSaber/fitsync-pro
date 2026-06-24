@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { ZodSchema } from "zod";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -55,7 +56,7 @@ function AuthScreen() {
 
   const { formData, handleChange, errors, handleSubmit, loading } = useFormManager<SignUpData>({
     initialData: { email: "", name: "", password: "" },
-    schema: isSignup ? signUpSchema : signInSchema,
+    schema: (isSignup ? signUpSchema : signInSchema) as unknown as ZodSchema<SignUpData>,
     onSubmit: async (data) => {
       try {
         const { home } = isSignup

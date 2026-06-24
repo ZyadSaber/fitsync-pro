@@ -15,11 +15,15 @@ bun run dev:dashboard  # Dashboard SPA only (Vite dev, proxies /api → :3000)
 bun run build          # Build dashboard + marketing (client+SSR) + server
 bun run start          # Run the production server (serves everything on one port)
 bun run lint           # Run ESLint
-bun run db:migrate     # Apply db/migrations/custom_auth.sql to DATABASE_URL
+bun run db:migrate     # Apply custom_auth.sql to DATABASE_URL
 bun run db:seed        # Seed login accounts (all use password 'Passw0rd!')
+bun run typecheck:server # Type-check the Express server (tsc --noEmit)
 ```
 
-Server type-check: `bunx tsc -p server/tsconfig.json --noEmit`.
+Server type-check: `bun run typecheck:server` (or `bunx tsc -p server/tsconfig.json --noEmit`).
+All SQL lives under `server/src/db/SQL/`: `full_schema.sql`, `views.sql`, `seed.sql`,
+and the ordered `migrations/*.sql` set (the auth decoupling is `migrations/custom_auth.sql`).
+There is **no** root `db/` directory — older references to `db/...` paths are obsolete.
 Seeded accounts: `super@fitsync.test` (super admin), `gym@fitsync.test`, `coach@fitsync.test`.
 
 ## Architecture
@@ -40,6 +44,7 @@ Seeded accounts: `super@fitsync.test` (super admin), `gym@fitsync.test`, `coach@
 ```
 server/src/          Express: index.ts (bootstrap), ssr.ts (marketing SSR host),
                      env.ts, db/{pool,migrate,seed}, db/repositories/* (raw SQL),
+                     db/SQL/* (schema, views, ordered migrations),
                      auth/{jwt,middleware}, routes/* (REST), lib/apiResult.ts
 apps/marketing/      Vite SSR app — entry-server/entry-client, React 19 metadata
 apps/dashboard/      Vite SPA — main.tsx, App.tsx (react-router),
@@ -52,7 +57,7 @@ styles/globals.css   Shared Tailwind v4 stylesheet (imported by both apps)
   (Bearer) + an httpOnly refresh cookie; `lib/api.ts` refreshes once on a 401.
   Authorization is enforced in Express (`requireAuth`/`requireRole`/
   `requireSuperAdmin`) — RLS is no longer relied upon. Credentials live in the
-  `user_credentials` table (see `db/migrations/custom_auth.sql`); passwords are
+  `user_credentials` table (see `server/src/db/SQL/migrations/custom_auth.sql`); passwords are
   bcrypt-hashed.
 - **DB access**: raw parameterized SQL via `pg` in `server/src/db/repositories/*`,
   reusing the existing Postgres **views** (`gym_list`, `online_coach_list`,
@@ -62,10 +67,12 @@ styles/globals.css   Shared Tailwind v4 stylesheet (imported by both apps)
   keyPrefix })`); the locale lives in `i18n/index.ts` (SSR-safe — all
   `window`/`document` access is guarded). next-intl has been fully removed.
 - **Compat shims**: `apps/dashboard/vite.config.ts` aliases
-  `next/navigation`, `next/link`, `next/cache`, `next/headers` to small modules in
+  `next/link`, `next/cache`, `next/headers` to small modules in
   `apps/dashboard/src/compat/`, and `@/i18n/navigation` is reimplemented
-  (`i18n/navigation.tsx`) on react-router. This lets the existing component tree be
-  reused with minimal edits.
+  (`i18n/navigation.tsx`) on react-router — it owns every navigation primitive
+  (`useRouter`, `usePathname`, `useSearchParams`, `redirect`, `Link`). `next/navigation`
+  has been removed entirely (no alias, no shim). This lets the existing component tree
+  be reused with minimal edits.
 
 ### Legacy context (Next.js — being replaced)
 
@@ -162,27 +169,32 @@ The router is the source of truth for what's actually wired. Routes (no locale
 prefix) under `/application`:
 
 - `sign-in` — custom JWT login (`POST /api/auth/sign-in`).
-- `management/*` (super-admin gate, `RequireRole roles={[]}`) → `DashboardShell`:
-  `gyms` is fully wired end-to-end (REST + `pg`, the reference slice);
-  `coaches`, `subscriptions`, `quotas` render `<Placeholder>` pending port.
-- `admin/*`, `coach/*`, `member/*`, `client/*` — role-gated `<Placeholder>`s, not
-  yet ported.
+- `management/*` (super-admin gate, section on `DashboardShell`): index →
+  `ManagementOverviewPage`; `gyms` (the reference slice, wired end-to-end with REST
+  + `pg`, plus subscription/billing tabs under `gyms/partials/`), `coaches`,
+  `subscriptions`, and `activity` are all wired pages; only `quotas` is still a
+  `<Placeholder>`.
+- `admin/*`, `coach/*`, `member/*`, `client/*` — mount `DashboardShell` but the
+  inner pages are not yet ported.
 
 The legacy Next.js pages under `app/[locale]/**` are **inert reference** for porting
 the remaining slices — do not treat them as running code. The full schema is at
-`db/full_schema.sql`; the active migration is `db/migrations/custom_auth.sql`.
+`server/src/db/SQL/full_schema.sql`; the auth migration is
+`server/src/db/SQL/migrations/custom_auth.sql`.
 
 ### Localization
 
 The app targets the Egyptian market first. **Arabic (`ar`) is the default locale** — routes without a locale prefix redirect to `/ar/...`. The `[locale]` segment in `app/[locale]/` is always present.
 
-**Always import navigation primitives from `@/i18n/navigation`, never from `next/navigation`:**
+**Always import navigation primitives from `@/i18n/navigation`** (`next/navigation` no
+longer exists — it has been removed):
 
 ```ts
-import { Link, redirect, usePathname, useRouter } from "@/i18n/navigation";
+import { Link, redirect, usePathname, useRouter, useSearchParams } from "@/i18n/navigation";
 ```
 
-The locale-aware wrappers from `next-intl` handle prefixing automatically. Using Next.js built-ins directly will break locale routing.
+These are thin react-router wrappers (`i18n/navigation.tsx`). `useSearchParams` returns a
+plain `URLSearchParams` (not react-router's `[params, setParams]` tuple).
 
 The root layout sets `dir="rtl"` and switches fonts when `locale === "ar"`. Cairo (Arabic) and Inter (Latin) are loaded via Google Fonts in `app/[locale]/layout.tsx`. Sidebar nav labels are hardcoded bilingual strings inside the component itself — they are **not** sourced from the `i18n/` translation files.
 
@@ -218,8 +230,6 @@ The custom `Icon` component at `components/ui/Icon.tsx` renders inline SVGs by n
 ### AppShell behaviour
 
 `AppShell` (`components/layout/AppShell.tsx`) is a client component that reads the pathname to detect `role`. It only renders the `Sidebar` for routes under `/admin` or `/coach`. All other routes (auth, landing page, etc.) render without the sidebar shell.
-
-**Exception to the navigation import rule:** `AppShell` uses `usePathname` from `next/navigation` directly (not from `@/i18n/navigation`) — it only reads the raw pathname string for role detection and does not generate locale-prefixed links, so the locale wrapper is not needed there.
 
 All dashboard pages start with a `Topbar` (`components/layout/Topbar.tsx`) that renders the page title, subtitle, a search input, a notifications bell, and optional `actions` (buttons). Pass `dir="rtl"` when in Arabic context.
 
@@ -258,7 +268,8 @@ TWILIO_WHATSAPP_FROM=
 
 **Done & verified:** workspace/tooling; Express core (pg pool, JWT auth,
 middleware); full REST API (`/api/auth`, `/api/gyms`, `/api/coaches`,
-`/api/subscriptions`, `/api/admin/dashboard`) as raw-SQL repositories; marketing
+`/api/subscriptions`, `/api/admin/dashboard`, `/api/activity`) as raw-SQL
+repositories; marketing
 SSR app (renders with React 19 metadata); dashboard SPA foundation (react-router +
 react-i18next + auth guards + `lib/api`) with the **Management → Gyms** page wired
 end-to-end as the reference slice. Server typechecks; both apps build.

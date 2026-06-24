@@ -27,34 +27,27 @@ async function upsertAccount(acc: SeedAccount) {
   const passwordHash = await hashPassword(acc.password);
 
   await withTransaction(async (client) => {
-    const existing = await client.query<{ profile_id: string }>(
-      "SELECT profile_id FROM user_credentials WHERE lower(email) = lower($1)",
+    const existing = await client.query<{ id: string }>(
+      "SELECT id FROM user_credentials WHERE lower(email) = lower($1)",
       [acc.email]
     );
 
     if (existing.rows[0]) {
-      const profileId = existing.rows[0].profile_id;
       await client.query(
-        "UPDATE profiles SET full_name = $2, user_type = $3, is_super_admin = $4 WHERE id = $1",
-        [profileId, acc.fullName, acc.userType, acc.isSuperAdmin ?? false]
-      );
-      await client.query(
-        "UPDATE user_credentials SET password_hash = $2, updated_at = now() WHERE profile_id = $1",
-        [profileId, passwordHash]
+        `UPDATE user_credentials
+            SET full_name = $2, user_type = $3, is_super_admin = $4,
+                password_hash = $5, updated_at = now()
+          WHERE id = $1`,
+        [existing.rows[0].id, acc.fullName, acc.userType, acc.isSuperAdmin ?? false, passwordHash]
       );
       console.log(`[seed] updated ${acc.email}`);
       return;
     }
 
-    const profile = await client.query<{ id: string }>(
-      `INSERT INTO profiles (user_type, full_name, is_super_admin)
-       VALUES ($1, $2, $3) RETURNING id`,
-      [acc.userType, acc.fullName, acc.isSuperAdmin ?? false]
-    );
-    const profileId = profile.rows[0].id;
     await client.query(
-      "INSERT INTO user_credentials (profile_id, email, password_hash) VALUES ($1, $2, $3)",
-      [profileId, acc.email, passwordHash]
+      `INSERT INTO user_credentials (email, password_hash, full_name, user_type, is_super_admin)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [acc.email, passwordHash, acc.fullName, acc.userType, acc.isSuperAdmin ?? false]
     );
     console.log(`[seed] created ${acc.email}`);
   });

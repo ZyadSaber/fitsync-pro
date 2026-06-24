@@ -3,7 +3,7 @@
 import { SelectField } from "@/components/ui/select";
 import type { SelectOptions } from "@/types/ui";
 import { useTranslation } from "react-i18next";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "@/i18n/navigation";
 import useFormManager from "@/hooks/useFormManager";
 
 interface Props {
@@ -23,7 +23,6 @@ const ActivityFilters = ({ gymOptions, coachOptions, eventOptions }: Props) => {
 
   const { handleToggle, formData } = useFormManager({
     initialData: { gym: "", coach: "", event: "" },
-    searchFields: ["gym", "coach", "event"],
   });
 
   const from = searchParams.get("from") ?? "";

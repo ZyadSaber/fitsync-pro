@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { Download } from "lucide-react";
 import { api } from "../../lib/api";
+import { API } from "@/constants/apiRoutes";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import SubscriptionsFilters from "@/components/management/subscriptions/SubscriptionsFilters";
@@ -38,7 +39,7 @@ export default function SubscriptionsPage() {
 
   const { data: allPlans = [], error: plansError } = useQuery({
     queryKey: ["subscription-plans"],
-    queryFn: () => api.get<SubscriptionPlanStats[]>("/subscriptions/plans"),
+    queryFn: () => api.get<SubscriptionPlanStats[]>(API.subscriptions.plans),
   });
   const { data: rows = [], error: billingError } = useQuery({
     queryKey: ["billing-records", sf ?? "", pt ?? ""],
@@ -47,20 +48,20 @@ export default function SubscriptionsPage() {
       if (sf) qs.set("status", sf);
       if (pt) qs.set("planType", pt);
       const suffix = qs.toString() ? `?${qs}` : "";
-      return api.get<BillingRecordListItem[]>(`/subscriptions/billing${suffix}`);
+      return api.get<BillingRecordListItem[]>(`${API.subscriptions.billing}${suffix}`);
     },
   });
   const { data: counts = { total: 0, pastDue: 0, pending: 0 } } = useQuery({
     queryKey: ["billing-counts"],
-    queryFn: () => api.get<{ total: number; pastDue: number; pending: number }>("/subscriptions/billing/counts"),
+    queryFn: () => api.get<{ total: number; pastDue: number; pending: number }>(API.subscriptions.billingCounts),
   });
   const { data: gyms = [] } = useQuery({
     queryKey: ["gyms"],
-    queryFn: () => api.get<GymListItem[]>("/gyms"),
+    queryFn: () => api.get<GymListItem[]>(API.gyms.list()),
   });
   const { data: coachOptions = [] } = useQuery({
     queryKey: ["coach-options"],
-    queryFn: () => api.get<SelectOptions[]>("/subscriptions/coach-options"),
+    queryFn: () => api.get<SelectOptions[]>(API.subscriptions.coachOptions),
   });
 
   const validTypes: SubscriptionPlanType[] = ["gym", "online_coach"];

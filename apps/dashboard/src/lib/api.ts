@@ -2,6 +2,8 @@
  * Thin REST client for the Express API. Holds the access token in memory and
  * transparently refreshes it (via the httpOnly refresh cookie) once on a 401.
  */
+import { API, API_BASE, API_PREFIX } from "@/constants/apiRoutes";
+
 export class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
@@ -28,7 +30,6 @@ let accessToken: string | null = null;
 export const setAccessToken = (t: string | null) => {
   accessToken = t;
 };
-export const getAccessToken = () => accessToken;
 
 type Method = "GET" | "POST" | "PUT" | "DELETE";
 
@@ -36,7 +37,7 @@ async function rawFetch(method: Method, path: string, body?: unknown): Promise<R
   const headers: Record<string, string> = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
-  return fetch(`/api${path}`, {
+  return fetch(`${API_PREFIX}${path}`, {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -44,22 +45,24 @@ async function rawFetch(method: Method, path: string, body?: unknown): Promise<R
   });
 }
 
-async function tryRefresh(): Promise<boolean> {
+/** POST an auth endpoint, store the returned access token, and return the
+ *  payload — or null when there's no valid session (never throws). */
+async function authPost(path: string): Promise<AuthPayload | null> {
   try {
-    const res = await rawFetch("POST", "/auth/refresh");
-    if (!res.ok) return false;
-    const json = (await res.json()) as { data: AuthPayload };
-    setAccessToken(json.data.accessToken);
-    return true;
+    const res = await rawFetch("POST", path);
+    if (!res.ok) return null;
+    const { data } = (await res.json()) as { data: AuthPayload };
+    setAccessToken(data.accessToken);
+    return data;
   } catch {
-    return false;
+    return null;
   }
 }
 
 async function request<T>(method: Method, path: string, body?: unknown): Promise<T> {
   let res = await rawFetch(method, path, body);
-  if (res.status === 401 && !path.startsWith("/auth/")) {
-    if (await tryRefresh()) res = await rawFetch(method, path, body);
+  if (res.status === 401 && !path.startsWith(`${API_BASE.auth}/`)) {
+    if (await authPost(API.auth.refresh)) res = await rawFetch(method, path, body);
   }
   const json = await res.json().catch(() => null);
   if (!res.ok) throw new ApiError(json?.error ?? res.statusText, res.status);
@@ -74,29 +77,26 @@ export const api = {
 };
 
 // ── Auth-specific helpers ────────────────────────────────────────────────────
-export async function apiSignIn(email: string, password: string): Promise<AuthPayload> {
-  const data = await api.post<AuthPayload>("/auth/sign-in", { email, password });
+
+/** POST credentials to an auth endpoint, store the token, return the payload
+ *  (throws ApiError on failure — for sign-in / sign-up). */
+async function authSubmit(path: string, body: unknown): Promise<AuthPayload> {
+  const data = await api.post<AuthPayload>(path, body);
   setAccessToken(data.accessToken);
   return data;
 }
 
-export async function apiSignUp(email: string, name: string, password: string): Promise<AuthPayload> {
-  const data = await api.post<AuthPayload>("/auth/sign-up", { email, name, password });
-  setAccessToken(data.accessToken);
-  return data;
-}
+export const apiSignIn = (email: string, password: string) =>
+  authSubmit(API.auth.signIn, { email, password });
 
-export async function apiRefresh(): Promise<AuthPayload | null> {
-  const ok = await tryRefresh();
-  if (!ok) return null;
-  return api.get<{ user: AuthUser; home: string }>("/auth/me").then((me) => ({
-    user: me.user,
-    home: me.home,
-    accessToken: getAccessToken()!,
-  }));
-}
+export const apiSignUp = (email: string, name: string, password: string) =>
+  authSubmit(API.auth.signUp, { email, name, password });
+
+/** Validate the session in the httpOnly refresh cookie and renew its 5-day
+ *  expiry, returning the full payload (user + token + role home) or null. */
+export const apiRevalidate = () => authPost(API.auth.revalidate);
 
 export async function apiSignOut(): Promise<void> {
-  await api.post("/auth/sign-out");
+  await api.post(API.auth.signOut);
   setAccessToken(null);
 }

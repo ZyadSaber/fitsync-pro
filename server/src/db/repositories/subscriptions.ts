@@ -74,7 +74,7 @@ export async function listBillingRecords(filter?: { status?: string; planType?: 
        FROM platform_billing_records r
        LEFT JOIN gyms g ON g.id = r.gym_id
        LEFT JOIN coaches c ON c.id = r.coach_id
-       LEFT JOIN profiles p ON p.id = c.profile_id
+       LEFT JOIN user_credentials p ON p.id = c.profile_id
        ${where}
        ORDER BY r.created_at DESC
        LIMIT 100`,

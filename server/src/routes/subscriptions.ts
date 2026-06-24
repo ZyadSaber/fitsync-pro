@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { SUBSCRIPTION } from "@/constants/apiRoutes";
 import {
   planFormSchema,
   invoiceFormSchema,
@@ -14,10 +15,10 @@ export const subscriptionsRouter = Router();
 subscriptionsRouter.use(requireAuth, requireSuperAdmin);
 
 // ── Plans ────────────────────────────────────────────────────────────────────
-subscriptionsRouter.get("/plans", asyncHandler(async (_req, res) => ok(res, await repo.listPlanStats())));
+subscriptionsRouter.get(SUBSCRIPTION.plans, asyncHandler(async (_req, res) => ok(res, await repo.listPlanStats())));
 
 subscriptionsRouter.post(
-  "/plans",
+  SUBSCRIPTION.plans,
   asyncHandler(async (req, res) => {
     const data = parseBody(planFormSchema, req.body);
     return ok(res, { id: await repo.createPlan(data) }, 201);
@@ -25,7 +26,7 @@ subscriptionsRouter.post(
 );
 
 subscriptionsRouter.put(
-  "/plans/:id",
+  SUBSCRIPTION.planById(":id"),
   asyncHandler(async (req, res) => {
     const data = parseBody(planFormSchema, req.body);
     await repo.updatePlan(req.params.id, data);
@@ -34,7 +35,7 @@ subscriptionsRouter.put(
 );
 
 subscriptionsRouter.delete(
-  "/plans/:id",
+  SUBSCRIPTION.planById(":id"),
   asyncHandler(async (req, res) => {
     await repo.deletePlan(req.params.id);
     return ok(res, { id: req.params.id });
@@ -43,7 +44,7 @@ subscriptionsRouter.delete(
 
 // ── Billing records ──────────────────────────────────────────────────────────
 subscriptionsRouter.get(
-  "/billing",
+  SUBSCRIPTION.billing,
   asyncHandler(async (req, res) =>
     ok(res, await repo.listBillingRecords({
       status: req.query.status as string | undefined,
@@ -53,12 +54,12 @@ subscriptionsRouter.get(
 );
 
 subscriptionsRouter.get(
-  "/billing/counts",
+  SUBSCRIPTION.billingCounts,
   asyncHandler(async (_req, res) => ok(res, await repo.getBillingStatusCounts()))
 );
 
 subscriptionsRouter.post(
-  "/billing",
+  SUBSCRIPTION.billing,
   asyncHandler(async (req, res) => {
     const data = parseBody(invoiceFormSchema, req.body);
     return ok(res, { id: await repo.createCustomBillingRecord(data) }, 201);
@@ -66,7 +67,7 @@ subscriptionsRouter.post(
 );
 
 subscriptionsRouter.put(
-  "/billing/:id",
+  SUBSCRIPTION.billingById(":id"),
   asyncHandler(async (req, res) => {
     const data = parseBody(invoiceFormSchema, req.body);
     await repo.updateBillingRecord(req.params.id, data);
@@ -75,7 +76,7 @@ subscriptionsRouter.put(
 );
 
 subscriptionsRouter.post(
-  "/billing/:id/mark-paid",
+  SUBSCRIPTION.billingMarkPaid(":id"),
   asyncHandler(async (req, res) => {
     await repo.markBillingRecordPaid(req.params.id);
     return ok(res, { id: req.params.id });
@@ -83,7 +84,7 @@ subscriptionsRouter.post(
 );
 
 subscriptionsRouter.delete(
-  "/billing/:id",
+  SUBSCRIPTION.billingById(":id"),
   asyncHandler(async (req, res) => {
     await repo.deleteBillingRecord(req.params.id);
     return ok(res, { id: req.params.id });
@@ -92,7 +93,7 @@ subscriptionsRouter.delete(
 
 // ── Tenant assignment ────────────────────────────────────────────────────────
 subscriptionsRouter.get(
-  "/tenant/:type/:id/assignment-state",
+  SUBSCRIPTION.assignmentState(":type", ":id"),
   asyncHandler(async (req, res) => {
     const type = req.params.type as TenantType;
     return ok(res, await repo.getTenantAssignmentState(type, req.params.id));
@@ -100,19 +101,19 @@ subscriptionsRouter.get(
 );
 
 subscriptionsRouter.get(
-  "/coach-options",
+  SUBSCRIPTION.coachOptions,
   asyncHandler(async (_req, res) => ok(res, await repo.listCoachSelectOptions()))
 );
 
 // GET /api/subscriptions/gym/:gymId/active  → { id } | null
 subscriptionsRouter.get(
-  "/gym/:gymId/active",
+  SUBSCRIPTION.gymActive(":gymId"),
   asyncHandler(async (req, res) => ok(res, await repo.getActiveSubscriptionIdForGym(req.params.gymId)))
 );
 
 // POST /api/subscriptions/assign-plan   body: { data, installments }
 subscriptionsRouter.post(
-  "/assign-plan",
+  SUBSCRIPTION.assignPlan,
   asyncHandler(async (req, res) => {
     const data = parseBody(assignPlanSchema, req.body?.data);
     const installments = (req.body?.installments ?? []) as unknown[];

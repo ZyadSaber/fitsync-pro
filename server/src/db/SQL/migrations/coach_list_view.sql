@@ -114,7 +114,7 @@ SELECT
   sp.member_limit
 
 FROM coaches c
-JOIN  profiles p  ON p.id = c.profile_id
+JOIN  user_credentials p  ON p.id = c.profile_id
 LEFT JOIN coach_clients cc ON cc.coach_id = c.id
 LEFT JOIN LATERAL (
   SELECT ps.status, ps.started_at, ps.plan_id

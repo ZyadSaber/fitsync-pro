@@ -15,7 +15,6 @@ const CoachesFilters = ({ planOptions }: Props) => {
 
   const { handleToggle, formData } = useFormManager({
     initialData: { active: "", plan: "" },
-    searchFields: ["active", "plan"],
   });
 
   const activeOptions = [

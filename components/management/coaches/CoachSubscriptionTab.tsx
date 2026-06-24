@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { api } from "@/apps/dashboard/src/lib/api";
+import { API } from "@/constants/apiRoutes";
 import type { PlatformSubscriptionDetails } from "@/types/gyms";
 
 interface Props {
@@ -27,7 +28,7 @@ const fmt = (iso: string | null | undefined) =>
   iso ? format(new Date(iso), "d MMM yyyy") : "—";
 
 async function fetchSubscription(coachId: string): Promise<PlatformSubscriptionDetails | null> {
-  return api.get<PlatformSubscriptionDetails | null>(`/coaches/${coachId}/subscription`);
+  return api.get<PlatformSubscriptionDetails | null>(API.coaches.subscription(coachId));
 }
 
 export default function CoachSubscriptionTab({ coachId }: Props) {

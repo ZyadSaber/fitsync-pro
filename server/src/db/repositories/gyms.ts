@@ -1,4 +1,5 @@
 import { query, queryOne } from "../pool.js";
+import type { PlatformSubscriptionDetails } from "@/types/gyms";
 
 export interface GymListItem {
   id: string;
@@ -32,11 +33,39 @@ interface GymListRow {
   plan_id: string | null;
 }
 
-export async function listGyms(): Promise<GymListItem[]> {
+export interface GymListFilters {
+  search?: string;
+  plan?: string;
+  status?: string;
+}
+
+export async function listGyms({ search, plan, status }: GymListFilters = {}): Promise<GymListItem[]> {
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+
+  if (status) {
+    params.push(status);
+    conditions.push(`subscription_status = $${params.length}`);
+  }
+  if (plan) {
+    params.push(plan);
+    conditions.push(`plan_name = $${params.length}`);
+  }
+  if (search) {
+    params.push(`%${search}%`);
+    conditions.push(
+      `(name ILIKE $${params.length} OR address ILIKE $${params.length} OR phone ILIKE $${params.length})`
+    );
+  }
+
+  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+
   const { rows } = await query<GymListRow>(
     `SELECT id, name, address, phone, logo_url, created_at, plan_name, price_egp,
             subscription_status, member_count, last_activity_at, member_limit, plan_id
-       FROM gym_list`
+       FROM gym_list
+       ${where}`,
+    params
   );
   return rows.map((item) => ({
     id: item.id,
@@ -65,16 +94,16 @@ export async function listActiveSubscriptionPlanOptions() {
 // Candidate gym owners for the create/edit dialog: non-super-admin gym/member
 // profiles. Labelled by full_name, falling back to phone then id.
 export async function listGymOwnerOptions() {
-  const { rows } = await query<{ id: string; full_name: string | null; phone: string | null }>(
-    `SELECT id, full_name, phone
-       FROM profiles
-      WHERE user_type IN ('gym', 'member')
+  const { rows } = await query<{ id: string; full_name: string; }>(
+    `SELECT id, full_name
+       FROM user_credentials
+      WHERE user_type IN ('member')
         AND is_super_admin = false
       ORDER BY full_name`
   );
   return rows.map((u) => ({
     key: u.id,
-    label: u.full_name?.trim() || u.phone || u.id,
+    label: u.full_name?.trim(),
   }));
 }
 
@@ -106,7 +135,7 @@ export async function deleteGym(id: string): Promise<void> {
 }
 
 export async function getGymSubscription(gymId: string) {
-  return queryOne(
+  return queryOne<PlatformSubscriptionDetails>(
     `SELECT * FROM platform_subscription_details
       WHERE gym_id = $1 ORDER BY started_at DESC LIMIT 1`,
     [gymId]

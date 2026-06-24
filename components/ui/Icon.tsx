@@ -4,7 +4,7 @@ type IconName =
   | "home" | "users" | "user" | "card" | "tag" | "qr" | "dumbbell"
   | "chart" | "plus" | "search" | "filter" | "bell" | "arrow-up"
   | "arrow-down" | "arrow-right" | "check" | "flame" | "whatsapp"
-  | "logo" | "more" | "wallet" | "apple" | "google" | "play";
+  | "logo" | "more" | "wallet" | "apple" | "google" | "play" | "refresh";
 
 interface IconProps {
   name: IconName;
@@ -42,6 +42,7 @@ export default function Icon({ name, size = 16, stroke = 1.6, color = "currentCo
     case "apple":      return <svg viewBox="0 0 24 24" style={s}><path {...p} d="M16 8c-1.5 0-3 1-4 1s-2.5-1-4-1c-2.5 0-4 2-4 5s2 8 4 8c1 0 1.5-1 3-1s2 1 3 1c1 0 2-1 3-3M14 4c0 1.5-1 3-2.5 3"/></svg>;
     case "google":     return <svg viewBox="0 0 24 24" style={s}><circle {...p} cx="12" cy="12" r="9"/><path {...p} d="M12 8v4h5c-.5 2-2 3.5-5 3.5"/></svg>;
     case "play":       return <svg viewBox="0 0 24 24" style={s}><path {...p} d="M7 5l12 7-12 7V5z"/></svg>;
+    case "refresh":    return <svg viewBox="0 0 24 24" style={s}><path {...p} d="M21 12a9 9 0 11-2.64-6.36M21 3v6h-6"/></svg>;
     default: return null;
   }
 }

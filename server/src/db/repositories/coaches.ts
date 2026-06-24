@@ -19,7 +19,7 @@ export async function listActiveCoachPlanOptions() {
 export async function listNonCoachUsers() {
   const { rows } = await query(
     `SELECT id, full_name, phone, avatar_url, user_type, gym_id, created_at
-       FROM profiles WHERE user_type = 'member' ORDER BY full_name ASC`
+       FROM user_credentials WHERE user_type = 'member' ORDER BY full_name ASC`
   );
   return rows;
 }
@@ -27,7 +27,7 @@ export async function listNonCoachUsers() {
 export async function promoteToCoach(profileId: string): Promise<void> {
   await withTransaction(async (client) => {
     await client.query(
-      `UPDATE profiles SET user_type = 'coach', gym_id = NULL WHERE id = $1`,
+      `UPDATE user_credentials SET user_type = 'coach', gym_id = NULL WHERE id = $1`,
       [profileId]
     );
     await client.query(
@@ -52,7 +52,7 @@ export async function updateCoach(
 ): Promise<void> {
   await withTransaction(async (client) => {
     await client.query(
-      `UPDATE profiles SET full_name = $2, phone = $3 WHERE id = $1`,
+      `UPDATE user_credentials SET full_name = $2, phone = $3 WHERE id = $1`,
       [profileId, input.full_name, input.phone || null]
     );
     await client.query(
@@ -71,24 +71,19 @@ export interface CoachCreateInput {
 }
 
 /**
- * Create a brand-new online coach: profile + placeholder credentials + coach row.
- * Mirrors the old Supabase signUp flow — the coach is given a random password and
- * is expected to reset it via the (future) password-reset flow.
+ * Create a brand-new online coach: user (identity + placeholder credentials) +
+ * coach row. Mirrors the old Supabase signUp flow — the coach is given a random
+ * password and is expected to reset it via the (future) password-reset flow.
  */
 export async function createCoach(input: CoachCreateInput): Promise<string> {
   const placeholderHash = await hashPassword(randomUUID());
   return withTransaction(async (client) => {
-    const profile = await client.query<{ id: string }>(
-      `INSERT INTO profiles (user_type, full_name, phone)
-       VALUES ('coach', $1, $2) RETURNING id`,
-      [input.full_name, input.phone || null]
+    const user = await client.query<{ id: string }>(
+      `INSERT INTO user_credentials (user_type, full_name, phone, email, password_hash)
+       VALUES ('coach', $1, $2, $3, $4) RETURNING id`,
+      [input.full_name, input.phone || null, input.email, placeholderHash]
     );
-    const profileId = profile.rows[0].id;
-    await client.query(
-      `INSERT INTO user_credentials (profile_id, email, password_hash)
-       VALUES ($1, $2, $3)`,
-      [profileId, input.email, placeholderHash]
-    );
+    const profileId = user.rows[0].id;
     await client.query(
       `INSERT INTO coaches (profile_id, gym_id, bio, specialties)
        VALUES ($1, NULL, $2, $3)`,

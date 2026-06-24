@@ -85,7 +85,10 @@
       "Bash(timeout 300 bunx vite build apps/dashboard)",
       "Bash(git mv *)",
       "Bash(ls messages *)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(xargs grep -l \"home\\\\|role.*route\\\\|route.*role\")",
+      "Bash(xargs cat)",
+      "Bash(xargs grep -l \"useEffect.*loading\\\\|loading.*setUser\\\\|requireAuth\")"
     ]
   }
 }

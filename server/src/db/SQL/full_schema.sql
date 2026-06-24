@@ -12,36 +12,31 @@ CREATE TABLE gyms (
 );
 
 -- ============================================================
--- PROFILES (one row per auth user — all roles)
--- user_type drives dashboard routing and middleware access control.
+-- USER_CREDENTIALS (one row per user — identity, role, AND login)
+-- Single table holding both profile data and credentials. Custom JWT auth
+-- manages email/password_hash directly; rows without them are login-less
+-- members/clients. user_type drives dashboard routing / access control.
 -- gym_id = NULL  → online coaching context
 -- gym_id = set   → gym module context
 -- ============================================================
-CREATE TABLE profiles (
-  id            UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+CREATE TABLE user_credentials (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   gym_id        UUID REFERENCES gyms(id),        -- NULL for online-only users
   user_type     TEXT NOT NULL DEFAULT 'member'
-                CHECK (user_type IN ('member', 'gym', 'coach')),
+                CHECK (user_type IN ('member', 'gym', 'coach', 'client')),
   full_name     TEXT DEFAULT '',
   phone         TEXT DEFAULT '',
   avatar_url    TEXT DEFAULT '',
-  created_at    TIMESTAMPTZ DEFAULT now()
+  is_super_admin BOOLEAN NOT NULL DEFAULT false,
+  email         TEXT,            -- NULL for login-less users
+  password_hash TEXT,            -- bcrypt; NULL for login-less users
+  created_at    TIMESTAMPTZ DEFAULT now(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Auto-create a profile row with default type 'member' on every sign-up
-CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-BEGIN
-  INSERT INTO public.profiles (id, user_type)
-  VALUES (NEW.id, 'member')
-  ON CONFLICT (id) DO NOTHING;
-  RETURN NEW;
-END;
-$$;
-
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+-- Case-insensitive unique email across rows that actually have one.
+CREATE UNIQUE INDEX user_credentials_email_lower_idx
+  ON user_credentials (lower(email)) WHERE email IS NOT NULL;
 
 -- ============================================================
 -- COACHES
@@ -50,7 +45,7 @@ CREATE TRIGGER on_auth_user_created
 -- ============================================================
 CREATE TABLE coaches (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  profile_id      UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  profile_id      UUID REFERENCES user_credentials(id) ON DELETE CASCADE,
   gym_id          UUID REFERENCES gyms(id),       -- NULL = standalone online coach
   bio             TEXT DEFAULT '',
   specialties     TEXT[] DEFAULT '{}',
@@ -65,7 +60,7 @@ CREATE TABLE coaches (
 -- ============================================================
 CREATE TABLE clients (
   id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  profile_id          UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  profile_id          UUID REFERENCES user_credentials(id) ON DELETE CASCADE,
   gym_id              UUID REFERENCES gyms(id),    -- NULL for online-only clients
   membership_status   TEXT DEFAULT 'active' CHECK (membership_status IN ('active', 'frozen', 'expired')),
   membership_type     TEXT DEFAULT '',
@@ -283,13 +278,13 @@ ALTER TABLE gyms ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "gym admin access" ON gyms
   USING (owner_id = auth.uid());
 
--- PROFILES: users see only their own profile; gym admin sees their gym's profiles
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "own profile" ON profiles
+-- USER_CREDENTIALS: users see only their own row; gym admin sees their gym's users
+ALTER TABLE user_credentials ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "own profile" ON user_credentials
   FOR SELECT USING (id = auth.uid());
-CREATE POLICY "own profile update" ON profiles
+CREATE POLICY "own profile update" ON user_credentials
   FOR UPDATE USING (id = auth.uid());
-CREATE POLICY "gym admin reads profiles" ON profiles
+CREATE POLICY "gym admin reads profiles" ON user_credentials
   FOR SELECT USING (
     gym_id IN (SELECT id FROM gyms WHERE owner_id = auth.uid())
   );

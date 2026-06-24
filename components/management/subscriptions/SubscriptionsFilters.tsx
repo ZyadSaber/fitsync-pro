@@ -15,7 +15,6 @@ const SubscriptionsFilters = ({ statusOptions }: Props) => {
 
   const { handleToggle, formData } = useFormManager({
     initialData: { status: "" },
-    searchFields: ["status"],
   });
 
   return (
