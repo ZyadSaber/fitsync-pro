@@ -18,6 +18,7 @@ export const API_PREFIX = "/api";
 export const API_BASE = {
   auth: "/auth",
   gyms: "/gyms",
+  gymsMutations: "/gyms_mutations",
   coaches: "/coaches",
   subscriptions: "/subscriptions",
   admin: "/admin",
@@ -38,10 +39,16 @@ export const GYM = {
   root: "/",
   planOptions: "/plan-options",
   ownerOptions: "/owner-options",
-  byId: (id: string) => `/${id}`,
   subscription: (id: string) => `/${id}/subscription`,
   billing: (id: string) => `/${id}/billing`,
   billingStatus: (id: string, recordId: string) => `/${id}/billing/${recordId}/status`,
+} as const;
+
+// Gym write endpoints live under their own mount (`/gyms_mutations`), separate
+// from the read/list routes on `/gyms`.
+export const GYM_MUTATIONS = {
+  root: "/",
+  byId: (id: string) => `/${id}`,
 } as const;
 
 export const COACH = {
@@ -89,16 +96,24 @@ export const API = {
       const qs = params.toString();
       return qs ? `${API_BASE.gyms}?${qs}` : API_BASE.gyms;
     },
+    create: API_BASE.gymsMutations + GYM_MUTATIONS.root,
     planOptions: API_BASE.gyms + GYM.planOptions,
     ownerOptions: API_BASE.gyms + GYM.ownerOptions,
-    byId: (id: string) => API_BASE.gyms + GYM.byId(id),
+    byId: (id: string) => API_BASE.gymsMutations + GYM_MUTATIONS.byId(id),
     subscription: (id: string) => API_BASE.gyms + GYM.subscription(id),
     billing: (id: string) => API_BASE.gyms + GYM.billing(id),
     billingStatus: (id: string, recordId: string) =>
       API_BASE.gyms + GYM.billingStatus(id, recordId),
   },
   coaches: {
-    list: API_BASE.coaches,
+    list: (filters?: { search?: string; plan?: string; active?: string }) => {
+      const params = new URLSearchParams();
+      if (filters?.search) params.set("search", filters.search);
+      if (filters?.plan) params.set("plan", filters.plan);
+      if (filters?.active) params.set("active", filters.active);
+      const qs = params.toString();
+      return qs ? `${API_BASE.coaches}?${qs}` : API_BASE.coaches;
+    },
     planOptions: API_BASE.coaches + COACH.planOptions,
     nonCoaches: API_BASE.coaches + COACH.nonCoaches,
     subscription: (id: string) => API_BASE.coaches + COACH.subscription(id),

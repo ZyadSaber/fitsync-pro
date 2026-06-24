@@ -2,7 +2,7 @@ import { Navigate, Route, Routes } from "react-router";
 import SignIn from "./pages/SignIn";
 import DashboardShell from "./layout/DashboardShell";
 import GymsPage from "./pages/management/gyms";
-import CoachesPage from "./pages/management/CoachesPage";
+import CoachesPage from "./pages/management/coachesPage";
 import SubscriptionsPage from "./pages/management/SubscriptionsPage";
 import ActivityPage from "./pages/management/ActivityPage";
 import ManagementOverviewPage from "./pages/management/ManagementOverviewPage";

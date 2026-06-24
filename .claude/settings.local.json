@@ -88,7 +88,11 @@
       "Bash(git rm *)",
       "Bash(xargs grep -l \"home\\\\|role.*route\\\\|route.*role\")",
       "Bash(xargs cat)",
-      "Bash(xargs grep -l \"useEffect.*loading\\\\|loading.*setUser\\\\|requireAuth\")"
+      "Bash(xargs grep -l \"useEffect.*loading\\\\|loading.*setUser\\\\|requireAuth\")",
+      "Bash(grep -n \"@dashboard\\\\|@/\\\\*\\\\|paths\" tsconfig.json tsconfig.base.json)",
+      "PowerShell(npx vite build apps/dashboard 2>&1 | Select-Object -Last 30)",
+      "PowerShell(npx tsx server/src/db/apply-one.ts invitations.sql)",
+      "PowerShell(npx tsx server/src/db/verify-inv.ts)"
     ]
   }
 }

@@ -14,7 +14,11 @@ import { pool } from "./pool.js";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = path.join(here, "SQL", "migrations");
 
-const MIGRATIONS = ["custom_auth.sql", "merge_profiles_into_credentials.sql"];
+const MIGRATIONS = [
+  // "custom_auth.sql",
+  // "merge_profiles_into_credentials.sql",
+  "invitations.sql",
+];
 
 async function main() {
   for (const file of MIGRATIONS) {

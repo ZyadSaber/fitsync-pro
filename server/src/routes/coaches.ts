@@ -2,14 +2,19 @@ import { Router } from "express";
 import { COACH } from "@/constants/apiRoutes";
 import { coachFormSchema, createCoachSchema } from "@/validations/coachSchema";
 import { requireAuth, requireSuperAdmin } from "../auth/middleware.js";
-import { asyncHandler, badRequest, ok, parseBody } from "../lib/apiResult.js";
+import { asyncHandler, badRequest, ok, parseBody, queryParams } from "../lib/apiResult.js";
 import * as repo from "../db/repositories/coaches.js";
 
 export const coachesRouter = Router();
 coachesRouter.use(requireAuth, requireSuperAdmin);
 
-// GET /api/coaches
-coachesRouter.get(COACH.root, asyncHandler(async (_req, res) => ok(res, await repo.listCoaches())));
+// GET /api/coaches?search=&plan=&active=
+coachesRouter.get(
+  COACH.root,
+  asyncHandler(async (req, res) =>
+    ok(res, await repo.listCoaches(queryParams(req, "search", "plan", "active")))
+  )
+);
 
 // GET /api/coaches/plan-options
 coachesRouter.get(

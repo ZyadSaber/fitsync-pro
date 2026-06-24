@@ -1,16 +1,20 @@
-import { getTranslations } from "next-intl/server";
-import { Suspense } from "react";
-import HeaderContent from "@/components/layout/Topbar";
-import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
-import { getCoachesPageData, getActiveCoachPlanOptions, getNonCoachUsers } from "@/services/management/coaches";
-import CoachesFilters from "@/components/management/coaches/CoachesFilters";
-import CoachPromoteDialog from "@/components/management/coaches/CoachPromoteDialog";
-import CoachRowActions from "@/components/management/coaches/CoachRowActions";
-import getInitials from "@/lib/getInitials";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@dashboard/lib/api";
+import { API } from "@/constants/apiRoutes";
 import { formatDistanceToNow } from "date-fns";
+import { Download } from "lucide-react";
+import HeaderContent from "../../../layout/HeaderContent";
+import { Button } from "@/components/ui/button";
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
+import { SelectField, SelectFieldApiData } from "@/components/ui/select";
 import UsageBar from "@/components/superadmin/UsageBar";
+import getInitials from "@/lib/getInitials";
+import getTranslations from "@/i18n/lib/getTranslations";
+import useFormManager from "@/hooks/useFormManager";
+import CoachRowActions from "./partials/CoachRowActions";
+import CoachPromoteDialog from "./partials/CoachPromoteDialog";
+import type { CoachListItem, PlatformUser } from "@/types/coaches";
 
 const BILLING_BADGE: Record<string, string> = {
   active: "active",
@@ -18,75 +22,78 @@ const BILLING_BADGE: Record<string, string> = {
   cancelled: "expired",
 };
 
-export default async function CoachesPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ search?: string; plan?: string; active?: string }>;
-}) {
-  const [t, filters, planOptions, platformUsersResult] = await Promise.all([
-    getTranslations("management.coaches"),
-    searchParams,
-    getActiveCoachPlanOptions(),
-    getNonCoachUsers(),
-  ]);
+export default function CoachesPage() {
+  const t = getTranslations("management.coaches");
 
-  const { data, error } = await getCoachesPageData(filters);
+  const {
+    formData: { plan, active, searchQuery },
+    handleToggle,
+    handleChange,
+  } = useFormManager({
+    initialData: {
+      plan: "",
+      active: "",
+    },
+  });
 
-  if (error || !data) {
-    return (
-      <div className="p-7">
-        <p className="text-sm font-mono text-red-600 bg-red-50 border border-red-200 rounded-lg p-4 whitespace-pre-wrap">
-          {error}
-        </p>
-      </div>
-    );
-  }
+  const activeOptions = useMemo(() => [
+    { key: "true", label: t("filters.active") },
+    { key: "false", label: t("filters.inactive") },
+  ], []);
 
-  const { rows, totalCoaches, activeBilling, totalClients } = data;
+  const { data: coaches, isLoading } = useQuery({
+    queryKey: ["coaches", searchQuery.search, plan, active],
+    queryFn: () => api.get<CoachListItem[]>(API.coaches.list({ search: searchQuery.search, plan, active })),
+  });
+
+  const { data: platformUsers = [] } = useQuery({
+    queryKey: ["coach-non-coaches"],
+    queryFn: () => api.get<PlatformUser[]>(API.coaches.nonCoaches),
+  });
+
+  const totalClients = (coaches ?? []).reduce((sum, c) => sum + (Number(c.client_count) || 0), 0);
 
   return (
     <>
       <HeaderContent
         title={t("title")}
-        subtitle={t("subtitle", { count: totalCoaches, clients: totalClients })}
+        subtitle={t("subtitle", { count: coaches?.length ?? 0, clients: totalClients })}
+        onChange={handleChange}
+        value={searchQuery.value}
         actions={
           <>
-            <Button variant="ghost">
-              <Download size={13} />
+            <Button variant="ghost" icon={Download}>
               {t("actions.exportCsv")}
             </Button>
-            <CoachPromoteDialog platformUsers={platformUsersResult.data} />
+            <CoachPromoteDialog platformUsers={platformUsers} />
           </>
         }
       />
 
       <div className="p-7 flex flex-col gap-4">
 
-        {/* KPI row */}
-        <div className="grid grid-cols-3 gap-3.5">
-          {[
-            { label: t("kpis.total"), value: String(totalCoaches), sub: t("kpis.totalSub") },
-            { label: t("kpis.activeBilling"), value: String(activeBilling), sub: t("kpis.activeBillingSub") },
-            { label: t("kpis.clients"), value: totalClients.toLocaleString(), sub: t("kpis.clientsSub") },
-          ].map((card) => (
-            <div key={card.label} className="fs-card pad flex flex-col justify-between min-h-[88px]">
-              <div className="fs-eyebrow">{card.label}</div>
-              <div className="flex items-baseline gap-2.5">
-                <div className="fs-num text-[26px] font-bold tracking-tight">{card.value}</div>
-                <div className="text-[11px] text-muted">{card.sub}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Filters */}
         <div className="flex items-center gap-2 flex-wrap">
-          <Suspense>
-            <CoachesFilters planOptions={planOptions} />
-          </Suspense>
+          <SelectField
+            name="active"
+            label={t("filters.billingStatus")}
+            options={activeOptions}
+            value={active}
+            onValueChange={handleToggle("active")}
+            hideClear={false}
+            containerClassName="w-[20%]"
+          />
+
+          <SelectFieldApiData
+            name="plan"
+            label={t("table.plan")}
+            queryApi={API.coaches.planOptions}
+            value={plan}
+            onValueChange={handleToggle("plan")}
+            hideClear={false}
+            containerClassName="w-[20%]"
+          />
         </div>
 
-        {/* Table */}
         <div className="border border-[var(--hairline)] rounded-[8px] overflow-hidden">
           <Table>
             <TableHeader>
@@ -100,16 +107,9 @@ export default async function CoachesPage({
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
-            <TableBody>
-              {rows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted py-8">
-                    {t("empty")}
-                  </TableCell>
-                </TableRow>
-              ) : rows.map((coach) => (
+            <TableBody loading={isLoading}>
+              {coaches?.map((coach) => (
                 <TableRow key={coach.id}>
-
                   {/* Coach */}
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -140,7 +140,7 @@ export default async function CoachesPage({
                         <span className="font-medium text-[13px]">{coach.plan_name}</span>
                         <span className={`fs-badge ${BILLING_BADGE[coach.billing_status!] ?? "pending"}`}>
                           <span className="dot" />
-                          {t(`billing.${coach.billing_status!}`)}
+                          {t(`billing.${coach.billing_status!}` as "billing.active" | "billing.suspended" | "billing.cancelled")}
                         </span>
                       </div>
                     ) : (
@@ -159,33 +159,29 @@ export default async function CoachesPage({
                   </TableCell>
 
                   {/* Clients / limit */}
-                  <TableCell>
+                  <TableCell className="w-[180px]">
                     {coach.member_limit != null
                       ? <UsageBar used={coach.client_count} limit={+coach.member_limit} />
-                      : <span className="text-xs text-muted-foreground">—</span>
-                    }
+                      : <span className="text-xs text-muted-foreground">—</span>}
                   </TableCell>
 
                   {/* Joined */}
                   <TableCell className="text-muted text-xs">
                     {new Date(coach.created_at).toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
+                      day: "2-digit", month: "short", year: "numeric",
                     })}
                   </TableCell>
 
                   {/* Last activity */}
-                  <TableCell className="text-muted text-xs" suppressHydrationWarning>
+                  <TableCell className="text-muted-foreground text-xs" suppressHydrationWarning>
                     {coach.last_activity_at
-                      ? formatDistanceToNow(coach.last_activity_at, { addSuffix: true })
+                      ? formatDistanceToNow(new Date(coach.last_activity_at), { addSuffix: true })
                       : "—"}
                   </TableCell>
 
                   <TableCell>
                     <CoachRowActions coach={coach} />
                   </TableCell>
-
                 </TableRow>
               ))}
             </TableBody>

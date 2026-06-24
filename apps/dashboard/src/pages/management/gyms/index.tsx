@@ -156,7 +156,7 @@ export default function GymsPage() {
                                             </TableCell>
                                             <TableCell className="text-muted-foreground text-xs" suppressHydrationWarning>{g.lastActivityAt ? formatDistanceToNow(g.lastActivityAt, { addSuffix: true }) : "-"}</TableCell>
                                             <TableCell>
-                                                <GymRowActions gym={g} ownerOptions={[]} />
+                                                <GymRowActions gym={g} />
                                             </TableCell>
                                         </TableRow>
                                     );

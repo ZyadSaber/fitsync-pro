@@ -6,6 +6,7 @@ import { env } from "./env.js";
 import { errorMiddleware, ok } from "./lib/apiResult.js";
 import { authRouter } from "./routes/auth.js";
 import { gymsRouter } from "./routes/gyms.js";
+import { gymsMutationsRouter } from "./routes/gyms_mutations.js";
 import { coachesRouter } from "./routes/coaches.js";
 import { subscriptionsRouter } from "./routes/subscriptions.js";
 import { dashboardRouter } from "./routes/dashboard.js";
@@ -23,6 +24,7 @@ async function createServer() {
   api.get("/health", (_req, res) => ok(res, { status: "ok", ts: Date.now() }));
   api.use(API_BASE.auth, authRouter);
   api.use(API_BASE.gyms, gymsRouter);
+  api.use(API_BASE.gymsMutations, gymsMutationsRouter);
   api.use(API_BASE.coaches, coachesRouter);
   api.use(API_BASE.subscriptions, subscriptionsRouter);
   api.use(API_BASE.admin, dashboardRouter);

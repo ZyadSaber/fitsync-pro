@@ -2,9 +2,33 @@ import { query, queryOne, withTransaction } from "../pool.js";
 import { hashPassword } from "../../auth/jwt.js";
 import { randomUUID } from "node:crypto";
 
-export async function listCoaches() {
+export interface CoachListFilters {
+  search?: string;
+  plan?: string;
+  active?: string;
+}
+
+export async function listCoaches({ search, plan, active }: CoachListFilters = {}) {
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+
+  if (plan) {
+    params.push(plan);
+    conditions.push(`plan_name = $${params.length}`);
+  }
+  if (active === "true" || active === "false") {
+    conditions.push(`is_billing_active IS ${active === "true" ? "TRUE" : "NOT TRUE"}`);
+  }
+  if (search) {
+    params.push(`%${search}%`);
+    conditions.push(`(full_name ILIKE $${params.length} OR phone ILIKE $${params.length})`);
+  }
+
+  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+
   const { rows } = await query(
-    `SELECT * FROM online_coach_list ORDER BY created_at DESC`
+    `SELECT * FROM online_coach_list ${where} ORDER BY created_at DESC`,
+    params
   );
   return rows;
 }

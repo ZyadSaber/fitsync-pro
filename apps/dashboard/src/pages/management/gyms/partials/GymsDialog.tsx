@@ -12,9 +12,7 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SelectFieldApiData, type SelectOptions } from "@/components/ui/select";
 import { ImageUpload } from "@/components/ui/ImageUpload";
-import { User } from "lucide-react";
 import useFormManager from "@/hooks/useFormManager";
 import useVisibility from "@/hooks/useVisibility";
 import { gymSchema, type GymFormData } from "@/validations/gymSchema";
@@ -22,7 +20,7 @@ import type { GymListItem } from "@/types/gyms";
 import GymSubscriptionTab from "../partials/GymSubscriptionTab";
 import GymBillingTab from "../partials/GymBillingTab";
 import { getTranslations } from "@/i18n";
-import { API } from "@/constants/apiRoutes";
+import { useGymsMutations } from "../gyms_mutations";
 
 interface GymsDialogProps {
   gym?: GymListItem;
@@ -35,6 +33,7 @@ const GymsDialog = ({ gym }: GymsDialogProps) => {
 
   const { visible: open, handleOpen, handleClose, handleStateChange } = useVisibility();
   const [isUploading, setIsUploading] = useState(false);
+  const { createGym, updateGym } = useGymsMutations();
 
   const {
     formData,
@@ -43,7 +42,6 @@ const GymsDialog = ({ gym }: GymsDialogProps) => {
     errors,
     handleSubmit,
     loading,
-    handleToggle
   } =
     useFormManager<GymFormData>({
       initialData: {
@@ -51,16 +49,22 @@ const GymsDialog = ({ gym }: GymsDialogProps) => {
         address: gym?.address ?? "",
         phone: gym?.phone ?? "",
         logo_url: gym?.logo_url ?? "",
-        owner_id: gym?.owner_id ?? "",
       },
       schema: gymSchema as z.ZodSchema<GymFormData>,
-      onSubmit: async (data, reset) => {
-        //const result = isEdit ? await updateGym(gym.id, data) : await createGym(data);
-        // if (!result.success) { toast.error(result.error); return; }
-        reset();
-        handleClose();
+      onSubmit: (data, reset) => {
+        const onSuccess = () => {
+          reset();
+          handleClose();
+        };
+        if (isEdit) {
+          updateGym.mutate({ id: gym.id, data }, { onSuccess });
+          return;
+        }
+        createGym.mutate(data, { onSuccess });
       },
     });
+
+  const isSaving = loading || createGym.isPending || updateGym.isPending;
 
   const infoForm = (
     <div className="flex flex-col gap-1 mt-1">
@@ -100,32 +104,20 @@ const GymsDialog = ({ gym }: GymsDialogProps) => {
         type="tel"
       />
 
-      <SelectFieldApiData
-        name="owner_id"
-        label={t("fields.owner")}
-        icon={User}
-        value={formData.owner_id}
-        onValueChange={handleToggle("owner_id")}
-        error={errors.owner_id}
-        showSearch
-        containerClassName="mt-1"
-        queryApi={API.gyms.ownerOptions}
-      />
-
       <div className="flex gap-2 justify-end mt-4">
         <Button
           variant="outline"
-          isLoading={loading || isUploading}
+          isLoading={isSaving || isUploading}
           onClick={handleClose}
         >
           {t("cancel")}
         </Button>
         <Button
           variant="accent"
-          isLoading={loading || isUploading}
+          isLoading={isSaving || isUploading}
           onClick={handleSubmit}
         >
-          {loading ? t("saving") : isEdit ? t("saveChanges") : t("create")}
+          {isSaving ? t("saving") : isEdit ? t("saveChanges") : t("create")}
         </Button>
       </div>
     </div>

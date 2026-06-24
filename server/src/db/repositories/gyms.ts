@@ -114,11 +114,11 @@ export interface GymInput {
   logo_url?: string;
 }
 
-export async function createGym(input: GymInput, ownerId: string): Promise<string> {
+export async function createGym(input: GymInput): Promise<string> {
   const row = await queryOne<{ id: string }>(
-    `INSERT INTO gyms (name, address, phone, logo_url, owner_id)
-     VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-    [input.name, input.address || null, input.phone || null, input.logo_url || null, ownerId]
+    `INSERT INTO gyms (name, address, phone, logo_url)
+     VALUES ($1, $2, $3, $4) RETURNING id`,
+    [input.name, input.address || null, input.phone || null, input.logo_url || null]
   );
   return row!.id;
 }

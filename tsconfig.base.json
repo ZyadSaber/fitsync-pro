@@ -14,7 +14,8 @@
     "verbatimModuleSyntax": false,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@dashboard/*": ["./apps/dashboard/src/*"]
     }
   }
 }

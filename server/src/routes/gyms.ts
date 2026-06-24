@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { GYM } from "@/constants/apiRoutes";
-import { gymSchema, billingStatusSchema } from "@/validations/gymSchema";
+import { billingStatusSchema } from "@/validations/gymSchema";
 import { requireAuth, requireSuperAdmin } from "../auth/middleware.js";
 import { asyncHandler, ok, parseBody, queryParams } from "../lib/apiResult.js";
 import * as repo from "../db/repositories/gyms.js";
@@ -26,35 +26,6 @@ gymsRouter.get(
 gymsRouter.get(
   GYM.ownerOptions,
   asyncHandler(async (_req, res) => ok(res, await repo.listGymOwnerOptions()))
-);
-
-// POST /api/gyms
-gymsRouter.post(
-  GYM.root,
-  asyncHandler(async (req, res) => {
-    const data = parseBody(gymSchema, req.body);
-    const id = await repo.createGym(data, req.user!.id);
-    return ok(res, { id }, 201);
-  })
-);
-
-// PUT /api/gyms/:id
-gymsRouter.put(
-  GYM.byId(":id"),
-  asyncHandler(async (req, res) => {
-    const data = parseBody(gymSchema, req.body);
-    await repo.updateGym(req.params.id, data);
-    return ok(res, { id: req.params.id });
-  })
-);
-
-// DELETE /api/gyms/:id
-gymsRouter.delete(
-  GYM.byId(":id"),
-  asyncHandler(async (req, res) => {
-    await repo.deleteGym(req.params.id);
-    return ok(res, { id: req.params.id });
-  })
 );
 
 // GET /api/gyms/:id/subscription

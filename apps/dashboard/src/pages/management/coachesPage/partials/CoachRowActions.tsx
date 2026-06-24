@@ -7,19 +7,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import GymsDialog from "./GymsDialog";
+import CoachEditDialog from "./CoachEditDialog";
 import DeleteDialog from "@/components/shared/delete-dialog";
-import { useGymsMutations } from "../gyms_mutations";
+import { useCoachesMutations } from "../coaches_mutations";
 import { useTranslation } from "react-i18next";
-import type { GymListItem } from "@/types/gyms";
+import type { CoachListItem } from "@/types/coaches";
 
-interface GymRowActionsProps {
-  gym: GymListItem;
+interface CoachRowActionsProps {
+  coach: CoachListItem;
 }
 
-export default function GymRowActions({ gym }: GymRowActionsProps) {
-  const { t } = useTranslation(undefined, { keyPrefix: "management.gyms" });
-  const { deleteGym } = useGymsMutations();
+export default function CoachRowActions({ coach }: CoachRowActionsProps) {
+  const { t } = useTranslation(undefined, { keyPrefix: "management.coaches" });
+  const { deleteCoach } = useCoachesMutations();
 
   return (
     <DropdownMenu>
@@ -34,7 +34,7 @@ export default function GymRowActions({ gym }: GymRowActionsProps) {
           className="focus:bg-hairline2 focus:text-ink cursor-pointer"
           onSelect={(e) => e.preventDefault()}
         >
-          <GymsDialog gym={gym} />
+          <CoachEditDialog coach={coach} />
         </DropdownMenuItem>
         <DropdownMenuSeparator className="bg-[var(--hairline)]" />
         <DropdownMenuItem
@@ -43,7 +43,7 @@ export default function GymRowActions({ gym }: GymRowActionsProps) {
         >
           <DeleteDialog
             deleteText={t("actions.delete")}
-            deleteAction={() => deleteGym(gym.id)}
+            deleteAction={() => deleteCoach(coach.id)}
           />
         </DropdownMenuItem>
       </DropdownMenuContent>
