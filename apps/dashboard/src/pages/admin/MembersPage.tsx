@@ -1,10 +1,8 @@
-"use client";
-
 import { useState } from "react";
 import Icon from "@/components/ui/Icon";
 import { Avatar, AvatarFallback } from "@/components/ui/Avatar";
 import StatusBadge from "@/components/ui/StatusBadge";
-import HeaderContent from "@/components/layout/Topbar";
+import HeaderContent from "../../layout/HeaderContent";
 
 type Status = "active" | "frozen" | "expired" | "pending";
 
@@ -37,9 +35,10 @@ export default function MemberListPage() {
 
   return (
     <>
-      {/* <HeaderContent
+      <HeaderContent
         title="Members"
         subtitle={`${rows.length} of ${ALL_MEMBERS.length} members`}
+        noSearch
         actions={
           <>
             <button className="fs-btn ghost">
@@ -52,7 +51,7 @@ export default function MemberListPage() {
             </button>
           </>
         }
-      /> */}
+      />
 
       <div className="flex flex-col gap-4 p-4 md:p-7">
 

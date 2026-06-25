@@ -84,6 +84,8 @@ export const ROLE_HOME: Record<AuthRole, string> = {
 // A section's nav items are therefore CONFIG[SECTION_ROLE[section]].items.
 export const SECTION_ROLE = {
   management: "superadmin",
+  admin: "admin",
+  coach: "coach",
 } satisfies Record<string, Role>;
 
 export type SectionKey = keyof typeof SECTION_ROLE;

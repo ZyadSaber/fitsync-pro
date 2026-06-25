@@ -6,6 +6,10 @@ import CoachesPage from "./pages/management/coachesPage";
 import SubscriptionsPage from "./pages/management/subscriptionsPage";
 import ActivityPage from "./pages/management/ActivityPage";
 import ManagementOverviewPage from "./pages/management/ManagementOverviewPage";
+import AdminDashboard from "./pages/admin";
+import AdminMembersPage from "./pages/admin/MembersPage";
+import CoachDashboard from "./pages/coach";
+import CoachExercisesPage from "./pages/coach/ExercisesPage";
 import Placeholder from "./pages/Placeholder";
 
 export default function App() {
@@ -31,17 +35,23 @@ export default function App() {
 
       {/* Role homes — ported incrementally */}
       <Route
-        path="admin/*"
+        path="admin"
         element={
           <DashboardShell section="admin" />
         }
-      />
+      >
+        <Route index element={<AdminDashboard />} />
+        <Route path="members" element={<AdminMembersPage />} />
+      </Route>
       <Route
-        path="coach/*"
+        path="coach"
         element={
           <DashboardShell section="coach" />
         }
-      />
+      >
+        <Route index element={<CoachDashboard />} />
+        <Route path="exercises" element={<CoachExercisesPage />} />
+      </Route>
       <Route
         path="member/*"
         element={

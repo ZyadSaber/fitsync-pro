@@ -94,7 +94,12 @@
       "PowerShell(npx tsx server/src/db/apply-one.ts invitations.sql)",
       "PowerShell(npx tsx server/src/db/verify-inv.ts)",
       "Bash(rm \"components/management/activity/ActivityFilters.tsx\")",
-      "Bash(rmdir \"components/management/activity\")"
+      "Bash(rmdir \"components/management/activity\")",
+      "Bash(find . -path ./node_modules -prune -o -name 'getTranslations*' -print)",
+      "Bash(ls i18n/lib)",
+      "Bash(ls apps/dashboard/src/lib/)",
+      "Bash(find . -path ./node_modules -prune -o -name '*.json' -path '*i18n*' -print)",
+      "Bash(find . -path ./node_modules -prune -o -name '*.json' -path '*messages*' -print)"
     ]
   }
 }

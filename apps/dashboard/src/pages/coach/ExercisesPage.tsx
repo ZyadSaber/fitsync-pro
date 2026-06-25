@@ -1,9 +1,7 @@
-"use client";
-
 import { useState } from "react";
 import Icon from "@/components/ui/Icon";
 import ExerciseCard from "@/components/ui/ExerciseCard";
-import HeaderContent from "@/components/layout/Topbar";
+import HeaderContent from "../../layout/HeaderContent";
 
 const EXERCISES = [
   { name: "Barbell back squat",    muscles: ["Quads", "Glutes"],   difficulty: "Intermediate", equip: "Barbell"    },
@@ -40,6 +38,7 @@ export default function ExerciseLibraryPage() {
       <HeaderContent
         title="Exercise library"
         subtitle="12 exercises · private to your account"
+        noSearch
         actions={
           <button className="fs-btn accent">
             <Icon name="plus" size={13} color="#fff" />

@@ -1,11 +1,8 @@
-"use client";
-
 import { useState } from "react";
 import Icon from "@/components/ui/Icon";
 import MetricCard from "@/components/ui/MetricCard";
 import ClientCard from "@/components/ui/ClientCard";
-import HeaderContent from "@/components/layout/Topbar";
-import EmptyState from "@/components/layout/EmptyState";
+import HeaderContent from "../../layout/HeaderContent";
 
 const CLIENTS = [
   { name: "Ahmed Hassan",   plan: "Hypertrophy 12W", week: 4,  compliance: 86, lastSeen: "today, 6:42 AM",  weight: [82.4,82.1,81.8,81.2,80.9,80.5,80.1], online: false, flag: false },
@@ -35,6 +32,7 @@ export default function CoachDashboardPage() {
       <HeaderContent
         title="Coach dashboard"
         subtitle="8 clients · 6 active this week"
+        noSearch
         actions={
           <button className="fs-btn accent">
             <Icon name="plus" size={13} color="#fff" />
