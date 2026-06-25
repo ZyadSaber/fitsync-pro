@@ -1,7 +1,7 @@
 # FitSync Pro — Dev TODO List
 > **Human + Claude Code collaboration tracker**  
-> Stack: Next.js 15 · Supabase · Tailwind CSS · shadcn/ui  
-> Last updated: May 2026
+> Stack: **Vite (SSR marketing + SPA dashboard) · Express REST API · `pg` raw SQL · custom JWT auth · react-router v7 · react-i18next · TanStack Query · Tailwind v4**  
+> Last updated: June 2026
 
 ---
 
@@ -12,7 +12,34 @@
 - 🧠 = Claude Code handles this (code generation, schema, logic)
 - 👤 = You handle this (accounts, keys, real data, decisions)
 - 🤝 = Both together
-- ❌ = Rejected or chang in plan
+- ❌ = Rejected or change in plan
+
+---
+
+## 🚚 Platform Migration — Next.js 16 → Vite + Express
+
+> The app is being re-platformed off Next.js onto a Vite SSR marketing app
+> (`apps/marketing`), a Vite SPA dashboard (`apps/dashboard`), and an Express
+> REST API (`server/`) with raw SQL via `pg` and custom JWT auth. Next is
+> uninstalled; the legacy `app/[locale]/**` tree is inert reference material kept
+> only for porting the remaining dashboard slices.
+
+### Infrastructure & tooling
+
+- ✅ 🧠 Workspace + tooling (bun, Vite, tsx) — apps/marketing, apps/dashboard, server/
+- ✅ 🧠 Express core: `pg` pool, JWT issue/refresh, `requireAuth`/`requireRole`/`requireSuperAdmin`
+- ✅ 🧠 Custom auth: `user_credentials` (bcrypt), `POST /api/auth/sign-in` (Bearer access + httpOnly refresh cookie), single-retry refresh in `lib/api.ts`
+- ✅ 🧠 SQL moved under `server/src/db/SQL/` (`full_schema.sql`, `views.sql`, `seed.sql`, ordered `migrations/*.sql` incl. `custom_auth.sql`)
+- ✅ 🧠 REST repositories + routers: `/api/auth`, `/api/gyms`, `/api/coaches`, `/api/subscriptions`, `/api/admin/dashboard`, `/api/activity`
+- ✅ 🧠 Marketing SSR app renders with React 19 native `<title>`/`<meta>`
+- ✅ 🧠 Dashboard SPA foundation: react-router (`basename="/application"`), react-i18next (locale in localStorage + `fs_locale` cookie, no URL prefix), auth guards, compat shims (`next/link`, `next/cache`, `next/headers`, `@/i18n/navigation`)
+- ✅ 🧠 Server typechecks (`typecheck:server`); both apps build
+- ⬜ 🤝 Run `db:migrate` + `db:seed` against a real `DATABASE_URL` to exercise the full auth + data flow end-to-end
+
+### Dashboard page ports (follow the Gyms reference slice)
+
+- ⬜ 🧠 Port remaining `app/[locale]/**` pages into react-router routes (useQuery/useMutation against REST + shimmed components)
+- ⬜ 🧠 Delete the legacy Next.js files (`app/`, `middleware.ts`, `services/`, `lib/supabase/`, `i18n/routing.ts`) once their slices are ported
 
 ---
 
@@ -25,27 +52,31 @@
 - ✅ 🧠 Add `is_super_admin` boolean column to `profiles` table (default `false`, not exposed via RLS to regular users)
 - ✅ 🧠 Create `platform_subscriptions` table — `id`, `gym_id`, `plan_name` (starter/pro/enterprise), `price_egp`, `billing_cycle` (monthly/yearly), `status` (active/suspended/cancelled), `started_at`, `next_billing_at`, `notes`
 - ✅ 🧠 Create `platform_activity_log` table — `id`, `gym_id`, `event_type` (login, member_add, checkin, plan_change…), `actor_id`, `metadata jsonb`, `created_at`
-- ✅ 🧠 RLS: super admin rows are readable only when `is_super_admin = true`; no gym-scoped policy applies
+- ✅ 🧠 Super-admin authorization now enforced in Express (`requireSuperAdmin`) — RLS no longer relied upon
 
 ---
 
-### Management Portal — `/management`
+### Management Portal — `/application/management` (super-admin gated, wired end-to-end on Vite SPA)
 
-- ✅ 🧠 Middleware guard — redirect anyone without `is_super_admin` away from `/management/*`
-- ✅ 🧠 `/management` — Platform dashboard: total gyms, total members, MRR (EGP), active today, churn this month
-- ✅ 🧠 `/management/gyms` — Gyms table: name, address, plan tier, member count, MRR, last activity, subscription status badge; search + filter by plan/status
-- ✅ 🧠 `/management/gyms/new` — Create gym dialog (name, address, phone, logo URL) via `GymsDialog` embedded in the list page
-- ✅ 🧠 `GymsDialog` with tabs: **View** (subscription history, member count, coach list, recent check-ins, activity log) · **Edit** (name, address, phone, logo URL)
-- ✅ 🧠 `/management/subscriptions` — All subscriptions table: gym, plan, price, next billing date, status; bulk filter by status
-- ✅ 🧠 `/management/activity` — Platform-wide activity log: who did what at which gym, filterable by gym / event type / date range
-- ✅ 🧠 `/management/coaches` — All independent online coaches: name, client count, last login, subscription status
+> Auth gate is enforced in Express (`requireSuperAdmin`) on the REST endpoints,
+> not middleware. Each page is a react-router route using TanStack Query against
+> the REST API. Gyms is the reference slice (wired with REST + `pg`).
+
+- ✅ 🧠 Super-admin gate on `/management/*` (Express `requireSuperAdmin`; section guard on `DashboardShell`)
+- ✅ 🧠 `management` (index) — `ManagementOverviewPage`: platform metrics via `/api/admin/dashboard`
+- ✅ 🧠 `management/gyms` — Gyms table wired end-to-end (REST + `pg`): list, search, filter, create/edit via `GymsDialog`, `GymRowActions`, mutations in `gyms_mutations.ts`
+- ✅ 🧠 `GymsDialog` + tabs — `GymSubscriptionTab`, `GymBillingTab` (under `gyms/partials/`)
+- ✅ 🧠 `management/coaches` — `coachesPage` wired (list + `coaches_mutations.ts` + partials)
+- ✅ 🧠 `management/subscriptions` — `SubscriptionsPage`: all subscriptions, filter by status
+- ✅ 🧠 `management/activity` — `ActivityPage`: platform-wide activity log
+- ⬜ 🧠 `management/quotas` — still a `<Placeholder>`; needs porting + REST endpoint
 
 ---
 
 ### Management Success Checklist
 
-- ⬜ 🧠 Zero gym can see another gym's management data (RLS audit)
-- ⬜ 👤 At least one FitSync staff account has `is_super_admin = true` in production
+- ⬜ 🧠 Zero gym can see another gym's management data (Express authorization audit)
+- ✅ 👤 Seeded `super@fitsync.test` super-admin account (`is_super_admin = true`)
 - ⬜ 🤝 Subscription statuses sync with Paymob webhooks (Phase 3)
 
 ---
@@ -54,14 +85,14 @@
 
 ### Foundation & Setup
 
-- ✅ 🧠 Scaffold Next.js 15 app with TypeScript + Tailwind + shadcn/ui
-- ✅ 👤 Create Supabase project at supabase.com
-- ⬜ 👤 Enable Phone OTP in Supabase Auth dashboard
-- ✅ 🧠 Run full database schema SQL in Supabase SQL editor
-- ✅ 🧠 Add all RLS policies (gyms, profiles, clients, exercises, checkins, photos)
-- ✅ 🧠 Set up Supabase browser + server clients (`lib/supabase/client.ts` & `server.ts`)
-- ✅ 👤 Fill in `.env.local` with Supabase URL + anon key + service role key
-- ✅ 🧠 Build `/middleware.ts` — role detection → redirect to `/admin`, `/coach`, or `/app`
+- ✅ 🧠 Scaffold Vite SSR marketing + Vite SPA dashboard + Express server (migrated off Next.js)
+- ✅ 👤 Create Supabase project (Postgres used as the DB; auth is now custom JWT)
+- ❌ 👤 Phone OTP in Supabase Auth — replaced by custom JWT auth (`user_credentials`)
+- ✅ 🧠 Run `full_schema.sql` + `views.sql` + ordered `migrations/*.sql` (incl. `custom_auth.sql`)
+- ❌ 🧠 RLS policies — superseded by Express authorization (`requireAuth`/`requireRole`/`requireSuperAdmin`)
+- ✅ 🧠 `pg` pool + raw-SQL repositories (`server/src/db/repositories/*`), reusing Postgres views
+- ✅ 👤 Fill in `.env.local` — `DATABASE_URL` (required), `JWT_SECRET`, `REFRESH_TOKEN_SECRET`, token TTLs
+- ✅ 🧠 Role-based routing via react-router + auth guards (`admin`/`coach`/`member`/`client` shells)
 
 ---
 

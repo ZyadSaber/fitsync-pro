@@ -16,6 +16,12 @@ gymsRouter.get(
   )
 );
 
+// GET /api/gyms/gym-options
+gymsRouter.get(
+  GYM.gymOptions,
+  asyncHandler(async (_req, res) => ok(res, await repo.listGymOptions()))
+);
+
 // GET /api/gyms/plan-options
 gymsRouter.get(
   GYM.planOptions,

@@ -26,11 +26,6 @@ import type { BillingRecordListItem } from "@/types/subscriptions";
 import type { SelectOptions } from "@/types/ui";
 import { toast } from "sonner";
 
-const BILLING_OPTIONS: SelectOptions[] = [
-  { key: "monthly", label: "Monthly" },
-  { key: "yearly", label: "Yearly" },
-];
-
 const STATUS_OPTIONS: SelectOptions[] = [
   { key: "paid", label: "Paid" },
   { key: "pending", label: "Open / Pending" },
@@ -45,10 +40,8 @@ const EMPTY: InvoiceFormData = {
   gym_id: "",
   subscription_id: "",
   amount_egp: "",
-  billing_cycle: "monthly",
   period_start: "",
   period_end: "",
-  next_billing_at: "",
   status: "pending",
   paid_at: "",
   notes: "",
@@ -70,10 +63,8 @@ export default function InvoiceDialog({ gyms, record }: Props) {
       gym_id: record.gym_id ?? "",
       subscription_id: record.subscription_id,
       amount_egp: String(record.amount_egp),
-      billing_cycle: record.billing_cycle,
       period_start: toDateInput(record.period_start),
       period_end: toDateInput(record.period_end),
-      next_billing_at: toDateInput(record.next_billing_at),
       status: record.status,
       paid_at: toDateInput(record.paid_at),
       notes: record.notes ?? "",

@@ -84,6 +84,14 @@ export async function listGyms({ search, plan, status }: GymListFilters = {}): P
   }));
 }
 
+// Lightweight {key,label} gym list for filter/select dropdowns.
+export async function listGymOptions() {
+  const { rows } = await query<{ id: string; name: string }>(
+    `SELECT id, name FROM gym_list ORDER BY name`
+  );
+  return rows.map((g) => ({ key: g.id, label: g.name }));
+}
+
 export async function listActiveSubscriptionPlanOptions() {
   const { rows } = await query<{ name: string }>(
     `SELECT name FROM subscription_plans WHERE is_active = true ORDER BY name`

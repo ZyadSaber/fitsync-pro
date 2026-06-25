@@ -37,6 +37,7 @@ export const AUTH = {
 
 export const GYM = {
   root: "/",
+  gymOptions: "/gym-options",
   planOptions: "/plan-options",
   ownerOptions: "/owner-options",
   subscription: (id: string) => `/${id}/subscription`,
@@ -97,6 +98,7 @@ export const API = {
       return qs ? `${API_BASE.gyms}?${qs}` : API_BASE.gyms;
     },
     create: API_BASE.gymsMutations + GYM_MUTATIONS.root,
+    gymOptions: API_BASE.gyms + GYM.gymOptions,
     planOptions: API_BASE.gyms + GYM.planOptions,
     ownerOptions: API_BASE.gyms + GYM.ownerOptions,
     byId: (id: string) => API_BASE.gymsMutations + GYM_MUTATIONS.byId(id),
@@ -135,5 +137,16 @@ export const API = {
     assignPlan: API_BASE.subscriptions + SUBSCRIPTION.assignPlan,
   },
   admin: { dashboard: API_BASE.admin + ADMIN.dashboard },
-  activity: { root: API_BASE.activity },
+  activity: {
+    list: (filters?: { gym?: string; coach?: string; event?: string; from?: string; to?: string }) => {
+      const params = new URLSearchParams();
+      if (filters?.gym) params.set("gym", filters.gym);
+      if (filters?.coach) params.set("coach", filters.coach);
+      if (filters?.event) params.set("event", filters.event);
+      if (filters?.from) params.set("from", filters.from);
+      if (filters?.to) params.set("to", filters.to);
+      const qs = params.toString();
+      return qs ? `${API_BASE.activity}?${qs}` : API_BASE.activity;
+    },
+  },
 } as const;

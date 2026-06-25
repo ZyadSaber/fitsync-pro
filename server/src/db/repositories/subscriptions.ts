@@ -1,6 +1,6 @@
 import { query, queryOne, withTransaction } from "../pool.js";
 import type { PlanFormData, InvoiceFormData, AssignPlanFormData, InstallmentRow } from "@/validations/subscriptionSchema";
-import type { TenantType } from "@/types/subscriptions";
+import type { TenantType, BillingRecordListItem } from "@/types/subscriptions";
 
 // ── Plan stats ───────────────────────────────────────────────────────────────
 export async function listPlanStats() {
@@ -51,23 +51,27 @@ export async function deletePlan(id: string): Promise<void> {
 }
 
 // ── Billing records (invoice list) ───────────────────────────────────────────
-export async function listBillingRecords(filter?: { status?: string; planType?: string }) {
+export interface BillingRecordFilter {
+  status?: string;
+  planType?: string;
+}
+
+export async function listBillingRecords(filter: BillingRecordFilter = {}) {
   const conditions: string[] = [];
   const params: unknown[] = [];
 
-  if (filter?.status && filter.status !== "all") {
-    params.push(filter.status);
-    conditions.push(`r.status = $${params.length}`);
+  if (filter.status && filter.status !== "all") {
+    conditions.push(`r.status = $${params.push(filter.status)}`);
   }
   // Exactly one of (gym_id, coach_id) is set; filter by the other being NULL.
-  if (filter?.planType === "gym") conditions.push(`r.coach_id IS NULL`);
-  else if (filter?.planType === "online_coach") conditions.push(`r.gym_id IS NULL`);
+  if (filter.planType === "gym") conditions.push(`r.coach_id IS NULL`);
+  else if (filter.planType === "online_coach") conditions.push(`r.gym_id IS NULL`);
 
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
-  const { rows } = await query(
-    `SELECT r.id, r.subscription_id, r.gym_id, r.coach_id, r.amount_egp, r.billing_cycle,
-            r.period_start, r.period_end, r.next_billing_at, r.status, r.paid_at, r.notes,
+  const { rows } = await query<BillingRecordListItem>(
+    `SELECT r.id, r.subscription_id, r.gym_id, r.coach_id, r.amount_egp,
+            r.period_start, r.period_end, r.status, r.paid_at, r.notes,
             r.created_at,
             COALESCE(g.name, p.full_name, 'Unknown') AS tenant_name,
             CASE WHEN r.gym_id IS NOT NULL THEN 'gym' ELSE 'online_coach' END AS tenant_type
@@ -101,17 +105,15 @@ export async function getBillingStatusCounts() {
 export async function createCustomBillingRecord(data: InvoiceFormData): Promise<string> {
   const row = await queryOne<{ id: string }>(
     `INSERT INTO platform_billing_records
-       (subscription_id, gym_id, amount_egp, billing_cycle, period_start, period_end,
-        next_billing_at, status, paid_at, notes)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+       (subscription_id, gym_id, amount_egp, period_start, period_end,
+        status, paid_at, notes)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
     [
       data.subscription_id,
       data.gym_id,
       parseFloat(data.amount_egp),
-      data.billing_cycle,
       data.period_start,
       data.period_end,
-      data.next_billing_at || null,
       data.status,
       data.paid_at || null,
       data.notes || null,
@@ -123,16 +125,14 @@ export async function createCustomBillingRecord(data: InvoiceFormData): Promise<
 export async function updateBillingRecord(id: string, data: InvoiceFormData): Promise<void> {
   await query(
     `UPDATE platform_billing_records SET
-       amount_egp = $2, billing_cycle = $3, period_start = $4, period_end = $5,
-       next_billing_at = $6, status = $7, paid_at = $8, notes = $9
+       amount_egp = $2, period_start = $3, period_end = $4,
+       status = $5, paid_at = $6, notes = $7
      WHERE id = $1`,
     [
       id,
       parseFloat(data.amount_egp),
-      data.billing_cycle,
       data.period_start,
       data.period_end,
-      data.next_billing_at || null,
       data.status,
       data.paid_at || null,
       data.notes || null,
@@ -267,12 +267,12 @@ export async function assignPlanToTenant(
       for (const inst of installments) {
         await client.query(
           `INSERT INTO platform_billing_records
-             (subscription_id, gym_id, coach_id, amount_egp, billing_cycle,
-              period_start, period_end, next_billing_at, status, notes)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',$9)`,
+             (subscription_id, gym_id, coach_id, amount_egp,
+              period_start, period_end, status, notes)
+           VALUES ($1,$2,$3,$4,$5,$6,'pending',$7)`,
           [
             subscriptionId, ownerGymId, ownerCoachId, parseFloat(inst.amount),
-            data.billing_cycle, data.started_at, periodEnd, inst.due_date, inst.label || null,
+            data.started_at, periodEnd, inst.label || null,
           ]
         );
       }
