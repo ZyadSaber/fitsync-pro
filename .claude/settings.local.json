@@ -99,7 +99,9 @@
       "Bash(ls i18n/lib)",
       "Bash(ls apps/dashboard/src/lib/)",
       "Bash(find . -path ./node_modules -prune -o -name '*.json' -path '*i18n*' -print)",
-      "Bash(find . -path ./node_modules -prune -o -name '*.json' -path '*messages*' -print)"
+      "Bash(find . -path ./node_modules -prune -o -name '*.json' -path '*messages*' -print)",
+      "Bash(echo \"exit: $?\")",
+      "PowerShell(bunx tsc -p server/tsconfig.json --noEmit)"
     ]
   }
 }

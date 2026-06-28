@@ -23,6 +23,8 @@ export const API_BASE = {
   subscriptions: "/subscriptions",
   admin: "/admin",
   activity: "/activity",
+  users: "/users",
+  invitations: "/invitations",
 } as const;
 
 // ── Relative-to-mount route patterns (registered by the Express routers) ───────
@@ -38,7 +40,6 @@ export const AUTH = {
 export const GYM = {
   root: "/",
   gymOptions: "/gym-options",
-  planOptions: "/plan-options",
   ownerOptions: "/owner-options",
   subscription: (id: string) => `/${id}/subscription`,
   billing: (id: string) => `/${id}/billing`,
@@ -63,6 +64,7 @@ export const COACH = {
 } as const;
 
 export const SUBSCRIPTION = {
+  planOptions: "/plan-options",
   plans: "/plans",
   planById: (id: string) => `/plans/${id}`,
   billing: "/billing",
@@ -77,6 +79,17 @@ export const SUBSCRIPTION = {
 
 export const ADMIN = { dashboard: "/dashboard" } as const;
 export const ACTIVITY = { root: "/" } as const;
+
+export const USER = {
+  root: "/",
+  byId: (id: string) => `/${id}`,
+} as const;
+
+export const INVITATION = {
+  root: "/",
+  byId: (id: string) => `/${id}`,
+  resend: (id: string) => `/${id}/resend`,
+} as const;
 
 // ── Client-facing FULL paths (relative to /api, prepended by lib/api.ts) ───────
 export const API = {
@@ -99,7 +112,6 @@ export const API = {
     },
     create: API_BASE.gymsMutations + GYM_MUTATIONS.root,
     gymOptions: API_BASE.gyms + GYM.gymOptions,
-    planOptions: API_BASE.gyms + GYM.planOptions,
     ownerOptions: API_BASE.gyms + GYM.ownerOptions,
     byId: (id: string) => API_BASE.gymsMutations + GYM_MUTATIONS.byId(id),
     subscription: (id: string) => API_BASE.gyms + GYM.subscription(id),
@@ -125,6 +137,7 @@ export const API = {
   },
   subscriptions: {
     plans: API_BASE.subscriptions + SUBSCRIPTION.plans,
+    planOptions: API_BASE.subscriptions + SUBSCRIPTION.planOptions,
     planById: (id: string) => API_BASE.subscriptions + SUBSCRIPTION.planById(id),
     billing: API_BASE.subscriptions + SUBSCRIPTION.billing,
     billingCounts: API_BASE.subscriptions + SUBSCRIPTION.billingCounts,
@@ -137,6 +150,31 @@ export const API = {
     assignPlan: API_BASE.subscriptions + SUBSCRIPTION.assignPlan,
   },
   admin: { dashboard: API_BASE.admin + ADMIN.dashboard },
+  users: {
+    list: (filters?: { search?: string; type?: string; gym?: string }) => {
+      const params = new URLSearchParams();
+      if (filters?.search) params.set("search", filters.search);
+      if (filters?.type) params.set("type", filters.type);
+      if (filters?.gym) params.set("gym", filters.gym);
+      const qs = params.toString();
+      return qs ? `${API_BASE.users}?${qs}` : API_BASE.users;
+    },
+    create: API_BASE.users + USER.root,
+    byId: (id: string) => API_BASE.users + USER.byId(id),
+  },
+  invitations: {
+    list: (filters?: { type?: string; gym?: string; status?: string }) => {
+      const params = new URLSearchParams();
+      if (filters?.type) params.set("type", filters.type);
+      if (filters?.gym) params.set("gym", filters.gym);
+      if (filters?.status) params.set("status", filters.status);
+      const qs = params.toString();
+      return qs ? `${API_BASE.invitations}?${qs}` : API_BASE.invitations;
+    },
+    create: API_BASE.invitations + INVITATION.root,
+    byId: (id: string) => API_BASE.invitations + INVITATION.byId(id),
+    resend: (id: string) => API_BASE.invitations + INVITATION.resend(id),
+  },
   activity: {
     list: (filters?: { gym?: string; coach?: string; event?: string; from?: string; to?: string }) => {
       const params = new URLSearchParams();

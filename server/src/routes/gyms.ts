@@ -22,12 +22,6 @@ gymsRouter.get(
   asyncHandler(async (_req, res) => ok(res, await repo.listGymOptions()))
 );
 
-// GET /api/gyms/plan-options
-gymsRouter.get(
-  GYM.planOptions,
-  asyncHandler(async (_req, res) => ok(res, await repo.listActiveSubscriptionPlanOptions()))
-);
-
 // GET /api/gyms/owner-options
 gymsRouter.get(
   GYM.ownerOptions,

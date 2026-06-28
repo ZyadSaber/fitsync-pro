@@ -24,6 +24,14 @@ function planValues(data: PlanFormData) {
   ];
 }
 
+// ── Plans Options ────────────────────────────────────────────────────────────────
+export async function listActiveSubscriptionPlanOptions() {
+  const { rows } = await query(
+    `SELECT id AS key, name AS label FROM subscription_plans WHERE is_active = true ORDER BY name`
+  );
+  return rows;
+}
+
 export async function createPlan(data: PlanFormData): Promise<string> {
   const row = await queryOne<{ id: string }>(
     `INSERT INTO subscription_plans

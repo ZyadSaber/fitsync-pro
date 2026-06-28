@@ -4,6 +4,7 @@ import DashboardShell from "./layout/DashboardShell";
 import GymsPage from "./pages/management/gyms";
 import CoachesPage from "./pages/management/coachesPage";
 import SubscriptionsPage from "./pages/management/subscriptionsPage";
+import InvitationsPage from "./pages/management/invitationsPage";
 import ActivityPage from "./pages/management/ActivityPage";
 import ManagementOverviewPage from "./pages/management/ManagementOverviewPage";
 import AdminDashboard from "./pages/admin";
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="gyms" element={<GymsPage />} />
         <Route path="coaches" element={<CoachesPage />} />
         <Route path="subscriptions" element={<SubscriptionsPage />} />
+        <Route path="invitations" element={<InvitationsPage />} />
         <Route path="activity" element={<ActivityPage />} />
         <Route path="quotas" element={<Placeholder title="Quotas" />} />
       </Route>

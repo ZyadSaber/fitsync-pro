@@ -1,39 +1,37 @@
 import { Router } from "express";
 import { SUBSCRIPTION } from "@/constants/apiRoutes";
-import {
-  planFormSchema,
-  invoiceFormSchema,
-  assignPlanSchema,
-  installmentRowSchema,
-} from "@/validations/subscriptionSchema";
 import type { TenantType } from "@/types/subscriptions";
 import { requireAuth, requireSuperAdmin } from "../auth/middleware.js";
-import { asyncHandler, badRequest, ok, parseBody } from "../lib/apiResult.js";
+import { asyncHandler, badRequest, ok, queryParams } from "../lib/apiResult.js";
 import * as repo from "../db/repositories/subscriptions.js";
 
 export const subscriptionsRouter = Router();
 subscriptionsRouter.use(requireAuth, requireSuperAdmin);
 
 // ── Plans ────────────────────────────────────────────────────────────────────
+// GET /api/subscriptions/plans
 subscriptionsRouter.get(SUBSCRIPTION.plans, asyncHandler(async (_req, res) => ok(res, await repo.listPlanStats())));
 
+// POST /api/subscriptions/plans
 subscriptionsRouter.post(
   SUBSCRIPTION.plans,
-  asyncHandler(async (req, res) => {
-    const data = parseBody(planFormSchema, req.body);
-    return ok(res, { id: await repo.createPlan(data) }, 201);
-  })
+  asyncHandler(async (req, res) => ok(res, { id: await repo.createPlan(req.body) }, 201))
 );
 
+// PUT /api/subscriptions/plans/:id
 subscriptionsRouter.put(
   SUBSCRIPTION.planById(":id"),
-  asyncHandler(async (req, res) => {
-    const data = parseBody(planFormSchema, req.body);
-    await repo.updatePlan(req.params.id, data);
-    return ok(res, { id: req.params.id });
-  })
+  asyncHandler(async (req, res) =>
+    ok(res, await repo.updatePlan(req.params.id, req.body))
+  )
 );
 
+subscriptionsRouter.get(
+  SUBSCRIPTION.planOptions,
+  asyncHandler(async (_req, res) => ok(res, await repo.listActiveSubscriptionPlanOptions()))
+);
+
+// DELETE /api/subscriptions/plans/:id
 subscriptionsRouter.delete(
   SUBSCRIPTION.planById(":id"),
   asyncHandler(async (req, res) => {
@@ -43,38 +41,34 @@ subscriptionsRouter.delete(
 );
 
 // ── Billing records ──────────────────────────────────────────────────────────
+// GET /api/subscriptions/billing?status=&planType=
 subscriptionsRouter.get(
   SUBSCRIPTION.billing,
-  asyncHandler(async (req, res) =>
-    ok(res, await repo.listBillingRecords({
-      status: req.query.status as string | undefined,
-      planType: req.query.planType as string | undefined,
-    }))
-  )
+  asyncHandler(async (req, res) => ok(res, await repo.listBillingRecords(queryParams(req, "status", "planType"))))
 );
 
+// GET /api/subscriptions/billing/counts
 subscriptionsRouter.get(
   SUBSCRIPTION.billingCounts,
   asyncHandler(async (_req, res) => ok(res, await repo.getBillingStatusCounts()))
 );
 
+// POST /api/subscriptions/billing
 subscriptionsRouter.post(
   SUBSCRIPTION.billing,
-  asyncHandler(async (req, res) => {
-    const data = parseBody(invoiceFormSchema, req.body);
-    return ok(res, { id: await repo.createCustomBillingRecord(data) }, 201);
-  })
+  asyncHandler(async (req, res) => ok(res, { id: await repo.createCustomBillingRecord(req.body) }, 201))
 );
 
+// PUT /api/subscriptions/billing/:id
 subscriptionsRouter.put(
   SUBSCRIPTION.billingById(":id"),
   asyncHandler(async (req, res) => {
-    const data = parseBody(invoiceFormSchema, req.body);
-    await repo.updateBillingRecord(req.params.id, data);
+    await repo.updateBillingRecord(req.params.id, req.body);
     return ok(res, { id: req.params.id });
   })
 );
 
+// POST /api/subscriptions/billing/:id/mark-paid
 subscriptionsRouter.post(
   SUBSCRIPTION.billingMarkPaid(":id"),
   asyncHandler(async (req, res) => {
@@ -83,6 +77,7 @@ subscriptionsRouter.post(
   })
 );
 
+// DELETE /api/subscriptions/billing/:id
 subscriptionsRouter.delete(
   SUBSCRIPTION.billingById(":id"),
   asyncHandler(async (req, res) => {
@@ -92,6 +87,7 @@ subscriptionsRouter.delete(
 );
 
 // ── Tenant assignment ────────────────────────────────────────────────────────
+// GET /api/subscriptions/tenant/:type/:id/assignment-state
 subscriptionsRouter.get(
   SUBSCRIPTION.assignmentState(":type", ":id"),
   asyncHandler(async (req, res) => {
@@ -100,6 +96,7 @@ subscriptionsRouter.get(
   })
 );
 
+// GET /api/subscriptions/coach-options
 subscriptionsRouter.get(
   SUBSCRIPTION.coachOptions,
   asyncHandler(async (_req, res) => ok(res, await repo.listCoachSelectOptions()))
@@ -115,11 +112,9 @@ subscriptionsRouter.get(
 subscriptionsRouter.post(
   SUBSCRIPTION.assignPlan,
   asyncHandler(async (req, res) => {
-    const data = parseBody(assignPlanSchema, req.body?.data);
-    const installments = (req.body?.installments ?? []) as unknown[];
+    const installments = req.body?.installments ?? [];
     if (!installments.length) throw badRequest("At least one payment installment is required");
-    const parsedInstallments = installments.map((row) => parseBody(installmentRowSchema, row));
-    const result = await repo.assignPlanToTenant(data, parsedInstallments);
+    const result = await repo.assignPlanToTenant(req.body?.data, installments);
     if (!result.ok) throw badRequest(result.error);
     return ok(res, { id: result.id }, 201);
   })

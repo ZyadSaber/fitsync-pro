@@ -11,6 +11,8 @@ import { coachesRouter } from "./routes/coaches.js";
 import { subscriptionsRouter } from "./routes/subscriptions.js";
 import { dashboardRouter } from "./routes/dashboard.js";
 import { activityRouter } from "./routes/activity.js";
+import { usersRouter } from "./routes/users.js";
+import { invitationsRouter } from "./routes/invitations.js";
 import { setupSsr } from "./ssr.js";
 
 async function createServer() {
@@ -29,6 +31,8 @@ async function createServer() {
   api.use(API_BASE.subscriptions, subscriptionsRouter);
   api.use(API_BASE.admin, dashboardRouter);
   api.use(API_BASE.activity, activityRouter);
+  api.use(API_BASE.users, usersRouter);
+  api.use(API_BASE.invitations, invitationsRouter);
   app.use(API_PREFIX, api);
 
   // ── Marketing SSR (apps/marketing) + dashboard SPA static ───────────────────

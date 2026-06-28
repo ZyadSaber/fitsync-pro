@@ -88,7 +88,7 @@ export default function GymsPage() {
                     <SelectFieldApiData
                         name="plan"
                         label={t("table.plan")}
-                        queryApi={API.gyms.planOptions}
+                        queryApi={API.subscriptions.planOptions}
                         value={plan}
                         onValueChange={handleToggle("plan")}
                         hideClear={false}

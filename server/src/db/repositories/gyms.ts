@@ -1,5 +1,6 @@
 import { query, queryOne } from "../pool.js";
 import type { PlatformSubscriptionDetails } from "@/types/gyms";
+import { format } from "date-fns";
 
 export interface GymListItem {
   id: string;
@@ -49,7 +50,7 @@ export async function listGyms({ search, plan, status }: GymListFilters = {}): P
   }
   if (plan) {
     params.push(plan);
-    conditions.push(`plan_name = $${params.length}`);
+    conditions.push(`plan_id = $${params.length}`);
   }
   if (search) {
     params.push(`%${search}%`);
@@ -61,8 +62,7 @@ export async function listGyms({ search, plan, status }: GymListFilters = {}): P
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
   const { rows } = await query<GymListRow>(
-    `SELECT id, name, address, phone, logo_url, created_at, plan_name, price_egp,
-            subscription_status, member_count, last_activity_at, member_limit, plan_id
+    `SELECT *
        FROM gym_list
        ${where}`,
     params
@@ -73,13 +73,13 @@ export async function listGyms({ search, plan, status }: GymListFilters = {}): P
     address: item.address ?? "",
     phone: item.phone ?? "",
     logo_url: item.logo_url ?? "",
-    joinedAt: item.created_at,
+    joinedAt: format(item.created_at, "yyyy-MM-dd HH:mm"),
     plan: item.plan_name ?? "",
     plan_id: item.plan_id ?? "",
     planPriceEgp: item.price_egp != null ? Number(item.price_egp) : "",
     status: item.subscription_status ?? "unknown",
     memberCount: Number(item.member_count ?? 0),
-    lastActivityAt: item.last_activity_at ?? "",
+    lastActivityAt: item.last_activity_at ? format(item.last_activity_at, "yyyy-MM-dd HH:mm") : "",
     member_limit: Number(item.member_limit ?? 0),
   }));
 }
@@ -87,16 +87,9 @@ export async function listGyms({ search, plan, status }: GymListFilters = {}): P
 // Lightweight {key,label} gym list for filter/select dropdowns.
 export async function listGymOptions() {
   const { rows } = await query<{ id: string; name: string }>(
-    `SELECT id, name FROM gym_list ORDER BY name`
+    `SELECT id AS key, name AS label FROM gym_list ORDER BY name`
   );
-  return rows.map((g) => ({ key: g.id, label: g.name }));
-}
-
-export async function listActiveSubscriptionPlanOptions() {
-  const { rows } = await query<{ name: string }>(
-    `SELECT name FROM subscription_plans WHERE is_active = true ORDER BY name`
-  );
-  return rows.map((p) => ({ key: p.name, label: p.name }));
+  return rows;
 }
 
 // Candidate gym owners for the create/edit dialog: non-super-admin gym/member

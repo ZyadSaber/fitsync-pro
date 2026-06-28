@@ -35,6 +35,7 @@ export const CONFIG: Record<Role, RoleConfig> = {
       { href: "/management/gyms", icon: "users", label: "Gyms" },
       { href: "/management/coaches", icon: "user", label: "Online coaches" },
       { href: "/management/subscriptions", icon: "card", label: "Subscriptions" },
+      { href: "/management/invitations", icon: "tag", label: "Invitations" },
       { href: "/management/activity", icon: "chart", label: "Activity" },
     ],
     brand: "FitSync HQ",

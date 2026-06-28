@@ -568,6 +568,89 @@
         "gym": "عضو جيم"
       }
     },
+    "invitations": {
+      "title": "الدعوات",
+      "subtitle": "{count} إجمالي · {pending} قيد الانتظار · {accepted} مقبولة",
+      "actions": {
+        "send": "إرسال دعوة",
+        "resend": "إعادة الإرسال",
+        "revoke": "إلغاء",
+        "copyLink": "نسخ رابط الدعوة",
+        "copied": "تم نسخ رابط الدعوة",
+        "exportCsv": "تصدير CSV"
+      },
+      "filters": {
+        "type": "النوع",
+        "status": "الحالة"
+      },
+      "kpi": {
+        "breakdown": "{accepted} مقبولة · {pending} قيد الانتظار"
+      },
+      "table": {
+        "type": "النوع",
+        "email": "البريد الإلكتروني",
+        "context": "السياق",
+        "token": "الرمز",
+        "status": "الحالة",
+        "sent": "أُرسلت",
+        "expires": "تنتهي",
+        "platformLevel": "على مستوى المنصة"
+      },
+      "types": {
+        "gym_owner": {
+          "label": "مالك نادٍ",
+          "desc": "يُنشئ نادياً وحساب مالك عند القبول"
+        },
+        "online_coach": {
+          "label": "مدرب أونلاين",
+          "desc": "يُنشئ حساب مدرب مستقل عند القبول"
+        },
+        "gym_coach": {
+          "label": "مدرب نادٍ",
+          "desc": "يُربط كمدرب بنادٍ قائم"
+        },
+        "gym_member": {
+          "label": "عضو نادٍ",
+          "desc": "يُربط كعضو بنادٍ قائم"
+        },
+        "coach_client": {
+          "label": "عميل مدرب",
+          "desc": "يُربط كعميل لمدرب أونلاين"
+        }
+      },
+      "status": {
+        "pending": "قيد الانتظار",
+        "used": "مقبولة",
+        "expired": "منتهية"
+      },
+      "dialog": {
+        "titleAdd": "إرسال دعوة",
+        "titleSent": "تم إرسال الدعوة",
+        "generatedUrl": "رابط الدعوة المُنشأ",
+        "copied": "تم النسخ",
+        "sentTo": "أُرسلت إلى {email}",
+        "expires": "تنتهي في {date}",
+        "fields": {
+          "type": "نوع الدعوة",
+          "email": "البريد الإلكتروني",
+          "gym": "النادي"
+        },
+        "placeholders": {
+          "email": "owner@gymname.eg",
+          "gym": "اختر نادياً"
+        },
+        "actions": {
+          "cancel": "إلغاء",
+          "sending": "جارٍ الإرسال…",
+          "copyLink": "نسخ رابط الدعوة",
+          "done": "تم"
+        },
+        "toast": {
+          "created": "تم إرسال الدعوة",
+          "resent": "تمت إعادة إرسال الدعوة"
+        }
+      }
+    },
     "activity": {
       "title": "سجل النشاط",
       "subtitle": "سجل تدقيق على مستوى المنصة — من فعل ماذا، وفي أي نادٍ",

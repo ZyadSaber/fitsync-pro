@@ -568,6 +568,89 @@
         "gym": "Gym member"
       }
     },
+    "invitations": {
+      "title": "Invitations",
+      "subtitle": "{count} total · {pending} pending · {accepted} accepted",
+      "actions": {
+        "send": "Send invitation",
+        "resend": "Resend",
+        "revoke": "Revoke",
+        "copyLink": "Copy invite link",
+        "copied": "Invite link copied",
+        "exportCsv": "Export CSV"
+      },
+      "filters": {
+        "type": "Type",
+        "status": "Status"
+      },
+      "kpi": {
+        "breakdown": "{accepted} accepted · {pending} pending"
+      },
+      "table": {
+        "type": "Type",
+        "email": "Email",
+        "context": "Context",
+        "token": "Token",
+        "status": "Status",
+        "sent": "Sent",
+        "expires": "Expires",
+        "platformLevel": "Platform-level"
+      },
+      "types": {
+        "gym_owner": {
+          "label": "Gym owner",
+          "desc": "Provisions a gym + owner account on accept"
+        },
+        "online_coach": {
+          "label": "Online coach",
+          "desc": "Provisions a standalone coach account on accept"
+        },
+        "gym_coach": {
+          "label": "Gym coach",
+          "desc": "Links as staff coach to an existing gym tenant"
+        },
+        "gym_member": {
+          "label": "Gym member",
+          "desc": "Links as a member to an existing gym tenant"
+        },
+        "coach_client": {
+          "label": "Coach client",
+          "desc": "Links as a client to an online coach"
+        }
+      },
+      "status": {
+        "pending": "Pending",
+        "used": "Accepted",
+        "expired": "Expired"
+      },
+      "dialog": {
+        "titleAdd": "Send invitation",
+        "titleSent": "Invitation sent",
+        "generatedUrl": "Generated invite URL",
+        "copied": "Copied",
+        "sentTo": "Sent to {email}",
+        "expires": "Expires {date}",
+        "fields": {
+          "type": "Invitation type",
+          "email": "Email address",
+          "gym": "Gym"
+        },
+        "placeholders": {
+          "email": "owner@gymname.eg",
+          "gym": "Select a gym"
+        },
+        "actions": {
+          "cancel": "Cancel",
+          "sending": "Sending…",
+          "copyLink": "Copy invite link",
+          "done": "Done"
+        },
+        "toast": {
+          "created": "Invitation sent",
+          "resent": "Invitation resent"
+        }
+      }
+    },
     "activity": {
       "title": "Activity log",
       "subtitle": "Platform-wide audit trail — who did what, at which gym",

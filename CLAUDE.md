@@ -28,16 +28,20 @@ Seeded accounts: `super@fitsync.test` (super admin), `gym@fitsync.test`, `coach@
 
 ## Architecture
 
-> **MIGRATION IN PROGRESS — Next.js 16 → Vite + Express.** The app is being
-> re-platformed off Next.js. The new stack is: a **Vite SSR marketing app**
-> (`apps/marketing`) for SEO, a **Vite SPA dashboard** (`apps/dashboard`) for the
-> authenticated product, and an **Express** server (`server/`) exposing a REST API
-> (raw SQL via `pg`) + custom JWT auth + hosting the SSR/SPA. Routing uses
-> `react-router-dom` v7; i18n uses `react-i18next`. The legacy Next.js source
-> (`app/`, `middleware.ts`, `services/`, `lib/supabase/`,
-> `i18n/routing.ts`) is **inert reference material** kept for porting the
-> remaining dashboard pages — Next is uninstalled and nothing runs it.
-> See "New architecture" and "Migration status" below.
+> **Re-platformed off Next.js → Vite + Express.** Next.js is fully removed —
+> there is no `app/` directory, no `middleware.ts`, and the package is
+> uninstalled. The stack is: a **Vite SSR marketing app** (`apps/marketing`) for
+> SEO, a **Vite SPA dashboard** (`apps/dashboard`) for the authenticated product,
+> and an **Express** server (`server/`) exposing a REST API (raw SQL via `pg`) +
+> custom JWT auth + hosting the SSR/SPA. Routing uses `react-router-dom` v7; i18n
+> uses `react-i18next`.
+>
+> **The root-level `components/`, `types/`, `validations/`, `constants/`,
+> `hooks/`, `lib/`, and `i18n/` dirs are live shared code**, imported by the
+> dashboard via the `@/*` alias — they are *not* legacy. Only the Next.js runtime
+> (App Router pages, Server Actions, middleware) is gone. A few Supabase
+> artifacts (`lib/supabase/*`, `services/management/`) survive as the last
+> un-ported references; treat them as inert. See "Migration status" below.
 
 ### New architecture (Vite + Express)
 
@@ -47,9 +51,12 @@ server/src/          Express: index.ts (bootstrap), ssr.ts (marketing SSR host),
                      db/SQL/* (schema, views, ordered migrations),
                      auth/{jwt,middleware}, routes/* (REST), lib/apiResult.ts
 apps/marketing/      Vite SSR app — entry-server/entry-client, React 19 metadata
-apps/dashboard/      Vite SPA — main.tsx, App.tsx (react-router),
-                     auth/ (AuthProvider + guards), lib/api.ts, compat/ (shims),
-                     i18n.ts (locale persisted to localStorage + cookie), pages/*
+apps/dashboard/      Vite SPA — main.tsx (BrowserRouter + QueryClient + AuthProvider),
+                     App.tsx (routes), auth/AuthProvider, layout/ (DashboardShell,
+                     Sidebar), lib/{api,queryClient}, compat/ (Next shims), pages/*
+i18n/                Shared (root): index.ts (locale → localStorage + cookie),
+                     navigation.tsx (react-router nav shim), messages/{ar,en}.json
+constants/, components/, types/, validations/, hooks/, lib/   Shared root dirs (@/*)
 styles/globals.css   Shared Tailwind v4 stylesheet (imported by both apps)
 ```
 
@@ -74,9 +81,11 @@ styles/globals.css   Shared Tailwind v4 stylesheet (imported by both apps)
   has been removed entirely (no alias, no shim). This lets the existing component tree
   be reused with minimal edits.
 
-### Legacy context (Next.js — being replaced)
+### Domain model
 
-FitSync Pro is a multi-role fitness management platform originally built on **Next.js 16 (App Router)**, **React 19**, **Supabase** (Postgres + Auth + RLS), and **Tailwind CSS v4**.
+FitSync Pro is a multi-role fitness management platform (React 19 + Tailwind CSS
+v4) backed by a Supabase **Postgres** database accessed directly via `pg` (Auth
+and RLS are no longer used — authz is enforced in Express).
 
 ### Two independent product modules
 
@@ -85,7 +94,7 @@ The app serves two completely separate business contexts that share the same cod
 1. **Gym Module** — gym owners (admins) manage a facility; gym coaches are assigned to gym members; members check in via QR code.
 2. **Online Coaching Module** — independent coaches (no gym) work directly with online clients.
 
-The nullable `gym_id` column on `profiles`, `coaches`, `clients`, and most other tables is how this split is expressed in the database — a `NULL` `gym_id` means the user belongs to the online coaching context. All queries and RLS policies must account for this.
+The nullable `gym_id` column on `profiles`, `coaches`, `clients`, and most other tables is how this split is expressed in the database — a `NULL` `gym_id` means the user belongs to the online coaching context. All queries must account for this.
 
 ### User roles
 
@@ -99,56 +108,42 @@ Five distinct roles, each with separate dashboard routes:
 | Online Coach | `/coach` (without `gym_id`) | Online module |
 | Online Client | `/client` | Online module |
 
-### Supabase client pattern
-
-Two clients with distinct uses — never swap them:
-
-- `lib/supabase/client.ts` — browser client; use in Client Components for realtime subscriptions and auth state changes.
-- `lib/supabase/server.ts` — async server client via `@supabase/ssr`; use in Server Components and Route Handlers. Must be `await`ed: `const supabase = await createServerSupabaseClient()`.
-
-RLS policies on the database enforce access control, so always use the user-scoped anon-key clients (not the service-role key) in application code.
-
-### Next.js 16 dynamic API change
-
-In Next.js 16 the `params` and `searchParams` props on layouts and pages are **Promises** — always `await` them before destructuring:
-
-```ts
-const { locale } = await params;
-```
-
-Accessing them synchronously (as in older Next.js) will throw at runtime.
-
 ### Platform admin (super admin)
 
-`/management/*` routes are a separate portal for the platform operator (not gym admins). Middleware protects these routes by checking `is_super_admin = true` on the user's profile. RLS policies on platform tables call the `public.is_super_admin()` SQL function. Do not conflate this role with the Gym Admin role.
+`/management/*` routes are a separate portal for the platform operator (not gym
+admins) — the auth role is `super_admin`. Access is gated in Express via
+`requireSuperAdmin` on the API and on the client by `DashboardShell`. Do not
+conflate this role with the Gym Admin role.
 
-### Server Actions pattern
+### Adding a REST slice (the pattern to follow)
 
-All mutations go through Server Actions (`actions.ts` co-located with the route). Every action:
-1. Validates input with a Zod schema from `validations/` first.
-2. Returns `ActionResult<T>` from `types/common.ts` — a discriminated union `{ success: true; data: T } | { success: false; error: string }`.
-3. Calls `revalidatePath()` after a successful mutation.
+Reads and writes both flow through the Express REST API; the dashboard talks to
+it with TanStack Query (`useQuery`/`useMutation`) via `apps/dashboard/src/lib/api.ts`.
+The **Management → Gyms** slice (`apps/dashboard/src/pages/management/gyms/`) is
+the canonical reference. To add an endpoint:
 
-Zod schemas and their inferred types are exported from `validations/` and imported by both the action (server) and the form component (client) to keep validation in sync.
+1. **Repository** — raw parameterized SQL in `server/src/db/repositories/*`
+   (reuse Postgres **views** for JOIN-heavy reads; multi-step writes use
+   `withTransaction`). Never string-interpolate SQL.
+2. **Router** — `server/src/routes/*`, guarded by `requireAuth` /
+   `requireRole` / `requireSuperAdmin`, validating the body with a Zod schema
+   from `validations/`, returning the `{ data }` / `{ error }` envelope via
+   `server/src/lib/apiResult.ts`.
+3. **Page** — a react-router route under `apps/dashboard/src/pages/*` calling the
+   endpoint through `lib/api.ts`. Mutations live in a co-located
+   `*_mutations.ts`.
 
-### Services layer
-
-Data-access logic lives in `services/`, not in page components or actions directly. Service functions:
-- Return `{ data: T; error: null | string }` for reads and call the server Supabase client.
-- Use Supabase **views** (e.g., `gym_list`) for queries that would otherwise require multi-table JOINs — the view handles the JOIN and RLS applies via `security_invoker = true`.
-- Log errors with a contextual prefix: `console.error("[functionName]", error)`.
-
-The data flow is: **Page (Server Component) → service function → Supabase view/table** for reads, and **Client Component → Server Action → service/Supabase → revalidatePath** for writes.
-
-### Code organisation rules
+### Code organisation (shared root dirs)
 
 | Directory | What goes here |
 |---|---|
 | `types/` | TypeScript interfaces and discriminated union string-literal types (e.g. `GymPlan`, `BillingRecordStatus`) |
-| `validations/` | Zod schemas and their inferred `FormData` types |
-| `services/` | Data-access functions — Supabase queries, no business logic beyond mapping |
-| `lib/` | Utility helpers, Supabase client factories |
-| `actions.ts` | Next.js Server Actions, co-located with the route that owns them |
+| `validations/` | Zod schemas and their inferred `FormData` types — shared by server routes and client forms |
+| `constants/` | `navigation.ts` (canonical sidebar/role config), `apiRoutes.ts`, etc. |
+| `components/` | Shared React component tree (`ui/`, `layout/`, `management/`, `superadmin/`, …) reused by the dashboard |
+| `hooks/` | Reusable React hooks (`useFormManager`, `useVisibility`, …) |
+| `lib/` | Utility helpers (formatting, dates, PDF export, …) |
+| `i18n/` | `index.ts` (i18next init + locale persistence), `navigation.tsx` (react-router nav shim), `messages/{ar,en}.json` |
 
 ### Current state (live Vite SPA — `apps/dashboard/src/App.tsx`)
 
@@ -169,34 +164,48 @@ The router is the source of truth for what's actually wired. Routes (no locale
 prefix) under `/application`:
 
 - `sign-in` — custom JWT login (`POST /api/auth/sign-in`).
-- `management/*` (super-admin gate, section on `DashboardShell`): index →
-  `ManagementOverviewPage`; `gyms` (the reference slice, wired end-to-end with REST
-  + `pg`, plus subscription/billing tabs under `gyms/partials/`), `coaches`,
-  `subscriptions`, and `activity` are all wired pages; only `quotas` is still a
-  `<Placeholder>`.
-- `admin/*`, `coach/*`, `member/*`, `client/*` — mount `DashboardShell` but the
-  inner pages are not yet ported.
+- `management/*` (super-admin gate, `section="management"` on `DashboardShell`):
+  index → `ManagementOverviewPage`; `gyms` (the reference slice, wired end-to-end
+  with REST + `pg`, plus subscription/billing tabs under `gyms/partials/`),
+  `coaches`, `subscriptions`, and `activity` are all wired pages; only `quotas` is
+  still a `<Placeholder>`.
+- `admin/*` (`section="admin"`): index → `AdminDashboard`, `members` →
+  `MembersPage`.
+- `coach/*` (`section="coach"`): index → `CoachDashboard`, `exercises` →
+  `ExercisesPage`.
+- `member/*`, `client/*` — mount `DashboardShell` but have no inner pages yet.
 
-The legacy Next.js pages under `app/[locale]/**` are **inert reference** for porting
-the remaining slices — do not treat them as running code. The full schema is at
+`DashboardShell` (`apps/dashboard/src/layout/DashboardShell.tsx`) takes a
+`section` prop; it maps section → role via `SECTION_ROLE` in
+`constants/navigation.ts` (the single source of truth for sidebar items, brand,
+and role plumbing) and renders `Sidebar` + an `<Outlet/>`. The full schema is at
 `server/src/db/SQL/full_schema.sql`; the auth migration is
 `server/src/db/SQL/migrations/custom_auth.sql`.
 
 ### Localization
 
-The app targets the Egyptian market first. **Arabic (`ar`) is the default locale** — routes without a locale prefix redirect to `/ar/...`. The `[locale]` segment in `app/[locale]/` is always present.
+The app targets the Egyptian market first. **Arabic (`ar`) is the default
+locale.** The locale is **not in the URL** — it is persisted to `localStorage` +
+the `fs_locale` cookie and restored on boot in `i18n/index.ts`, which also
+reflects `lang`/`dir` (rtl/ltr) on `<html>`. Switch with
+`i18n.changeLanguage(...)` (e.g. the `LanguageChange` component), never by
+changing the path.
 
-**Always import navigation primitives from `@/i18n/navigation`** (`next/navigation` no
-longer exists — it has been removed):
+**Always import navigation primitives from `@/i18n/navigation`** (`next/navigation`
+has been removed):
 
 ```ts
 import { Link, redirect, usePathname, useRouter, useSearchParams } from "@/i18n/navigation";
 ```
 
-These are thin react-router wrappers (`i18n/navigation.tsx`). `useSearchParams` returns a
-plain `URLSearchParams` (not react-router's `[params, setParams]` tuple).
+These are thin react-router wrappers (`i18n/navigation.tsx`); they no longer
+prefix paths with a locale. `useSearchParams` returns a plain `URLSearchParams`
+(not react-router's `[params, setParams]` tuple).
 
-The root layout sets `dir="rtl"` and switches fonts when `locale === "ar"`. Cairo (Arabic) and Inter (Latin) are loaded via Google Fonts in `app/[locale]/layout.tsx`. Sidebar nav labels are hardcoded bilingual strings inside the component itself — they are **not** sourced from the `i18n/` translation files.
+Sidebar nav labels are **bilingual `[en, ar]` tuples** defined in
+`constants/navigation.ts` (the `Bilingual` type + `pick()` helper) — not in the
+`i18n/messages/*.json` files. Component-level copy *does* use `react-i18next`
+(`useTranslation(undefined, { keyPrefix })`).
 
 ### CSS design system
 
@@ -225,17 +234,27 @@ The custom `Icon` component at `components/ui/Icon.tsx` renders inline SVGs by n
 
 ### Client-side data fetching
 
-`components/providers/QueryProvider.tsx` wraps the app with React Query (TanStack Query). It is configured with `staleTime: 60_000` and `retry: 1`. Use React Query for client-side mutations or optimistic updates where Server Actions are not enough. For straightforward reads, prefer Server Components fetching via the services layer.
+The dashboard is wrapped in `QueryClientProvider` in
+`apps/dashboard/src/main.tsx` using the **module-singleton** `queryClient`
+(`apps/dashboard/src/lib/queryClient.ts`, `staleTime: 60_000`, `retry: 1`).
+Exporting it as a singleton lets client-side mutation modules invalidate queries
+from outside the React tree — the SPA replacement for Next's `revalidatePath`.
+All reads/writes go through `useQuery`/`useMutation` against the REST API via
+`lib/api.ts`. (`components/providers/QueryProvider.tsx` is a leftover Next-era
+wrapper and is not used by the SPA.)
 
-### AppShell behaviour
+### Layout shell
 
-`AppShell` (`components/layout/AppShell.tsx`) is a client component that reads the pathname to detect `role`. It only renders the `Sidebar` for routes under `/admin` or `/coach`. All other routes (auth, landing page, etc.) render without the sidebar shell.
-
-All dashboard pages start with a `Topbar` (`components/layout/Topbar.tsx`) that renders the page title, subtitle, a search input, a notifications bell, and optional `actions` (buttons). Pass `dir="rtl"` when in Arabic context.
+The dashboard shell lives in `apps/dashboard/src/layout/`:
+`DashboardShell` (section → role + `Sidebar` + `<Outlet/>`), `Sidebar`,
+`HeaderContent`, `MenuButton`, and `SidebarContext` (mobile open/close). There is
+no `AppShell`/`Topbar` (those were Next-era components).
 
 ### Path alias
 
-`@/*` maps to the project root (configured in `tsconfig.json`). Use it for all internal imports.
+`@/*` maps to the project root (shared `components/`, `types/`, `lib/`, etc.) and
+`@dashboard/*` maps to `apps/dashboard/src/`. Both are configured in
+`apps/dashboard/vite.config.ts` (and `tsconfig`). Use them for all internal imports.
 
 ### Environment variables
 
@@ -266,17 +285,16 @@ TWILIO_WHATSAPP_FROM=
 
 ### Migration status (Next.js → Vite + Express)
 
-**Done & verified:** workspace/tooling; Express core (pg pool, JWT auth,
-middleware); full REST API (`/api/auth`, `/api/gyms`, `/api/coaches`,
-`/api/subscriptions`, `/api/admin/dashboard`, `/api/activity`) as raw-SQL
-repositories; marketing
-SSR app (renders with React 19 metadata); dashboard SPA foundation (react-router +
-react-i18next + auth guards + `lib/api`) with the **Management → Gyms** page wired
-end-to-end as the reference slice. Server typechecks; both apps build.
+**Done:** Next.js fully removed (no `app/`, no `middleware.ts`, package
+uninstalled). Express core (pg pool, JWT auth, middleware); full REST API
+(`/api/auth`, `/api/gyms`, `/api/coaches`, `/api/subscriptions`,
+`/api/admin/dashboard`, `/api/activity`) as raw-SQL repositories; marketing SSR
+app; dashboard SPA (react-router + react-i18next + auth + `lib/api`) with
+**Management** (gyms/coaches/subscriptions/activity/overview), **admin**
+(dashboard + members), and **coach** (dashboard + exercises) pages wired.
 
-**Remaining (mechanical, follow the Gyms slice pattern):** port the other dashboard
-pages from `app/[locale]/**` — admin dashboard, management coaches/subscriptions/
-quotas, members, coach/exercises, member/client — each becomes a react-router route
-using `useQuery`/`useMutation` against the REST endpoints and the (shimmed) existing
-components. Then delete the legacy Next files. Run `db:migrate` + `db:seed` against a
-real `DATABASE_URL` to exercise the auth + data flow.
+**Remaining:** management `quotas`; the `member/*` and `client/*` inner pages;
+retiring the last Supabase references (`lib/supabase/*`,
+`services/management/`). Follow the Gyms slice pattern (repository → guarded
+router → react-router page with `useQuery`/`useMutation`). Run `db:migrate` +
+`db:seed` against a real `DATABASE_URL` to exercise the auth + data flow.

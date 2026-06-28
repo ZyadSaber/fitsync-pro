@@ -1,10 +1,12 @@
 /**
- * Applies the custom-auth migration to the configured Postgres database.
+ * Applies the consolidated schema to the configured Postgres database.
  *
  *   bun run db:migrate
  *
- * The pre-existing schema/views/platform tables are assumed already applied to
- * the live Supabase database; this only layers on the custom-auth decoupling.
+ * All historical migrations have been folded into SQL/full_schema.sql, which is
+ * the single source of truth. This runs it against a FRESH database to create
+ * every table, index, and view in one pass. (The SQL/migrations/*.sql files are
+ * now empty stubs kept only for git history.)
  */
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -12,17 +14,15 @@ import { fileURLToPath } from "node:url";
 import { pool } from "./pool.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const MIGRATIONS_DIR = path.join(here, "SQL", "migrations");
+const SQL_DIR = path.join(here, "SQL");
 
-const MIGRATIONS = [
-  // "custom_auth.sql",
-  // "merge_profiles_into_credentials.sql",
-  "invitations.sql",
+const FILES = [
+  "full_schema.sql",
 ];
 
 async function main() {
-  for (const file of MIGRATIONS) {
-    const full = path.join(MIGRATIONS_DIR, file);
+  for (const file of FILES) {
+    const full = path.join(SQL_DIR, file);
     const sql = readFileSync(full, "utf8");
     console.log(`[migrate] applying ${file} ...`);
     await pool.query(sql);
